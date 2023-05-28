@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Ant-Wars.iml" filepath="$PROJECT_DIR$/Ant-Wars.iml" />
+      <module fileurl="file://$PROJECT_DIR$/web_ui.iml" filepath="$PROJECT_DIR$/web_ui.iml" />
+    </modules>
+  </component>
+</project>
