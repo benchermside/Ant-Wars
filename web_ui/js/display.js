@@ -3,13 +3,9 @@
  */
 
 // This is the main drawing function. It always draws to the standard game-canvas. It is
-// passed the drawing context to draw on and a 2D array of background IDs to draw.
+// passed the drawing context to draw on and a Grid of TerrainIds to draw.
 //
-// The background IDs will become fancier later, but for now here is what we have:
-//   0: Bedrock
-//   1: Dirt
-//   2: Sky
-//   3: Stone
+// See dataStructures.js for the definition of a TerrainId and of a Grid.
 //
 // NOTE: The current version is a placeholder. It just draws random junk no matter what gets
 //   passed in.
