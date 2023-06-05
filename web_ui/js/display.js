@@ -31,6 +31,6 @@ function drawBackground(drawContext, terrainGrid, size) {
 
     const NUM_CIRCLES = 30;
     for (let i=0; i<NUM_CIRCLES; i++) {
-        drawCircleAt(Math.random() * 500, Math.random() * 300);
+        drawCircleAt(Math.random() * (size * 8), Math.random() * (size * 6));
     }
 }

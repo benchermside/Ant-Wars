@@ -6,7 +6,7 @@ window.onload = function() {
     let gameContentElem = document.getElementById("game-content");
     let gameCanvasElem = document.getElementById("game-canvas");
     let drawContext = gameCanvasElem.getContext("2d");
-    let startingGrid = [
+    let startingTerrainGrid = [
         [3, 3, 3, 3, 3, 3],
         [2, 1, 1, 1, 2, 1],
         [2, 2, 1, 1, 1, 1],
@@ -15,5 +15,6 @@ window.onload = function() {
     ];
     gameCanvasElem.width = gameContentElem.offsetWidth;
     gameCanvasElem.height = gameContentElem.offsetHeight;
-    drawBackground(drawContext, startingGrid);
+    let cellSize = gameCanvasElem.width / 7;
+    drawBackground(drawContext, startingTerrainGrid, cellSize);
 }
