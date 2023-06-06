@@ -23,3 +23,19 @@
     overflow-x: scroll;
     overflow-y: scroll;
 }
+
+#game-canvas {
+}
+
+#zoom-controls {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    font-size: 0;
+}
+
+#zoom-in-btn, #zoom-out-btn {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+}

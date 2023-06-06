@@ -12,25 +12,25 @@
 //       getContext("2d") on a canvas element. The capabilities are described in
 //       https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
 //  * grid - this is a TerrainGrid as described in dataStructures.js
-//  * size - this is a number which gives the width that each hex should be (the
+//  * hexSize - this is a number which gives the width that each hex should be (the
 //       height can be calculated from the width). Each time the function is called
 //       this might be different if the user has zoomed.
 //
 // NOTE: The current version is a placeholder. It just draws random junk no matter what gets
 //   passed in.
-function drawBackground(drawContext, terrainGrid, size) {
+function drawBackground(drawContext, terrainGrid, hexSize) {
     let drawCircleAt = function(x,y) {
         const colors = ["red", "green", "blue", "yellow", "orange", "purple", "brown"];
         const color = colors[Math.floor(Math.random() * colors.length)];
 
         const circle = new Path2D();
-        circle.arc(x, y, 25, 0, 2 * Math.PI);
+        circle.arc(x, y, hexSize / 3, 0, 2 * Math.PI);
         drawContext.fillStyle = color;
         drawContext.fill(circle);
     }
 
     const NUM_CIRCLES = 30;
     for (let i=0; i<NUM_CIRCLES; i++) {
-        drawCircleAt(Math.random() * (size * 8), Math.random() * (size * 6));
+        drawCircleAt(Math.random() * (hexSize * 8), Math.random() * (hexSize * 6));
     }
 }
