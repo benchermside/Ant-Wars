@@ -3,7 +3,7 @@
  */
 
 // This updates after a set of moves has been selected. It is passed a GameState (see dataStructures.js)
-// and a MoveSelection. It returns the new GameState.
+// and a actionSelection. It returns the new GameState.
 //
 function applyRules(gameState, actionSelection) {
     // As a placeholder, we'll return the gameState unmodified
@@ -14,6 +14,32 @@ function applyRules(gameState, actionSelection) {
 // dataStructures.js) and an integer specifying which ant we want the moves of. It returns a
 // MoveLocations.
 function possibleMoves(gameState, antNumber) {
-    // As a placeholder, we'll return the same location we are already on -- and nothing else.
-    return [ gameState.ants[antNumber].location ];
+    const notMovable = new Set([0, 2, 3])   //list of all hex types that you CANNOT move through
+    const possibleMoves = [];
+    const numSteps = 1;
+    const gridHeight = gameState.terrainGrid.length;
+    const gridLength = gameState.terrainGrid[0].length;
+    const antStartX = gameState.ants[antNumber][0];
+    const antStartY = gameState.ants[antNumber][1];
+    possibleMoves.push([antStartX-1 + (antStartY%2), antStartY+1]);
+    possibleMoves.push([antStartX + (antStartY%2), antStartY+1]);
+    possibleMoves.push([antStartX-1, antStartY]);
+    possibleMoves.push([antStartX, antStartY]);
+    possibleMoves.push([antStartX+1, antStartY]);
+    possibleMoves.push([antStartX-1 + (antStartY%2), antStartY-1]);
+    possibleMoves.push([antStartX + (antStartY%2), antStartY-1]);
+    validMoves = [];
+    for(var i=0; i<possibleMoves.length; i++){
+        if(possibleMoves[i][0] >= 0 && possibleMoves[i][0] < gridLength && possibleMoves[i][1] >= 0 && possibleMoves[i][1] < gridHeight){
+            var currPos = gameState.terrainGrid[possibleMoves[i][1]][possibleMoves[i][0]];
+            if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
+                validMoves.push(possibleMoves[i]);
+            }
+        }
+    }
+    return validMoves;
 }
+
+//for testing delete later
+console.log("hello");
+//for testing delete later
