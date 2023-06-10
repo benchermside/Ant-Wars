@@ -31,10 +31,7 @@ const endTurn = function() {
     for(let antNumber = 0; antNumber < gameState.ants.length; antNumber++) {
         const moveLocations = possibleMoves(gameState, antNumber);
         const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-        const action = {
-            name: "Move",
-            destination: randomMove
-        };
+        const action = {name: "Move", destination: randomMove};
         actionSelection.push(action);
     }
 
@@ -47,14 +44,29 @@ const endTurn = function() {
 
 
 /*
+ * This will get called when the window (and thus the game canvas) is resized.
+ */
+const onWindowResize = function() {
+    const gameContentElem = document.getElementById("game-content");
+    const borderThickness = parseInt((getComputedStyle(gameContentElem)["borderWidth"]));
+    const canvasWidth = gameContentElem.offsetWidth - 2 * borderThickness;
+    const canvasHeight = gameContentElem.offsetHeight - 2 * borderThickness;
+    const gameCanvasElem = document.getElementById("game-canvas");
+    gameCanvasElem.width = canvasWidth;
+    gameCanvasElem.height = canvasHeight;
+    render();
+}
+
+
+/*
  * This is called before we begin to set up the initial game position.
  */
 const initializeStartingPosition = function() {
     const startingTerrainGrid = [
         [3, 3, 3, 3, 3, 3],
-        [2, 1, 1, 1, 2, 1],
+          [2, 1, 1, 1, 2, 1],
         [2, 2, 1, 1, 1, 1],
-        [2, 2, 1, 1, 1, 2],
+          [2, 2, 1, 1, 1, 2],
         [0, 0, 0, 0, 0, 0],
     ];
     gameState.terrainGrid = startingTerrainGrid;
@@ -67,7 +79,7 @@ const initializeStartingPosition = function() {
 
 /* ========= Run Stuff On Load ========= */
 
-window.onload = function() {
+window.addEventListener("load", function() {
     // ==== Set up button actions ====
     const zoomInBtnElem = document.getElementById("zoom-in-btn");
     zoomInBtnElem.onclick = function() {
@@ -84,11 +96,12 @@ window.onload = function() {
 
     // ==== Prepare Game Start ====
     initializeStartingPosition();
-    const gameContentElem = document.getElementById("game-content");
-    const gameCanvasElem = document.getElementById("game-canvas");
-    const contentBorderWidth = parseInt((getComputedStyle(gameContentElem)["borderWidth"]));
-    gameCanvasElem.width = gameContentElem.offsetWidth - 2 * contentBorderWidth;
-    gameCanvasElem.height = gameContentElem.offsetHeight - 2 * contentBorderWidth;
-    hexSize = gameCanvasElem.width / 7;
+    onWindowResize();
+    let canvasWidth = document.getElementById("game-canvas").width;
+    hexSize = canvasWidth / (gameState.terrainGrid[0].length + 1);
     render();
-}
+});
+
+window.addEventListener("resize", function(event) {
+    onWindowResize();
+});
