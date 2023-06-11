@@ -9,12 +9,12 @@
 // A BezierShapePoint is one point along a shape which is drawn using bezier curves.
 //
 // It is an object with four fields: "x" and "y" give the coordinates of a point, "angle"
-// gives the tangent to that point in degrees clockwise from "straight up". (We always
-// have angle >=0 and angle < 360.) And "flat" tells how far out the control points
-// should be -- larger numbers will be more flat.
+// gives the tangent to that point in "clockAngle" (0 up to 12) clockwise from "straight down".
+// (We always have angle >=0 and angle < 360.) And "flat" tells how far out the control points
+// should be: larger numbers will be more flat.
 //
 // Example:
-//   const p = {x:0, y:50, angle:90, flat:5}
+//   const p = {x:0, y:50, angle:3, flat:5}
 
 
 // LinePoint
@@ -44,10 +44,10 @@
 //   const shape = {
 //       "type": "BezierShape",
 //       "points": [
-//           {x:0,   y:13,   angle:90,  flat:2},
-//           {x:4,   y:10,   angle:150, flat:1.5},
-//           {x:3,   y:8,    angle:270, flat:0.8},
-//           {x:0,   y:13,   angle:90,  flat:2},
+//           {x:0,  y:13,  angle:3, flat:2},
+//           {x:4,  y:10,  angle:5, flat:1.5},
+//           {x:3,  y:8,   angle:9, flat:0.8},
+//           {x:0,  y:13,  angle:3, flat:2},
 //       ]
 //   };
 
@@ -59,7 +59,6 @@
 // It is just an array of Shape objects.
 
 
-// FIXME: Convert all angles to use clockAngle
 // FIXME: Merge scale and rotate into one step
 
 
@@ -80,7 +79,7 @@ function makeSymmetric(oneSide) {
         reflectedPoints.push({
             x: -1 * p.x,
             y: p.y,
-            angle: (180 + 360 - p.angle) % 360, // reflect in y-axis
+            angle: (18 - p.angle) % 12, // reflect in y-axis
             flat: p.flat,
         });
     });
@@ -141,7 +140,7 @@ function rotateBezierShapePoints(points, clockAngle) {
         return {
             x: p.x * cosAngle - p.y * sinAngle,
             y: p.x * sinAngle + p.y * cosAngle,
-            angle: (p.angle + clockAngle * 30) % 360,
+            angle: (p.angle + clockAngle) % 12,
             flat: p.flat,
         }
     });
@@ -194,7 +193,7 @@ function flipYBezierShapePoints(points) {
         return {
             x: p.x,
             y: -1 * p.y,
-            angle: (360 + 180 - p.angle) % 360,
+            angle: (18 - p.angle) % 12,
             flat: p.flat,
         }
     });
@@ -275,8 +274,8 @@ function drawBezierShapePoints(drawContext, points, x, y) {
     console.assert(points[0].y === points[points.length - 1].y);
 
     function ctrlPos(p) {
-        const cosAngle = Math.cos(p.angle * Math.PI / 180);
-        const sinAngle = Math.sin(p.angle * Math.PI / 180);
+        const cosAngle = Math.cos(p.angle * Math.PI / 6);
+        const sinAngle = Math.sin(p.angle * Math.PI / 6);
         const dx = p.flat * -1 * sinAngle;
         const dy = p.flat * cosAngle;
         return {
@@ -345,19 +344,19 @@ function drawDiagram(drawContext, diagram, x, y) {
 
 function drawAnt(drawContext, size, x, y) {
     const halfBodyPoints = [
-        {x:0,   y:13,   angle:360-90,  flat:2},   // A
-        {x:4,   y:10,   angle:360-150, flat:1.5}, // B
-        {x:3,   y:8,    angle:360-270, flat:0.8}, // C
-        {x:1,   y:8.2,  angle:360-280, flat:0},   // D
-        {x:1,   y:8.2,  angle:360-185, flat:0},   // E
-        {x:1,   y:7,    angle:360-135, flat:1},   // F
-        {x:3,   y:6,    angle:360-135, flat:1.5}, // G
-        {x:3,   y:-2,   angle:360-210, flat:1.5}, // H
-        {x:1.2, y:-4,   angle:360-240, flat:0.5}, // I
-        {x:1.2, y:-5,   angle:360-120, flat:0.5}, // J
-        {x:4,   y:-6,   angle:360-150, flat:0.5}, // K
-        {x:4.5, y:-15,  angle:360-210, flat:2},   // L
-        {x:0,   y:-19,  angle:360-270, flat:1.5}, // M
+        {x:0,   y:13,   angle:9,   flat:2},   // A
+        {x:4,   y:10,   angle:7,   flat:1.5}, // B
+        {x:3,   y:8,    angle:3,   flat:0.8}, // C
+        {x:1,   y:8.2,  angle:3,   flat:0},   // D
+        {x:1,   y:8.2,  angle:6,   flat:0},   // E
+        {x:1,   y:7,    angle:7.5, flat:1},   // F
+        {x:3,   y:6,    angle:7.5, flat:1.5}, // G
+        {x:3,   y:-2,   angle:5,   flat:1.5}, // H
+        {x:1.2, y:-4,   angle:4,   flat:0.5}, // I
+        {x:1.2, y:-5,   angle:8,   flat:0.5}, // J
+        {x:4,   y:-6,   angle:7,   flat:0.5}, // K
+        {x:4.5, y:-15,  angle:5,   flat:2},   // L
+        {x:0,   y:-19,  angle:3,   flat:1.5}, // M
     ];
     const body = {
         type: "BezierShape",
