@@ -52,12 +52,15 @@
 //   };
 
 
-// Group
+// Diagram
 //
 // A collection of Shapes.
 //
 // It is just an array of Shape objects.
 
+
+// FIXME: Convert all angles to use clockAngle
+// FIXME: Merge scale and rotate into one step
 
 
 /*
@@ -126,8 +129,59 @@ function scaleShape(shape, scale) {
     }
 }
 
-function scaleGroup(group, scale) {
-    return group.map(shape => scaleShape(shape, scale));
+function scaleDiagram(diagram, scale) {
+    return diagram.map(shape => scaleShape(shape, scale));
+}
+
+
+function rotateBezierShapePoints(points, clockAngle) {
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    const result = points.map(p => {
+        return {
+            x: p.x * cosAngle - p.y * sinAngle,
+            y: p.x * sinAngle + p.y * cosAngle,
+            angle: (p.angle + clockAngle * 30) % 360,
+            flat: p.flat,
+        }
+    });
+    return result;
+}
+
+function rotateLinePoints(points, clockAngle) {
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    return points.map(p => {
+        return {
+            x: p.x * cosAngle - p.y * sinAngle,
+            y: p.x * sinAngle + p.y * cosAngle,
+        };
+    });
+}
+
+function rotateShape(shape, clockAngle) {
+    if (shape.type === "BezierShape") {
+        return {
+            type: "BezierShape",
+            points: rotateBezierShapePoints(shape.points, clockAngle),
+        };
+    } else if (shape.type === "Line") {
+        return {
+            type: "Line",
+            points: rotateLinePoints(shape.points, clockAngle),
+        };
+    } else {
+        throw Error("Invalid type for shape");
+    }
+}
+
+/*
+ * This is given a Diagram and returns the same diagram rotated. The amount to rotate
+ * is given by clockAngle (in a clockwise direction), which is an unusual unit: one
+ * twelfth of a circle (numbers on a clock).
+ */
+function rotateDiagram(diagram, clockAngle) {
+    return diagram.map(shape => rotateShape(shape, clockAngle));
 }
 
 
@@ -177,10 +231,10 @@ function flipYShape(shape) {
 }
 
 /*
- * Given a group of shapes, this returns the same group flipped over the x-axis.
+ * Given a diagram of shapes, this returns the same diagram flipped over the x-axis.
  */
-function flipYGroup(group) {
-    return group.map(flipYShape);
+function flipYDiagram(diagram) {
+    return diagram.map(flipYShape);
 }
 
 
@@ -210,24 +264,26 @@ function reflectXShape(shape) {
     }
 }
 
+
 /*
  * This is passed a draw context, an array of BezierShapePoint objects (where the first and
  * last object are the same), and an x,y position. It draws the shape to the drawContext (in black)
  * at that location.
  */
 function drawBezierShapePoints(drawContext, points, x, y) {
-    console.assert(points[0].angle === 90);
-    console.assert(points[0].x === 0);
+    console.assert(points[0].x === points[points.length - 1].x);
     console.assert(points[0].y === points[points.length - 1].y);
 
-    function ctrlPos(point) {
-        const dx = point.flat * Math.sin(point.angle * Math.PI / 180);
-        const dy = point.flat * Math.cos(point.angle * Math.PI / 180);
+    function ctrlPos(p) {
+        const cosAngle = Math.cos(p.angle * Math.PI / 180);
+        const sinAngle = Math.sin(p.angle * Math.PI / 180);
+        const dx = p.flat * -1 * sinAngle;
+        const dy = p.flat * cosAngle;
         return {
-            nextX: point.x + dx,
-            nextY: point.y + dy,
-            prevX: point.x - dx,
-            prevY: point.y - dy,
+            nextX: p.x + dx,
+            nextY: p.y + dy,
+            prevX: p.x - dx,
+            prevY: p.y - dy,
         };
     }
 
@@ -277,11 +333,11 @@ function drawShape(drawContext, shape, x, y) {
 }
 
 /*
- * This is passed a draw context, a group (list of shapes), and an x,y position. It draws
+ * This is passed a draw context, a diagram (list of shapes), and an x,y position. It draws
  * the shapes to the drawContext (in black) at that location.
  */
-function drawGroup(drawContext, group, x, y) {
-    group.forEach(shape => {
+function drawDiagram(drawContext, diagram, x, y) {
+    diagram.forEach(shape => {
         drawShape(drawContext, shape, x, y)
     });
 }
@@ -289,19 +345,19 @@ function drawGroup(drawContext, group, x, y) {
 
 function drawAnt(drawContext, size, x, y) {
     const halfBodyPoints = [
-        {x:0,   y:13,   angle:90,  flat:2},   // A
-        {x:4,   y:10,   angle:150, flat:1.5}, // B
-        {x:3,   y:8,    angle:270, flat:0.8}, // C
-        {x:1,   y:8.2,  angle:280, flat:0.1}, // D
-        {x:1,   y:8.2,  angle:185, flat:0.1}, // E
-        {x:1,   y:7,    angle:135, flat:1},   // F
-        {x:3,   y:6,    angle:135, flat:1.5}, // G
-        {x:3,   y:-2,   angle:210, flat:1.5}, // H
-        {x:1.2, y:-4,   angle:240, flat:0.5}, // I
-        {x:1.2, y:-5,   angle:120, flat:0.5}, // J
-        {x:4,   y:-6,   angle:150, flat:0.5}, // K
-        {x:4.5, y:-15,  angle:210, flat:2},   // L
-        {x:0,   y:-19,  angle:270, flat:1.5}, // M
+        {x:0,   y:13,   angle:360-90,  flat:2},   // A
+        {x:4,   y:10,   angle:360-150, flat:1.5}, // B
+        {x:3,   y:8,    angle:360-270, flat:0.8}, // C
+        {x:1,   y:8.2,  angle:360-280, flat:0},   // D
+        {x:1,   y:8.2,  angle:360-185, flat:0},   // E
+        {x:1,   y:7,    angle:360-135, flat:1},   // F
+        {x:3,   y:6,    angle:360-135, flat:1.5}, // G
+        {x:3,   y:-2,   angle:360-210, flat:1.5}, // H
+        {x:1.2, y:-4,   angle:360-240, flat:0.5}, // I
+        {x:1.2, y:-5,   angle:360-120, flat:0.5}, // J
+        {x:4,   y:-6,   angle:360-150, flat:0.5}, // K
+        {x:4.5, y:-15,  angle:360-210, flat:2},   // L
+        {x:0,   y:-19,  angle:360-270, flat:1.5}, // M
     ];
     const body = {
         type: "BezierShape",
@@ -337,10 +393,10 @@ function drawAnt(drawContext, size, x, y) {
     const antennae1 = {
         type: "Line",
         points: [
-            {x: 3, y: 11}, // AA
-            {x: 12, y: 14}, // BB
+            {x: 3,   y: 11},  // AA
+            {x: 12,   y: 14}, // BB
             {x: 12.5, y: 17}, // CC
-            {x: 12, y: 18}, // DD
+            {x: 12,   y: 18}, // DD
         ],
     }
     const leg4 = reflectXShape(leg1);
@@ -348,7 +404,8 @@ function drawAnt(drawContext, size, x, y) {
     const leg6 = reflectXShape(leg3);
     const antennae2 = reflectXShape(antennae1);
 
-    const unscaledAntGroup = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
-    const antGroup = scaleGroup(flipYGroup(unscaledAntGroup), size/22);
-    drawGroup(drawContext, antGroup, x, y);
+    const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
+    const antDiagram = scaleDiagram(flipYDiagram(unscaledAntDiagram), size/22);
+    const antDiagramR = rotateDiagram(antDiagram, 11);
+    drawDiagram(drawContext, antDiagramR, x, y);
 }
