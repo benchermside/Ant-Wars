@@ -39,6 +39,7 @@
 //
 //   Line:
 //     "points": A list of LinePoint.
+//     "width": the width of the line
 //
 // Example:
 //   const shape = {
@@ -58,8 +59,6 @@
 //
 // It is just an array of Shape objects.
 
-
-// FIXME: Merge scale and rotate into one step
 
 
 /*
@@ -89,85 +88,57 @@ function makeSymmetric(oneSide) {
     return result;
 }
 
+
 /*
- * Given a list of BezierShapePoints, this scales it up by some size.
+ * This is given a shape and returns an equivalent shape which has been resized
+ * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
+ * from 0..12). The size is a multiplier, where 1 means leave it the same size.
  */
-function scaleBezierShapePoints(points, scale) {
+function twistBezierShapePoints(points, scale, clockAngle) {
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
     return points.map(p => {
         return {
-            x: scale * p.x,
-            y: scale * p.y,
-            angle: p.angle,
+            x: scale * (p.x * cosAngle - p.y * sinAngle),
+            y: scale * (p.x * sinAngle + p.y * cosAngle),
+            angle: (p.angle + clockAngle) % 12,
             flat: scale * p.flat,
         }
     });
 }
 
-function scaleLinePoints(points, scale) {
-    return points.map(p => {
-        return {
-            x: scale * p.x,
-            y: scale * p.y,
-        }
-    })
-}
-
-function scaleShape(shape, scale) {
-    if (shape.type === "BezierShape") {
-        return {
-            type: "BezierShape",
-            points: scaleBezierShapePoints(shape.points, scale),
-        };
-    } else if (shape.type === "Line") {
-        return {
-            type: "Line",
-            points: scaleLinePoints(shape.points, scale),
-        };
-    } else {
-        throw Error("Invalid type for shape");
-    }
-}
-
-function scaleDiagram(diagram, scale) {
-    return diagram.map(shape => scaleShape(shape, scale));
-}
-
-
-function rotateBezierShapePoints(points, clockAngle) {
-    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
-    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
-    const result = points.map(p => {
-        return {
-            x: p.x * cosAngle - p.y * sinAngle,
-            y: p.x * sinAngle + p.y * cosAngle,
-            angle: (p.angle + clockAngle) % 12,
-            flat: p.flat,
-        }
-    });
-    return result;
-}
-
-function rotateLinePoints(points, clockAngle) {
+/*
+ * This is given a shape and returns an equivalent shape which has been resized
+ * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
+ * from 0..12). The size is a multiplier, where 1 means leave it the same size.
+ */
+function twistLinePoints(points, scale, clockAngle) {
     const cosAngle = Math.cos(clockAngle * Math.PI / 6);
     const sinAngle = Math.sin(clockAngle * Math.PI / 6);
     return points.map(p => {
         return {
-            x: p.x * cosAngle - p.y * sinAngle,
-            y: p.x * sinAngle + p.y * cosAngle,
+            x: scale * (p.x * cosAngle - p.y * sinAngle),
+            y: scale * (p.x * sinAngle + p.y * cosAngle),
         };
     });
 }
 
-function rotateShape(shape, clockAngle) {
+/*
+ * This is given a shape and returns an equivalent shape which has been resized
+ * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
+ * from 0..12). The size is a multiplier, where 1 means leave it the same size.
+ */
+function twistShape(shape, scale, clockAngle) {
     if (shape.type === "BezierShape") {
         return {
             type: "BezierShape",
-            points: rotateBezierShapePoints(shape.points, clockAngle),
+            points: twistBezierShapePoints(shape.points, scale, clockAngle),
         };
     } else if (shape.type === "Line") {
         return {
             type: "Line",
-            points: rotateLinePoints(shape.points, clockAngle),
+            points: twistLinePoints(shape.points, scale, clockAngle),
+            width: scale * shape.width,
         };
     } else {
         throw Error("Invalid type for shape");
@@ -175,65 +146,12 @@ function rotateShape(shape, clockAngle) {
 }
 
 /*
- * This is given a Diagram and returns the same diagram rotated. The amount to rotate
- * is given by clockAngle (in a clockwise direction), which is an unusual unit: one
- * twelfth of a circle (numbers on a clock).
+ * This is given a diagram and returns an equivalent diagram which has been resized
+ * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
+ * from 0..12). The size is a multiplier, where 1 means leave it the same size.
  */
-function rotateDiagram(diagram, clockAngle) {
-    return diagram.map(shape => rotateShape(shape, clockAngle));
-}
-
-
-/*
- * Given the points of a BezierShape, this returns the points of the same shape flipped
- * over the x-axis.
- */
-function flipYBezierShapePoints(points) {
-    return points.map(p => {
-        return {
-            x: p.x,
-            y: -1 * p.y,
-            angle: (18 - p.angle) % 12,
-            flat: p.flat,
-        }
-    });
-}
-
-/*
- * Given the points of a Line, this returns the points of the same line flipped
- * over the x-axis.
- */
-function flipYLinePoints(points) {
-    return points.map(p => {
-        return {x: p.x, y: -1 * p.y}
-    });
-}
-
-/*
- * Given a Shape, this returns an equivalent shape flipped
- * over the x-axis.
- */
-function flipYShape(shape) {
-    if (shape.type === "BezierShape") {
-        return {
-            type: "BezierShape",
-            points: flipYBezierShapePoints(shape.points),
-        };
-    } else if (shape.type === "Line") {
-        return {
-            type: "Line",
-            points: flipYLinePoints(shape.points),
-        };
-    } else {
-        throw Error("Invalid type for shape");
-    }
-}
-
-/*
- * Given a diagram of shapes, this returns the same diagram flipped over the x-axis.
- */
-function flipYDiagram(diagram) {
-    return diagram.map(flipYShape);
+function twistDiagram(diagram, scale, clockAngle) {
+    return diagram.map(shape => twistShape(shape, scale, clockAngle));
 }
 
 
@@ -257,6 +175,7 @@ function reflectXShape(shape) {
         return {
             type: "Line",
             points: reflectXLinePoints(shape.points),
+            width: shape.width,
         };
     } else {
         throw Error("Invalid type for shape");
@@ -309,15 +228,16 @@ function drawBezierShapePoints(drawContext, points, x, y) {
  * On context "drawContext", this draws the line whose points are in "points"
  * at location ("x", "y").
  */
-function drawLinePoints(drawContext, points, x, y) {
+function drawLine(drawContext, shape, x, y) {
     const cx = drawContext;
+    const points = shape.points;
     cx.beginPath();
     cx.moveTo(x + points[0].x, y + points[0].y);
     for (let i=1; i < points.length; i++) {
         const p = points[i];
         cx.lineTo(x + p.x, y + p.y);
     }
-    cx.lineWidth = 4;
+    cx.lineWidth = shape.width;
     cx.stroke();
 }
 
@@ -325,7 +245,7 @@ function drawShape(drawContext, shape, x, y) {
     if (shape.type === "BezierShape") {
         return drawBezierShapePoints(drawContext, shape.points, x, y);
     } else if (shape.type === "Line") {
-        return drawLinePoints(drawContext, shape.points, x, y);
+        return drawLine(drawContext, shape, x, y);
     } else {
         throw Error("Invalid type for shape");
     }
@@ -362,6 +282,8 @@ function drawAnt(drawContext, size, x, y) {
         type: "BezierShape",
         points: makeSymmetric(halfBodyPoints),
     }
+    const legWidth = 0.8;
+    const antennaWidth = 0.5;
     const leg1 = {
         type: "Line",
         points: [
@@ -369,6 +291,7 @@ function drawAnt(drawContext, size, x, y) {
             {x:9,y:9},   // O
             {x:17,y:11}, // P
         ],
+        width: legWidth,
     }
     const leg2 = {
         type: "Line",
@@ -378,6 +301,7 @@ function drawAnt(drawContext, size, x, y) {
             {x:15,y:2},   // S
             {x:19,y:3},   // T
         ],
+        width: legWidth,
     }
     const leg3 = {
         type: "Line",
@@ -388,6 +312,7 @@ function drawAnt(drawContext, size, x, y) {
             {x:17,y:-8},   // X
             {x:20,y:-9},   // Y
         ],
+        width: legWidth,
     }
     const antennae1 = {
         type: "Line",
@@ -397,6 +322,7 @@ function drawAnt(drawContext, size, x, y) {
             {x: 12.5, y: 17}, // CC
             {x: 12,   y: 18}, // DD
         ],
+        width: antennaWidth,
     }
     const leg4 = reflectXShape(leg1);
     const leg5 = reflectXShape(leg2);
@@ -404,7 +330,6 @@ function drawAnt(drawContext, size, x, y) {
     const antennae2 = reflectXShape(antennae1);
 
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
-    const antDiagram = scaleDiagram(flipYDiagram(unscaledAntDiagram), size/22);
-    const antDiagramR = rotateDiagram(antDiagram, 11);
-    drawDiagram(drawContext, antDiagramR, x, y);
+    const antDiagram = twistDiagram(unscaledAntDiagram, size/22, 7);
+    drawDiagram(drawContext, antDiagram, x, y);
 }
