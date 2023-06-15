@@ -28,22 +28,14 @@ function possibleMoves(gameState, antNumber) {
     possibleMoves.push([antStartX+1, antStartY]);
     possibleMoves.push([antStartX-1 + (antStartY%2), antStartY-1]);
     possibleMoves.push([antStartX + (antStartY%2), antStartY-1]);
-    validMoves = [];
-    // for(var i=0; i<possibleMoves.length; i++){
-    //     if(possibleMoves[i][0] >= 0 && possibleMoves[i][0] < gridLength && possibleMoves[i][1] >= 0 && possibleMoves[i][1] < gridHeight){
-    //         var currPos = gameState.terrainGrid[possibleMoves[i][1]][possibleMoves[i][0]];
-    //         if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
-    //             validMoves.push(possibleMoves[i]);
-    //         }
-    //     }
-    // }
-    possibleMoves.forEach(move => {
+    const validMoves = possibleMoves.filter(move => {
         if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
             var currPos = gameState.terrainGrid[move[1]][move[0]];
             if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
-                validMoves.push(move);
+                return true;
             }
         }
+        return false;
     });
     return validMoves;
 }
@@ -67,5 +59,5 @@ let currentGameState = {
          }
      ]
 };
- console.log(possibleMoves(currentGameState, 1));
+ console.log(possibleMoves(currentGameState, 0));
 //for testing delete later
