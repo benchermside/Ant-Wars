@@ -33,4 +33,7 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
     for (let i=0; i<NUM_CIRCLES; i++) {
         drawCircleAt(Math.random() * (hexSize * 8), Math.random() * (hexSize * 6));
     }
+
+    // just stick a big ant on top of it because it's fun. This isn't really part of the logic.
+    drawAnt(drawContext, hexSize, 220, 220);
 }
