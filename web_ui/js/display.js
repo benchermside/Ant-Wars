@@ -57,6 +57,4 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
         }
     }
 
-    // just stick a big ant on top of it because it's fun. This isn't really part of the logic.
-    drawAnt(drawContext, hexSize, 220, 220);
 }

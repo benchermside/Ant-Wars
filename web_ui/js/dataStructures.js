@@ -58,6 +58,7 @@
 //
 // Example:
 //  let antState = {
+//      "facing": 1,
 //      "location": [2, 3]
 //  };
 

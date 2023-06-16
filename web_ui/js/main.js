@@ -20,6 +20,7 @@ const render = function() {
     const drawContext = gameCanvasElem.getContext("2d");
     drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
     drawBackground(drawContext, gameState.terrainGrid, hexSize);
+    drawItems(drawContext, gameState, hexSize);
 }
 
 /*
@@ -71,7 +72,8 @@ const initializeStartingPosition = function() {
     ];
     gameState.terrainGrid = startingTerrainGrid;
     const startingAnts = [
-        {"location": [4, 3]}
+        {"location": [2, 1], "facing": 7},
+        {"location": [4, 3], "facing": 3},
     ];
     gameState.ants = startingAnts;
 }
