@@ -35,6 +35,9 @@ function hexCenter(x, y, hexSize) {
 // NOTE: The current version is a placeholder. It just draws random junk no matter what gets
 //   passed in.
 function drawBackground(drawContext, terrainGrid, hexSize) {
+
+    const colorNames = ["#36454F", "brown", "grey", "blue"];
+
     for(let x=0;x<terrainGrid[0].length; x++) {
         for(let y = 0; y<terrainGrid.length; y++) {
            const cord = hexCenter(x, y, hexSize);
@@ -48,6 +51,8 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
             drawContext.lineTo(cord[0]-hexSize/2, cord[1]-hexSize/(2*Math.sqrt(3)));
             drawContext.lineTo(cord[0], cord[1]-hexSize/(Math.sqrt(3)));
             drawContext.closePath();
+            drawContext.fillStyle = colorNames[terrainGrid[y][x]];
+            drawContext.fill();
             drawContext.stroke();
         }
     }

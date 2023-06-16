@@ -9,8 +9,8 @@
 // values are:
 //   0: Bedrock
 //   1: Dirt
-//   2: Sky
-//   3: Stone
+//   2: Stone
+//   3: Sky
 //
 // Example:
 //  let terrainId = 1;
