@@ -3,7 +3,7 @@
  */
 
 /* ========= Global Variables ========= */
-let hexSize = 20;
+let hexSize = 120; // starting size
 let gameState = {
     terrainGrid: [],
     ants: [],
@@ -15,7 +15,7 @@ let gameState = {
 /*
  * Call this to re-draw all the game graphics.
  */
-const render = function() {
+function render() {
     const gameCanvasElem = document.getElementById("game-canvas");
     const drawContext = gameCanvasElem.getContext("2d");
     drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
@@ -26,7 +26,7 @@ const render = function() {
 /*
  * Call this to make the turn end and render the new update.
  */
-const endTurn = function() {
+function endTurn() {
     // === For each ant, select a random allowed destination to move to ===
     const actionSelection = [];
     for(let antNumber = 0; antNumber < gameState.ants.length; antNumber++) {
@@ -45,24 +45,34 @@ const endTurn = function() {
 
 
 /*
- * This will get called when the window (and thus the game canvas) is resized.
+ * Given a gameState and hexSize, this determines the [x,y] dimensions of the entire board
+ * (in pixels).
  */
-const onWindowResize = function() {
-    const gameContentElem = document.getElementById("game-content");
-    const borderThickness = parseInt((getComputedStyle(gameContentElem)["borderWidth"]));
-    const canvasWidth = gameContentElem.offsetWidth - 2 * borderThickness;
-    const canvasHeight = gameContentElem.offsetHeight - 2 * borderThickness;
+function gameBoardDimensions(gameState, hexSize) {
+    const hexesTall = gameState.terrainGrid.length;
+    const hexesWide = gameState.terrainGrid[0].length;
+    const pixelsWide = hexSize * (hexesWide + 1/2);
+    const hexHeight = hexSize * 3 / (2 * Math.sqrt(3));
+    const pixelsTall = hexHeight * (hexesTall + 1/3);
+    return [pixelsWide, pixelsTall];
+}
+
+
+/*
+ * Call this after the board has changed in size.
+ */
+function onBoardResize() {
     const gameCanvasElem = document.getElementById("game-canvas");
-    gameCanvasElem.width = canvasWidth;
-    gameCanvasElem.height = canvasHeight;
-    render();
+    const screenDims = gameBoardDimensions(gameState, hexSize);
+    gameCanvasElem.width = screenDims[0];
+    gameCanvasElem.height = screenDims[1];
 }
 
 
 /*
  * This is called before we begin to set up the initial game position.
  */
-const initializeStartingPosition = function() {
+function initializeStartingPosition() {
     const startingTerrainGrid = [
         [3, 3, 3, 3, 3, 3],
           [2, 1, 1, 1, 2, 1],
@@ -86,11 +96,13 @@ window.addEventListener("load", function() {
     const zoomInBtnElem = document.getElementById("zoom-in-btn");
     zoomInBtnElem.onclick = function() {
         hexSize = hexSize * 1.2;
+        onBoardResize();
         render();
     };
     const zoomOutBtnElem = document.getElementById("zoom-out-btn");
     zoomOutBtnElem.onclick = function() {
         hexSize = hexSize / 1.2;
+        onBoardResize();
         render();
     };
     const endTurnBtnElem = document.getElementById("end-turn-btn");
@@ -98,12 +110,6 @@ window.addEventListener("load", function() {
 
     // ==== Prepare Game Start ====
     initializeStartingPosition();
-    onWindowResize();
-    let canvasWidth = document.getElementById("game-canvas").width;
-    hexSize = canvasWidth / (gameState.terrainGrid[0].length + 1);
+    onBoardResize();
     render();
-});
-
-window.addEventListener("resize", function(event) {
-    onWindowResize();
 });
