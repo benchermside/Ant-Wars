@@ -6,7 +6,16 @@
 // and a actionSelection. It returns the new GameState.
 //
 function applyRules(gameState, actionSelection) {
-    // As a placeholder, we'll return the gameState unmodified
+    // FIXME: Should enforce the rules.
+    actionSelection.forEach((action, i) => {
+        if (action.name === "None") {
+            // do nothing
+        } else if (action.name === "Move") {
+            gameState.ants[i].location = action.destination;
+        } else {
+            throw Error("Invalid type for action");
+        }
+    });
     return gameState;
 }
 
