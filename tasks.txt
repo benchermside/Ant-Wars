@@ -5,12 +5,16 @@ A list of tasks:
 
  * Create a set of rules for the game!
  * Create image for drawing tunnels on a cell.
+ * Create food sources.
+ * Allow ants to walk on the surface.
  * Create movement rules that include moving faster through tunnels.
- * Create an editor tool for creating sites.
+ * Create a concept and data structure for a "Colony" of ants.
+ * Create multiple kinds of ants (queens, workers, larvae/pupae/egg, soldiers, males).
+ * Allow ants of different colonies to fight.
+ * Create an editor tool for creating maps.
  * Support input by the user to select where the ants should move.
  * The ability to display a message to the user floating over the map.
- * Create multi-player: ability to log in and view a game.
- * Create food sources.
+ * Support multiplayer: ability to log in and view a game.
+ * Support multiplayer: ability to enter moves for a colony.
  * Research ants and get a bunch of ant facts.
- * Create multiple kinds of ants.
  * Automate deployment to AWS.
