@@ -4,12 +4,14 @@ A list of tasks:
 -----
 
  * Create a set of rules for the game!
+ * Create "surface" as a new terrain type.
  * Create image for drawing tunnels on a cell.
  * Create food sources.
  * Allow ants to walk on the surface.
  * Create movement rules that include moving faster through tunnels.
  * Create a concept and data structure for a "Colony" of ants.
  * Create multiple kinds of ants (queens, workers, larvae/pupae/egg, soldiers, males).
+ * Create disasters (anteater, flood, stepped on).
  * Allow ants of different colonies to fight.
  * Create an editor tool for creating maps.
  * Support input by the user to select where the ants should move.

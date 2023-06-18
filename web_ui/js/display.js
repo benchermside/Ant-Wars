@@ -36,12 +36,12 @@ function hexCenter(x, y, hexSize) {
 //   passed in.
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
-    const colorNames = ["#36454F", "brown", "grey", "blue"];
+    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7"];
 
     for(let x=0;x<terrainGrid[0].length; x++) {
         for(let y = 0; y<terrainGrid.length; y++) {
            const cord = hexCenter(x, y, hexSize);
-            drawContext.lineWidth = 10;
+            drawContext.lineWidth = hexSize/25;
             drawContext.beginPath();
             drawContext.moveTo(cord[0], cord[1]-hexSize/Math.sqrt(3));
             drawContext.lineTo(cord[0]+hexSize/2, cord[1]-hexSize/(2*Math.sqrt(3)));
