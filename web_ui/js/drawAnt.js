@@ -185,10 +185,10 @@ function reflectXShape(shape) {
 
 /*
  * This is passed a draw context, an array of BezierShapePoint objects (where the first and
- * last object are the same), and an x,y position. It draws the shape to the drawContext (in black)
- * at that location.
+ * last object are the same), an x,y position, and a color. It draws the shape to the drawContext
+ * in the given color at that location.
  */
-function drawBezierShapePoints(drawContext, points, coord) {
+function drawBezierShapePoints(drawContext, points, coord, color) {
     console.assert(points[0].x === points[points.length - 1].x);
     console.assert(points[0].y === points[points.length - 1].y);
 
@@ -222,15 +222,15 @@ function drawBezierShapePoints(drawContext, points, coord) {
         );
     }
     cx.closePath();
-    cx.fillStyle = "black";
+    cx.fillStyle = color;
     cx.fill();
 }
 
 /*
  * On context "drawContext", this draws the line whose points are in "points"
- * at location coord (an x,y position in pixels).
+ * at location coord (an x,y position in pixels) in the given color.
  */
-function drawLine(drawContext, shape, coord) {
+function drawLine(drawContext, shape, coord, color) {
     const x = coord[0];
     const y = coord[1];
     const cx = drawContext;
@@ -242,35 +242,38 @@ function drawLine(drawContext, shape, coord) {
         cx.lineTo(x + p.x, y + p.y);
     }
     cx.lineWidth = shape.width;
+    cx.strokeStyle = color;
     cx.stroke();
 }
 
-function drawShape(drawContext, shape, coord) {
+function drawShape(drawContext, shape, coord, color) {
     if (shape.type === "BezierShape") {
-        return drawBezierShapePoints(drawContext, shape.points, coord);
+        return drawBezierShapePoints(drawContext, shape.points, coord, color);
     } else if (shape.type === "Line") {
-        return drawLine(drawContext, shape, coord);
+        return drawLine(drawContext, shape, coord, color);
     } else {
         throw Error("Invalid type for shape");
     }
 }
 
 /*
- * This is passed a draw context, a diagram (list of shapes), and coord (an x,y position in
- * pixels). It draws the shapes to the drawContext (in black) at that location.
+ * This is passed a draw context, a diagram (list of shapes), a coord (an x,y position in
+ * pixels), and a color (a string which that can be used to specify a drawing context color).
+ * It draws the shapes to the drawContext (in black) at that location in that color.
  */
-function drawDiagram(drawContext, diagram, coord) {
+function drawDiagram(drawContext, diagram, coord, color) {
     diagram.forEach(shape => {
-        drawShape(drawContext, shape, coord)
+        drawShape(drawContext, shape, coord, color)
     });
 }
 
 
 /*
  * Draw an ant onto the drawContext, sized for hexes of width hexSize and drawn at the
- * hex at coordinates "coord" (a [x,y] array, measured in pixels), and facing.
+ * hex at coordinates "coord" (a [x,y] array, measured in pixels), rotated to angle
+ * "facing", and drawn in color "color".
  */
-function drawAnt(drawContext, hexSize, coord, facing) {
+function drawAnt(drawContext, hexSize, coord, facing, color) {
     const scaleFactor = 1/50; // multiply by this to scale to normal ant size
     const halfBodyPoints = [
         {x:0,   y:13,   angle:9,   flat:2},   // A
@@ -340,7 +343,7 @@ function drawAnt(drawContext, hexSize, coord, facing) {
 
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
     const antDiagram = twistDiagram(unscaledAntDiagram, hexSize*scaleFactor, facing);
-    drawDiagram(drawContext, antDiagram, coord);
+    drawDiagram(drawContext, antDiagram, coord, color);
 }
 
 
@@ -349,8 +352,10 @@ function drawAnt(drawContext, hexSize, coord, facing) {
  * drawContext if the hexes are hexSize wide.
  */
 function drawItems(drawContext, gameState, hexSize) {
-    gameState.ants.forEach(antState => {
-        const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
-        drawAnt(drawContext, hexSize, coord, antState.facing);
+    gameState.colonies.forEach(colony => {
+        colony.ants.forEach(antState => {
+            const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
+            drawAnt(drawContext, hexSize, coord, antState.facing, colony.antColor);
+        });
     });
 }

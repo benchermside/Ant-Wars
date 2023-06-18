@@ -3,33 +3,35 @@
  */
 
 // This updates after a set of moves has been selected. It is passed a GameState (see dataStructures.js)
-// and a actionSelection. It returns the new GameState.
+// and a colonySelections. It returns the new GameState.
 //
-function applyRules(gameState, actionSelection) {
+function applyRules(gameState, colonySelections) {
     // FIXME: Should enforce the rules.
-    actionSelection.forEach((action, i) => {
-        if (action.name === "None") {
-            // do nothing
-        } else if (action.name === "Move") {
-            gameState.ants[i].location = action.destination;
-        } else {
-            throw Error("Invalid type for action");
-        }
+    colonySelections.forEach((colonySelections, colonyNumber) => {
+        colonySelections.actionSelections.forEach((action, antNumber) => {
+            if (action.name === "None") {
+                // do nothing
+            } else if (action.name === "Move") {
+                gameState.colonies[colonyNumber].ants[antNumber].location = action.destination;
+            } else {
+                throw Error("Invalid type for action");
+            }
+        })
     });
     return gameState;
 }
 
 // This finds the list of allowed locations an ant can move to. It is passed a GameState (see
-// dataStructures.js) and an integer specifying which ant we want the moves of. It returns a
-// MoveLocations.
-function possibleMoves(gameState, antNumber) {
+// dataStructures.js), an integer specifying which colony we want the moves for, and an integer
+// specifying which ant in that colony we want the moves of. It returns a MoveLocations.
+function possibleMoves(gameState, colonyNumber, antNumber) {
     const notMovable = new Set([0, 2, 3])   //list of all hex types that you CANNOT move through
     const possibleMoves = [];
     const numSteps = 1;
     const gridHeight = gameState.terrainGrid.length;
     const gridLength = gameState.terrainGrid[0].length;
-    const antStartX = gameState.ants[antNumber].location[0];
-    const antStartY = gameState.ants[antNumber].location[1];
+    const antStartX = gameState.colonies[colonyNumber].ants[antNumber].location[0];
+    const antStartY = gameState.colonies[colonyNumber].ants[antNumber].location[1];
     possibleMoves.push([antStartX-1 + (antStartY%2), antStartY+1]);
     possibleMoves.push([antStartX + (antStartY%2), antStartY+1]);
     possibleMoves.push([antStartX-1, antStartY]);

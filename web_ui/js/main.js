@@ -4,10 +4,7 @@
 
 /* ========= Global Variables ========= */
 let hexSize = 120; // starting size
-let gameState = {
-    terrainGrid: [],
-    ants: [],
-};
+let gameState = null; // will be populated during initialization
 
 
 /* ========= Functions ========= */
@@ -28,16 +25,17 @@ function render() {
  */
 function endTurn() {
     // === For each ant, select a random allowed destination to move to ===
-    const actionSelection = [];
-    for(let antNumber = 0; antNumber < gameState.ants.length; antNumber++) {
-        const moveLocations = possibleMoves(gameState, antNumber);
-        const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-        const action = {name: "Move", destination: randomMove};
-        actionSelection.push(action);
-    }
+    const colonySelections = gameState.colonies.map((colony, colonyNumber) => {
+        const actionSelections = colony.ants.map((antState, antNumber) => {
+            const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
+            const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
+            return {name: "Move", destination: randomMove};
+        });
+        return {actionSelections: actionSelections}
+    });
 
     // === Perform the moves ===
-    gameState = applyRules(gameState, actionSelection);
+    gameState = applyRules(gameState, colonySelections);
 
     // === Render the screen ===
     render();
@@ -70,7 +68,8 @@ function onBoardResize() {
 
 
 /*
- * This is called before we begin to set up the initial game position.
+ * This is called before we begin to set up the initial game position. It modifies the global
+ * gameState.
  */
 function initializeStartingPosition() {
     const startingTerrainGrid = [
@@ -86,13 +85,27 @@ function initializeStartingPosition() {
           [2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
-
-    gameState.terrainGrid = startingTerrainGrid;
-    const startingAnts = [
-        {"location": [2, 3], "facing": 7},
-        {"location": [4, 5], "facing": 3},
+    const startingColonies = [
+        {
+            ants: [
+                {"location": [2, 3], "facing": 7},
+                {"location": [4, 5], "facing": 3},
+            ],
+            foodSupply: 20,
+            antColor: "#000000",
+        },
+        {
+            ants: [
+                {"location": [15, 6], "facing": 1},
+            ],
+            foodSupply: 50,
+            antColor: "#750D06",
+        },
     ];
-    gameState.ants = startingAnts;
+    gameState = {
+        terrainGrid: startingTerrainGrid,
+        colonies: startingColonies,
+    }
 }
 
 
