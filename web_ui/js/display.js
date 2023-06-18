@@ -53,6 +53,7 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
             drawContext.closePath();
             drawContext.fillStyle = colorNames[terrainGrid[y][x]];
             drawContext.fill();
+            drawContext.strokeStyle = "black";
             drawContext.stroke();
         }
     }
