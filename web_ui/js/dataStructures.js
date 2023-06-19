@@ -54,10 +54,14 @@
     //
     // An AntState tells the current state of an ant BETWEEN turns.
     //
-    // It is an object,
+    // It is an object, with fields:
+    //   * cast - this is either "Worker", "Queen", or "Warrior".
+    //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
+    //   * location - an [x,y] grid coordinate giving the location of the ant.
     //
     // Example:
     const antState = {
+        "cast": "Worker",
         "facing": 1,
         "location": [2, 3]
     };
@@ -77,10 +81,12 @@
     const colonyState = {
         "ants": [
             {
+                "cast": "Worker",
                 "facing": 7,
                 "location": [2, 1]
             },
             {
+                "cast": "Queen",
                 "facing": 3,
                 "location": [4, 3]
             }
@@ -112,10 +118,12 @@
             {
                 "ants": [
                     {
+                        "cast": "Worker",
                         "facing": 7,
                         "location": [2, 1]
                     },
                     {
+                        "cast": "Queen",
                         "facing": 3,
                         "location": [4, 3]
                     }

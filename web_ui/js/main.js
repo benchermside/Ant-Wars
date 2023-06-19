@@ -88,15 +88,15 @@ function initializeStartingPosition() {
     const startingColonies = [
         {
             ants: [
-                {"location": [2, 3], "facing": 7},
-                {"location": [4, 5], "facing": 3},
+                {location: [2, 3], facing: 7, cast: "Worker"},
+                {location: [4, 5], facing: 3, cast: "Queen"},
             ],
             foodSupply: 20,
             antColor: "#000000",
         },
         {
             ants: [
-                {"location": [15, 6], "facing": 1},
+                {location: [15, 6], facing: 1, cast: "Queen"},
             ],
             foodSupply: 50,
             antColor: "#750D06",

@@ -156,6 +156,15 @@ function twistDiagram(diagram, scale, clockAngle) {
 
 
 /*
+ * Given the points of a BezierShape, this returns the points of the same shape reflected over the y-axis.
+ */
+function reflectXBezierShapePoints(points) {
+    return points.map(p => {
+        return {x: -1 * p.x, y: p.y, angle: (12 - p.angle) % 12, flat: p.flat};
+    });
+}
+
+/*
  * Given the points of a line, this returns the points of the same line reflected over the y-axis.
  */
 function reflectXLinePoints(points) {
@@ -170,7 +179,10 @@ function reflectXLinePoints(points) {
  */
 function reflectXShape(shape) {
     if (shape.type === "BezierShape") {
-        throw Error("Not supported.");
+        return {
+            type: "BezierShape",
+            points: reflectXBezierShapePoints(shape.points),
+        };
     } else if (shape.type === "Line") {
         return {
             type: "Line",
@@ -273,8 +285,42 @@ function drawDiagram(drawContext, diagram, coord, color) {
  * hex at coordinates "coord" (a [x,y] array, measured in pixels), rotated to angle
  * "facing", and drawn in color "color".
  */
-function drawAnt(drawContext, hexSize, coord, facing, color) {
+function drawAnt(drawContext, hexSize, colony, antState) {
     const scaleFactor = 1/50; // multiply by this to scale to normal ant size
+    const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
+
+
+    if (antState.cast === "Queen") {
+        const leftTopWing = {
+            type: "BezierShape",
+            points: [
+                {x:1,   y:3,   angle:0,   flat:0},
+                {x:12,  y:10,  angle:10,  flat:4},
+                {x:21,  y:9,   angle:6,   flat:2},
+                {x:16,  y:4,   angle:4,   flat:4},
+                {x:1,   y:1,   angle:0,   flat:0},
+                {x:1,   y:3,   angle:0,   flat:0},
+            ]
+        };
+        const rightTopWing = reflectXShape(leftTopWing);
+        const leftBottomWing = {
+            type: "BezierShape",
+            points: [
+                {x:1,    y:0,    angle:0,   flat:0},
+                {x:10,   y:0.5,  angle:9,   flat:4},
+                {x:19.5, y:-0.5, angle:6,   flat:2},
+                {x:11,   y:-4.5, angle:3,   flat:4},
+                {x:1,    y:-1.5, angle:2,   flat:0},
+                {x:1,    y:0,    angle:0,   flat:0},
+            ]
+        };
+        const rightBottomWing = reflectXShape(leftBottomWing);
+        const unscaledQueenWingsDiagram = [leftTopWing, rightTopWing, leftBottomWing, rightBottomWing];
+        const queenWingsDiagram = twistDiagram(unscaledQueenWingsDiagram, hexSize * scaleFactor, antState.facing);
+        drawDiagram(drawContext, queenWingsDiagram, coord, "#FFFF00");
+    }
+
+
     const halfBodyPoints = [
         {x:0,   y:13,   angle:9,   flat:2},   // A
         {x:4,   y:10,   angle:7,   flat:1.5}, // B
@@ -342,8 +388,34 @@ function drawAnt(drawContext, hexSize, coord, facing, color) {
     const antennae2 = reflectXShape(antennae1);
 
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
-    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize*scaleFactor, facing);
-    drawDiagram(drawContext, antDiagram, coord, color);
+    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * scaleFactor, antState.facing);
+    drawDiagram(drawContext, antDiagram, coord, colony.antColor);
+
+    if (antState.cast === "Queen") {
+        const crown = {
+            type: "BezierShape",
+            points: makeSymmetric([
+                {x:0,   y:16,   angle:7,   flat:0},
+                {x:1.5, y:14,   angle:7,   flat:0},
+                {x:3,   y:16,   angle:7,   flat:0},
+                {x:4,   y:13,   angle:10,  flat:0},
+                {x:0,   y:12,   angle:3,   flat:4},
+            ]),
+        };
+        const leftEye = {
+            type: "BezierShape",
+            points: [
+                {x:2,   y:11,   angle:0,   flat:1},
+                {x:3,   y:11,   angle:6,   flat:1},
+                {x:2,   y:11,   angle:0,   flat:1},
+            ]
+        }
+        const rightEye = reflectXShape(leftEye);
+        const unscaledQueenDiagram = [crown, leftEye, rightEye];
+        const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * scaleFactor, antState.facing);
+        drawDiagram(drawContext, queenDiagram, coord, "#FFFF00");
+    }
+
 }
 
 
@@ -354,8 +426,7 @@ function drawAnt(drawContext, hexSize, coord, facing, color) {
 function drawItems(drawContext, gameState, hexSize) {
     gameState.colonies.forEach(colony => {
         colony.ants.forEach(antState => {
-            const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
-            drawAnt(drawContext, hexSize, coord, antState.facing, colony.antColor);
+            drawAnt(drawContext, hexSize, colony, antState);
         });
     });
 }
