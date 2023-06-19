@@ -3,7 +3,6 @@
  */
 
 function hexCenter(x, y, hexSize) {
-    console.log("hexSize ", hexSize);
     const cord = [];
     if(y%2 === 0) {
         cord[0] = hexSize/2 + x*hexSize;
@@ -11,10 +10,55 @@ function hexCenter(x, y, hexSize) {
         cord[0] = hexSize + x*hexSize;
     }
     cord[1] = hexSize * (1/(2*Math.sqrt(3))) * (2+3*y);
-    console.log(cord);
     return cord;
 }
 
+
+/*
+ * This is passed a specific point on the board in the form of pixelCoord, an [x,y] pair of the
+ * pixel-coordinates of a location. It returns an [x,y] pair giving the grid coordinates of the
+ * hexagon clicked on OR return null if the click was outside of any grid hexagon. It is ALSO
+ * passed the gameState, but that is ONLY so it can find the dimensions of the grid.
+ */
+function hexClicked(gameState, hexSize, pixelCoord) {
+    // FIXME: There is certainly a way to simplify the code for this, but I wanted to save the first working version.
+    const gridXBound = gameState.terrainGrid[0].length;
+    const gridYBound = gameState.terrainGrid.length;
+    const pixelX = pixelCoord[0];
+    const pixelY = pixelCoord[1];
+    const oneThirdHeight = hexSize / (2 * Math.sqrt(3)); // this is 1/3 the full height of a hexagon
+    const thirdsY = Math.floor(pixelY / oneThirdHeight); // how many thirds down from the top this is
+    const isInZigZag = thirdsY % 3 === 0; // whether this falls in the section where the points of hexes are fitting together
+    let zigZagAdjust = [0,0];
+    let w = "";
+    if (isInZigZag) {
+        const sXRaw = 2 * (pixelX % hexSize) / hexSize;
+        const sYRaw = (pixelY % (2 * oneThirdHeight)) / oneThirdHeight;
+        const sX = sYRaw <= 1 ? sXRaw : (sXRaw + 1) % 2;
+        const sY = sYRaw % 1;
+        if (sX <= 1) {
+            if (sX + sY < 1) {
+                zigZagAdjust = [0,-1];
+            } else {
+                zigZagAdjust = [0,0];
+            }
+        } else {
+            if ((2 - sX) + sY < 1) {
+                zigZagAdjust = [0,-1];
+            } else {
+                zigZagAdjust = [0,0];
+            }
+        }
+    }
+    const gridY = Math.floor(thirdsY / 3) + zigZagAdjust[1];
+    const shiftOddRows = 0.5 * (gridY % 2); // odd numbered rows are shifted 1/2 hex to the right
+    const gridX = Math.floor((pixelX / hexSize) - shiftOddRows) + zigZagAdjust[0];
+    if (gridX < 0 || gridX >= gridXBound || gridY < 0 || gridY >= gridYBound) {
+        return null;
+    } else {
+        return [gridX, gridY];
+    }
+}
 
 
 

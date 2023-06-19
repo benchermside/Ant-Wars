@@ -128,6 +128,13 @@ window.addEventListener("load", function() {
     const endTurnBtnElem = document.getElementById("end-turn-btn");
     endTurnBtnElem.onclick = endTurn;
 
+    // === Set up canvas interaction actions ===
+    const canvas = document.getElementById("game-canvas");
+    canvas.addEventListener("click", function(event) {
+        const pixelCoord = [event.offsetX, event.offsetY];
+        console.log("clicked", hexClicked(gameState, hexSize, pixelCoord));
+    });
+
     // ==== Prepare Game Start ====
     initializeStartingPosition();
     onBoardResize();

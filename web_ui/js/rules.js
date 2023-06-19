@@ -52,23 +52,32 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
 }
 
 //for testing delete later
-console.log("hello");
-let currentGameState = {
-     "terrainGrid": [
-         [3, 3, 3, 3, 3, 3],
-          [2, 1, 1, 1, 2, 1],
-         [2, 2, 1, 1, 1, 1],
-          [2, 2, 1, 1, 1, 2],
-         [0, 0, 0, 0, 0, 0],
-     ],
-     "ants": [
-         {
-             "location": [2, 1]
-         },
-         {
-             "location": [0, 0]
-         }
-     ]
-};
- console.log(possibleMoves(currentGameState, 0));
+const TESTING = false;
+if (TESTING) {
+    console.log("hello");
+    let currentGameState = {
+        "terrainGrid": [
+            [3, 3, 3, 3, 3, 3],
+            [2, 1, 1, 1, 2, 1],
+            [2, 2, 1, 1, 1, 1],
+            [2, 2, 1, 1, 1, 2],
+            [0, 0, 0, 0, 0, 0],
+        ],
+        colonies: [
+            {
+                ants: [
+                    {
+                        "location": [2, 1]
+                    },
+                    {
+                        "location": [0, 0]
+                    }
+                ],
+                foodSupply: 20,
+                antColor: "#000000",
+            },
+        ],
+    };
+    console.log(possibleMoves(currentGameState, 0, 0));
+}
 //for testing delete later
