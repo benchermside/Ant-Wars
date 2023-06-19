@@ -107,6 +107,8 @@ function twistBezierShapePoints(points, scale, clockAngle) {
     });
 }
 
+
+
 /*
  * This is given a shape and returns an equivalent shape which has been resized
  * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
@@ -154,6 +156,34 @@ function twistDiagram(diagram, scale, clockAngle) {
     return diagram.map(shape => twistShape(shape, scale, clockAngle));
 }
 
+function shiftDiagram (diagram, coord){
+    return diagram.map(shape => shiftShape(shape, coord));
+}
+
+function shiftShape(shape,coord) {
+    if (shape.type === "BezierShape") {
+        return {
+            type: "BezierShape",
+            points: shiftPoints(shape.points,coord),
+        };
+    } else if (shape.type === "Line") {
+        throw Error("Not Implemented");
+    } else {
+        throw Error("Invalid type for shape");
+    }
+}
+
+function shiftPoints(points, coord) {
+    return points.map(p => {
+        return {
+            x: p.x+coord[0],
+            y: p.y + coord[1],
+            angle: p.angle,
+            flat: p.flat,
+        }
+    });
+}
+
 
 /*
  * Given the points of a BezierShape, this returns the points of the same shape reflected over the y-axis.
@@ -174,8 +204,7 @@ function reflectXLinePoints(points) {
 }
 
 /*
- * Given a shape, this returns the same shape reflected over the y-axis. It only
- * works on lines at the moment.
+ * Given a shape, this returns the same shape reflected over the y-axis.
  */
 function reflectXShape(shape) {
     if (shape.type === "BezierShape") {
@@ -193,6 +222,11 @@ function reflectXShape(shape) {
         throw Error("Invalid type for shape");
     }
 }
+
+function reflectXDiagram(diagram){
+    return diagram.map(shape => reflectXShape(shape));
+}
+
 
 
 /*
@@ -390,6 +424,44 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
     const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * scaleFactor, antState.facing);
     drawDiagram(drawContext, antDiagram, coord, colony.antColor);
+
+
+    if (antState.cast === "Soldier") {
+        const blade = {
+            type: "BezierShape",
+            points: [
+                {x:-.5,   y:-1,   angle:2,   flat:0},
+                {x:0,   y:5,   angle:0,   flat:0},
+                {x:.5,   y:-1,   angle:0,   flat:0},
+                {x:-.5,   y:-1,   angle:2,   flat:0},
+            ]
+        };
+        const handle = {
+            type: "BezierShape",
+            points: [
+                {x:-1.5,   y:0,   angle:3,   flat:0},
+                {x:1.5,   y:0,   angle:3,   flat:0},
+                {x:1.5,   y:.5,   angle:3,   flat:0},
+                {x:-1.5,   y:.5,   angle:3,   flat:0},
+                {x:-1.5,   y:0,   angle:3,   flat:0},
+        ]}
+        const daggerCenter = [blade, handle];
+
+        const coord_left1 = [16,10.5];
+        const coord_left2 = [19,3];
+        const coord_left3 = [19,-9];
+        const daggerLeft1 = shiftDiagram(daggerCenter, coord_left1);
+        const daggerLeft2 = shiftDiagram(twistDiagram(daggerCenter, 1, 11), coord_left2);
+        const daggerLeft3 = shiftDiagram(twistDiagram(daggerCenter, 1, 11), coord_left3);
+
+        const leftDaggers = [].concat(daggerLeft1, daggerLeft2, daggerLeft3);
+        const rightDaggers = reflectXDiagram(leftDaggers);
+
+        const daggers = [].concat(leftDaggers, rightDaggers, daggerCenter);
+
+        const scaledDaggers = twistDiagram(daggers, hexSize * scaleFactor, antState.facing);
+        drawDiagram(drawContext, scaledDaggers, coord, "#FFFF00");
+    }
 
     if (antState.cast === "Queen") {
         const crown = {

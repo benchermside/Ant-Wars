@@ -88,7 +88,7 @@ function initializeStartingPosition() {
     const startingColonies = [
         {
             ants: [
-                {location: [2, 3], facing: 7, cast: "Worker"},
+                {location: [2, 3], facing: 7, cast: "Soldier"},
                 {location: [4, 5], facing: 3, cast: "Queen"},
             ],
             foodSupply: 20,
@@ -97,6 +97,7 @@ function initializeStartingPosition() {
         {
             ants: [
                 {location: [15, 6], facing: 1, cast: "Queen"},
+                {location: [15, 8], facing: 1, cast: "Soldier"},
             ],
             foodSupply: 50,
             antColor: "#750D06",
@@ -134,7 +135,7 @@ window.addEventListener("load", function() {
         const pixelCoord = [event.offsetX, event.offsetY];
         console.log("clicked", hexClicked(gameState, hexSize, pixelCoord));
     });
-
+    
     // ==== Prepare Game Start ====
     initializeStartingPosition();
     onBoardResize();
