@@ -5,6 +5,7 @@
 /* ========= Global Variables ========= */
 let hexSize = 120; // starting size
 let gameState = null; // will be populated during initialization
+let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 
 
 /* ========= Functions ========= */
@@ -17,6 +18,9 @@ function render() {
     const drawContext = gameCanvasElem.getContext("2d");
     drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
     drawBackground(drawContext, gameState.terrainGrid, hexSize);
+    if (highlightedHex !== null) {
+        highlightHex(drawContext, hexSize, highlightedHex);
+    }
     drawItems(drawContext, gameState, hexSize);
 }
 
@@ -24,6 +28,9 @@ function render() {
  * Call this to make the turn end and render the new update.
  */
 function endTurn() {
+    // === When the turn ends, clear any UI interaction in progress ===
+    highlightedHex = null;
+
     // === For each ant, select a random allowed destination to move to ===
     const colonySelections = gameState.colonies.map((colony, colonyNumber) => {
         const actionSelections = colony.ants.map((antState, antNumber) => {
@@ -132,7 +139,16 @@ window.addEventListener("load", function() {
     const canvas = document.getElementById("game-canvas");
     canvas.addEventListener("click", function(event) {
         const pixelCoord = [event.offsetX, event.offsetY];
-        console.log("clicked", hexClicked(gameState, hexSize, pixelCoord));
+        const gridCoord = hexClicked(gameState, hexSize, pixelCoord)
+        if (gridCoord !== null) {
+            if (coordEqual(gridCoord, highlightedHex)) {
+                // we are DE-selecting a hex
+                highlightedHex = null;
+            } else {
+                highlightedHex = gridCoord;
+            }
+            render();
+        }
     });
 
     // ==== Prepare Game Start ====
