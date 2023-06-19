@@ -19,40 +19,31 @@ function hexCenter(x, y, hexSize) {
  * pixel-coordinates of a location. It returns an [x,y] pair giving the grid coordinates of the
  * hexagon clicked on OR return null if the click was outside of any grid hexagon. It is ALSO
  * passed the gameState, but that is ONLY so it can find the dimensions of the grid.
+ *
+ * NOTE: There are probably still some ways to simplify the formula in this code, and maybe also
+ * ways to make it more readable.
  */
 function hexClicked(gameState, hexSize, pixelCoord) {
-    // FIXME: There is certainly a way to simplify the code for this, but I wanted to save the first working version.
+    // --- grab some obvious numbers we'll need ---
     const gridXBound = gameState.terrainGrid[0].length;
     const gridYBound = gameState.terrainGrid.length;
     const pixelX = pixelCoord[0];
     const pixelY = pixelCoord[1];
     const oneThirdHeight = hexSize / (2 * Math.sqrt(3)); // this is 1/3 the full height of a hexagon
-    const thirdsY = Math.floor(pixelY / oneThirdHeight); // how many thirds down from the top this is
+    const thirdsY = Math.floor(pixelY / oneThirdHeight); // how many thirds down from the top this is (floored to integer)
+
+    // --- deal with the "zig zag" areas where the rows of hexes overlap in the same y value ---
+    const halvesX = (2 * pixelX / hexSize) % 2; // number of half-hexes from the left-side, mod 2
+    const sYRaw = (pixelY % (2 * oneThirdHeight)) / oneThirdHeight;
+    const sX = sYRaw <= 1 ? halvesX : (halvesX + 1) % 2;
+    const sY = sYRaw % 1;
     const isInZigZag = thirdsY % 3 === 0; // whether this falls in the section where the points of hexes are fitting together
-    let zigZagAdjust = [0,0];
-    let w = "";
-    if (isInZigZag) {
-        const sXRaw = 2 * (pixelX % hexSize) / hexSize;
-        const sYRaw = (pixelY % (2 * oneThirdHeight)) / oneThirdHeight;
-        const sX = sYRaw <= 1 ? sXRaw : (sXRaw + 1) % 2;
-        const sY = sYRaw % 1;
-        if (sX <= 1) {
-            if (sX + sY < 1) {
-                zigZagAdjust = [0,-1];
-            } else {
-                zigZagAdjust = [0,0];
-            }
-        } else {
-            if ((2 - sX) + sY < 1) {
-                zigZagAdjust = [0,-1];
-            } else {
-                zigZagAdjust = [0,0];
-            }
-        }
-    }
-    const gridY = Math.floor(thirdsY / 3) + zigZagAdjust[1];
+    const zigZagAdjustY = (isInZigZag && (1 - Math.abs(sX - 1) + sY < 1)) ? -1 : 0;
+
+    // --- find the grid X and Y values ---
+    const gridY = Math.floor(thirdsY / 3) + zigZagAdjustY;
     const shiftOddRows = 0.5 * (gridY % 2); // odd numbered rows are shifted 1/2 hex to the right
-    const gridX = Math.floor((pixelX / hexSize) - shiftOddRows) + zigZagAdjust[0];
+    const gridX = Math.floor((pixelX / hexSize) - shiftOddRows);
     if (gridX < 0 || gridX >= gridXBound || gridY < 0 || gridY >= gridYBound) {
         return null;
     } else {
@@ -60,6 +51,49 @@ function hexClicked(gameState, hexSize, pixelCoord) {
     }
 }
 
+/*
+ * This function will run some tests of hexClicked(). If it doesn't throw an exception then the
+ * tests all pass.
+ */
+function testHexClicked() {
+    function assertEqualArrays(testVal, expected) {
+        if (testVal === null && expected === null) {
+            // success
+        } else if (testVal === null || expected === null) {
+            throw Error(`assertion failed: ${testVal} != ${expected}`);
+        } else if (testVal.length !== expected.length || !testVal.every((x,i) => x === expected[i])) {
+            throw Error(`assertion failed: ${testVal} != ${expected}`);
+        } else {
+            // success
+        }
+    }
+    const gameState = {terrainGrid: [[0,0,0], [0,0,0]]};
+    const hexSize = 100;
+    const tests = [
+        [[17,9], null],
+        [[36,17], [0,0]],
+        [[62,18], [0,0]],
+        [[85,11], null],
+        [[85,11], null],
+        [[116,10], null],
+        [[137,16], [1,0]],
+        [[15,51], [0,0]],
+        [[76,64], [0,0]],
+        [[113,59], [1,0]],
+        [[176,59], [1,0]],
+        [[216,58], [2,0]],
+        [[10,108], null],
+        [[35,98], [0,0]],
+        [[66,95], [0,0]],
+        [[88,102], [0,1]],
+        [[117,106], [0,1]],
+        [[22,144], null],
+    ];
+    tests.forEach(data => {
+        assertEqualArrays( hexClicked(gameState, hexSize, data[0]), data[1]);
+    });
+}
+testHexClicked(); // FIXME: Run at launch
 
 
 // This is the main drawing function. It always draws to the standard game-canvas. It is
