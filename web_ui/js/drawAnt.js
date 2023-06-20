@@ -323,7 +323,23 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const scaleFactor = 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
 
+    //things drawn under the ant
+    if (antState.cast === "Soldier") {
+        const mandible = {
+            type: "BezierShape",
+            points: [
+                {x:2.5,   y:12,   angle:0,   flat:7},
+                {x:0,   y:16,   angle:9,   flat:0},
+                {x:1,   y:12,   angle:5,   flat:3},
+                {x:2.5,   y:12,   angle:3,   flat:0},
 
+            ]}
+        const mandibles = [mandible, reflectXShape(mandible)];
+        const scaledMandibles = twistDiagram(mandibles, hexSize * scaleFactor, antState.facing);
+        drawDiagram(drawContext, scaledMandibles, coord,colony.antColor);
+
+
+    }
     if (antState.cast === "Queen") {
         const leftTopWing = {
             type: "BezierShape",
@@ -354,7 +370,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         drawDiagram(drawContext, queenWingsDiagram, coord, "#FFFF00");
     }
 
-
+    //draw the ant
     const halfBodyPoints = [
         {x:0,   y:13,   angle:9,   flat:2},   // A
         {x:4,   y:10,   angle:7,   flat:1.5}, // B
@@ -426,6 +442,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     drawDiagram(drawContext, antDiagram, coord, colony.antColor);
 
 
+    //additions drawn after the ant
     if (antState.cast === "Soldier") {
         const blade = {
             type: "BezierShape",
@@ -461,6 +478,8 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
         const scaledDaggers = twistDiagram(daggers, hexSize * scaleFactor, antState.facing);
         drawDiagram(drawContext, scaledDaggers, coord, "#FFFF00");
+
+
     }
 
     if (antState.cast === "Queen") {

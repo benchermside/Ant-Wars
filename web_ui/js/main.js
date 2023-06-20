@@ -135,7 +135,7 @@ window.addEventListener("load", function() {
         const pixelCoord = [event.offsetX, event.offsetY];
         console.log("clicked", hexClicked(gameState, hexSize, pixelCoord));
     });
-    
+
     // ==== Prepare Game Start ====
     initializeStartingPosition();
     onBoardResize();
