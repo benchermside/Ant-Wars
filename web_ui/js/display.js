@@ -32,7 +32,7 @@ function hexClicked(gameState, hexSize, pixelCoord) {
     const oneThirdHeight = hexSize / (2 * Math.sqrt(3)); // this is 1/3 the full height of a hexagon
     const thirdsY = Math.floor(pixelY / oneThirdHeight); // how many thirds down from the top this is (floored to integer)
 
-    // --- deal with the "zig zag" areas where the rows of hexes overlap in the same y value ---
+    // --- deal with the "zigzag" areas where the rows of hexes overlap in the same y value ---
     const halvesX = (2 * pixelX / hexSize) % 2; // number of half-hexes from the left-side, mod 2
     const sYRaw = (pixelY % (2 * oneThirdHeight)) / oneThirdHeight;
     const sX = sYRaw <= 1 ? halvesX : (halvesX + 1) % 2;
@@ -72,34 +72,32 @@ function createHexPath(drawContext, hexSize, cord) {
 
 function findNeighbors(terrainGrid, y, x){
     const possibleNeighbors = [];
-    possibleMoves.add([x-1 + (y%2), y+1]);
-    possibleMoves.add([x + (y%2), y+1]);
-    possibleMoves.add([x-1, y]);
-    possibleMoves.add([x, y]);
-    possibleMoves.add([x+1, y]);
-    possibleMoves.add([x-1 + (y%2), y-1]);
-    possibleMoves.add([x + (y%2), y-1]);
+    const gridHeight = terrainGrid.length;
+    const gridLength = terrainGrid[0].length;
+    possibleNeighbors.push([x-1 + (y%2), y+1]);
+    possibleNeighbors.push([x + (y%2), y+1]);
+    possibleNeighbors.push([x-1, y]);
+    possibleNeighbors.push([x, y]);
+    possibleNeighbors.push([x+1, y]);
+    possibleNeighbors.push([x-1 + (y%2), y-1]);
+    possibleNeighbors.push([x + (y%2), y-1]);
     const neighbors = [];
     for (let i = 0; i < possibleNeighbors.length; i++) {
-        if(neighbor[0] >= 0 && neighbor[0] < gridLength && neighbor[1] >= 0 && neighbor[1] < gridHeight){
-            neighbors.add(neighbors);
+        if(possibleNeighbors[i][0] >= 0 && possibleNeighbors[i][0] < gridLength && possibleNeighbors[i][1] >= 0 && possibleNeighbors[i][1] < gridHeight){
+            neighbors.push(possibleNeighbors[i]);
        }
     }
-        possibleNeighbors.filter(neighbor => {
-    if(neighbor[0] >= 0 && neighbor[0] < gridLength && neighbor[1] >= 0 && neighbor[1] < gridHeight){
-
-
-    }
-    }
+    return neighbors;
 }
-
-    // if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
-    //     var currPos = gameState.terrainGrid[move[1]][move[0]];
-    //     if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
-    //         return true;
-    //     }
-    // }
-
+//x1 and y1 are the center cordinates of the first hexagon.
+//x2 and y2 are the center coordinates of the second, neighboring hexagon
+//returns the coordinate of the center of side the hexes share
+function neighboringSide(x1, y1, x2, y2) {
+    const cord = [];
+    cord.push(x1 + (x2-x1)/2);
+    cord.push(y1 + (y2-y1)/2);
+    return cord;
+}
 
 // This is the main drawing function. It always draws to the standard game-canvas. It is
 // passed the drawing context to draw on, a Grid of TerrainIds to draw, and a size field
@@ -118,25 +116,63 @@ function findNeighbors(terrainGrid, y, x){
 
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
-    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7", "#734434"];
+    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7", "#734434", "#734434"];
 
     for(let x=0;x<terrainGrid[0].length; x++) {
-        for(let y = 0; y<terrainGrid.length; y++) {
-           const cord = hexCenter(x, y, hexSize);
-            drawContext.lineWidth = hexSize/25;
+        for (let y = 0; y < terrainGrid.length; y++) {
+            const cord = hexCenter(x, y, hexSize);
+            drawContext.lineWidth = hexSize / 25;
             createHexPath(drawContext, hexSize, cord);
             drawContext.fillStyle = colorNames[terrainGrid[y][x]];
             drawContext.fill();
             drawContext.strokeStyle = "black";
             drawContext.stroke();
-            if(terrainGrid[y][x] === 4) {
-                const neighbors = findNeighbors(terrainGrid, y, x)
+        }
+    }
+
+    for(let x=0;x<terrainGrid[0].length; x++) {
+        for (let y = 0; y < terrainGrid.length; y++) {
+            const cord = hexCenter(x, y, hexSize);
+            if (terrainGrid[y][x] >=4) { //is a 4(tunnel) or 5(chamber)
+                drawContext.fillStyle = "#b37470";
+                if(terrainGrid[y][x] === 5) {
+                    drawContext.beginPath();
+                    drawContext.ellipse(cord[0], cord[1], hexSize / 2.5, hexSize / 2.8, 0, 0, Math.PI * 2);
+                    drawContext.fill();
+                } else {
+                    drawContext.beginPath();
+                    drawContext.ellipse(cord[0], cord[1], hexSize / 7, hexSize / 7, 0, 0, Math.PI * 2);
+                    drawContext.fill();
+                }
+                drawContext.beginPath();
+                drawContext.strokeStyle = "#b37470";
+                drawContext.lineWidth = hexSize / 8;
+                const neighbors = findNeighbors(terrainGrid, y, x);
+                neighbors.forEach((neighbor) => {
+                    if (terrainGrid[neighbor[1]][neighbor[0]] >= 4) {//if a tunneled/chamber neighbor
+                        drawContext.moveTo(cord[0], cord[1]);
+                        const neighborCenter = hexCenter(neighbor[0], neighbor[1], hexSize);
+                        const sideCord = neighboringSide(cord[0], cord[1], neighborCenter[0], neighborCenter[1]);
+                        console.log("cord", cord);
+                        console.log("neighrbor", neighbor);
+                        console.log("sideCord", sideCord);
+                        drawContext.lineTo(sideCord[0], sideCord[1]);
+                        // drawContext.bezierCurveTo(cord[0]+2, cord[1]+2, sideCord[0]-2, sideCord[1]-2, sideCord[0], sideCord[1]);
+                        drawContext.stroke();
+                    }
+                });
+
+                // } else if(terrainGrid[y][x] === 5) {
+                //     drawContext.fillStyle = "#b37470";
+                //     drawContext.beginPath();
+                //     drawContext.ellipse(cord[0], cord[1], hexSize/2, hexSize/2, 0, 0, Math.PI*2);
+                //     drawContext.fill();
             }
         }
     }
 }
 
-
+//ctx.ellipse(100, 100, 50, 75, Math.PI / 4, 0, 2 * Math.PI);
 /*
  * This is given a drawContext, the terrainGrid, the hexSize, and the coordinates of a
  * particular hex. It highlights that particular hex.
@@ -148,3 +184,6 @@ function highlightHex(drawContext, hexSize, coord) {
     drawContext.strokeStyle = "#FFFFFF";
     drawContext.stroke()
 }
+
+
+

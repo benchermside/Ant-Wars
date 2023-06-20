@@ -39,10 +39,7 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
     possibleMoves.push([antStartX+1, antStartY]);
     possibleMoves.push([antStartX-1 + (antStartY%2), antStartY-1]);
     possibleMoves.push([antStartX + (antStartY%2), antStartY-1]);
-    const validMoves = [];
-    for()
-
-        possibleMoves.filter(move => {
+    const validMoves = possibleMoves.filter(move => {
         if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
             var currPos = gameState.terrainGrid[move[1]][move[0]];
             if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
