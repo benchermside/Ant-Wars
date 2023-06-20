@@ -12,6 +12,7 @@
     //   1: Dirt
     //   2: Stone
     //   3: Sky
+    //   4: Dug-dirt
     //
     // Example:
     const terrainId = 1;

@@ -68,6 +68,39 @@ function createHexPath(drawContext, hexSize, cord) {
 }
 
 
+
+
+function findNeighbors(terrainGrid, y, x){
+    const possibleNeighbors = [];
+    possibleMoves.add([x-1 + (y%2), y+1]);
+    possibleMoves.add([x + (y%2), y+1]);
+    possibleMoves.add([x-1, y]);
+    possibleMoves.add([x, y]);
+    possibleMoves.add([x+1, y]);
+    possibleMoves.add([x-1 + (y%2), y-1]);
+    possibleMoves.add([x + (y%2), y-1]);
+    const neighbors = [];
+    for (let i = 0; i < possibleNeighbors.length; i++) {
+        if(neighbor[0] >= 0 && neighbor[0] < gridLength && neighbor[1] >= 0 && neighbor[1] < gridHeight){
+            neighbors.add(neighbors);
+       }
+    }
+        possibleNeighbors.filter(neighbor => {
+    if(neighbor[0] >= 0 && neighbor[0] < gridLength && neighbor[1] >= 0 && neighbor[1] < gridHeight){
+
+
+    }
+    }
+}
+
+    // if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
+    //     var currPos = gameState.terrainGrid[move[1]][move[0]];
+    //     if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
+    //         return true;
+    //     }
+    // }
+
+
 // This is the main drawing function. It always draws to the standard game-canvas. It is
 // passed the drawing context to draw on, a Grid of TerrainIds to draw, and a size field
 // which gives the number of pixels wide each hex should be.
@@ -82,11 +115,10 @@ function createHexPath(drawContext, hexSize, cord) {
 //       height can be calculated from the width). Each time the function is called
 //       this might be different if the user has zoomed.
 //
-// NOTE: The current version is a placeholder. It just draws random junk no matter what gets
-//   passed in.
+
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
-    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7"];
+    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7", "#734434"];
 
     for(let x=0;x<terrainGrid[0].length; x++) {
         for(let y = 0; y<terrainGrid.length; y++) {
@@ -97,6 +129,9 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
             drawContext.fill();
             drawContext.strokeStyle = "black";
             drawContext.stroke();
+            if(terrainGrid[y][x] === 4) {
+                const neighbors = findNeighbors(terrainGrid, y, x)
+            }
         }
     }
 }
