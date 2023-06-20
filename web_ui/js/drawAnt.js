@@ -320,8 +320,9 @@ function drawDiagram(drawContext, diagram, coord, color) {
  * "facing", and drawn in color "color".
  */
 function drawAnt(drawContext, hexSize, colony, antState) {
-    const scaleFactor = 1/50; // multiply by this to scale to normal ant size
+    const scaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
+
 
     //things drawn under the ant
     if (antState.cast === "Soldier") {

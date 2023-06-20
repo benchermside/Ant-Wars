@@ -103,6 +103,7 @@ function initializeStartingPosition() {
         },
         {
             ants: [
+                {location: [14,7],facing: 1, cast: "Worker" },
                 {location: [15, 6], facing: 1, cast: "Queen"},
                 {location: [15, 8], facing: 1, cast: "Soldier"},
             ],
