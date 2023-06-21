@@ -1,22 +1,24 @@
 A list of tasks:
 
- * Create  applyRules() function that will apply a set of actions.
+ * Create  applyRules() function that will apply a set of actions. [in progress by Ben]
 -----
 
  * Create a set of rules for the game!
  * Create "surface" as a new terrain type.
- * Create image for drawing tunnels on a cell.
  * Create food sources.
  * Allow ants to walk on the surface.
  * Create movement rules that include moving faster through tunnels.
- * Create a concept and data structure for a "Colony" of ants.
- * Create multiple kinds of ants (queens, workers, larvae/pupae/egg, soldiers, males).
  * Create disasters (anteater, flood, stepped on).
  * Allow ants of different colonies to fight.
  * Create an editor tool for creating maps.
- * Support input by the user to select where the ants should move.
+ * Support input by the user to select where the ants should move. [in progress by Michael]
  * The ability to display a message to the user floating over the map.
  * Support multiplayer: ability to log in and view a game.
  * Support multiplayer: ability to enter moves for a colony.
  * Research ants and get a bunch of ant facts.
  * Automate deployment to AWS.
+
+---- Completed ----
+ * Create image for drawing tunnels on a cell.
+ * Create a concept and data structure for a "Colony" of ants.
+ * Create multiple kinds of ants (queens, workers, larvae/pupae/egg, soldiers, males).

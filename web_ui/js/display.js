@@ -2,6 +2,13 @@
  * Contains code to draw the UI of the game.
  */
 
+
+/*
+ * Tells what fraction of a hex width the borders are.
+ */
+const lineWidthFraction = 1 / 25;
+
+
 function hexCenter(x, y, hexSize) {
     const cord = [];
     if(y%2 === 0) {
@@ -53,7 +60,8 @@ function hexClicked(gameState, hexSize, pixelCoord) {
 
 
 /*
- * This creates the path for a hexagon of size hexSize, centered at coord.
+ * This creates the path for a hexagon of size hexSize, centered at coord (which
+ * is measured in pixels).
  */
 function createHexPath(drawContext, hexSize, cord) {
     drawContext.beginPath();
@@ -66,9 +74,6 @@ function createHexPath(drawContext, hexSize, cord) {
     drawContext.lineTo(cord[0], cord[1]-hexSize/(Math.sqrt(3)));
     drawContext.closePath();
 }
-
-
-
 
 function findNeighbors(terrainGrid, y, x){
     const possibleNeighbors = [];
@@ -113,7 +118,6 @@ function neighboringSide(x1, y1, x2, y2) {
 //       height can be calculated from the width). Each time the function is called
 //       this might be different if the user has zoomed.
 //
-
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
     const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7", "#734434", "#734434"];
@@ -121,7 +125,7 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
     for(let x=0;x<terrainGrid[0].length; x++) {
         for (let y = 0; y < terrainGrid.length; y++) {
             const cord = hexCenter(x, y, hexSize);
-            drawContext.lineWidth = hexSize / 25;
+            drawContext.lineWidth = hexSize * lineWidthFraction;
             createHexPath(drawContext, hexSize, cord);
             drawContext.fillStyle = colorNames[terrainGrid[y][x]];
             drawContext.fill();
@@ -180,10 +184,20 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
 function highlightHex(drawContext, hexSize, coord) {
     const pixelCoord = hexCenter(coord[0], coord[1], hexSize);
     createHexPath(drawContext, hexSize, pixelCoord);
-    drawContext.lineWidth = hexSize/25;
+    drawContext.lineWidth = hexSize * lineWidthFraction;
     drawContext.strokeStyle = "#FFFFFF";
     drawContext.stroke()
 }
 
-
+/*
+ * This is given a drawContext, the terrainGrid, the hexSize, and the coordinates of a
+ * particular hex. It marks that particular hex as indicated.
+ */
+function indicateHex(drawContext, hexSize, coord) {
+    const pixelCoord = hexCenter(coord[0], coord[1], hexSize);
+    createHexPath(drawContext, hexSize * (1 - 2 * lineWidthFraction), pixelCoord);
+    drawContext.lineWidth = hexSize * lineWidthFraction;
+    drawContext.strokeStyle = "#FFFF0066";
+    drawContext.stroke()
+}
 

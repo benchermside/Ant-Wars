@@ -6,6 +6,8 @@
 let hexSize = 120; // starting size
 let gameState = null; // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
+let indicatedHexes = []; // list of [x,y] coordinates to mark
+let playerColony = 0; // which colony (by number) the current player is running
 
 
 /* ========= Functions ========= */
@@ -21,6 +23,7 @@ function render() {
     if (highlightedHex !== null) {
         highlightHex(drawContext, hexSize, highlightedHex);
     }
+    indicatedHexes.forEach(coord => indicateHex(drawContext, hexSize, coord));
     drawItems(drawContext, gameState, hexSize);
 }
 
@@ -71,6 +74,101 @@ function onBoardResize() {
     const screenDims = gameBoardDimensions(gameState, hexSize);
     gameCanvasElem.width = screenDims[0];
     gameCanvasElem.height = screenDims[1];
+}
+
+
+/*
+ * This is called when a hex becomes selected. It is passed the coordinates of the hex.
+ * It is NOT responsible for calling render() (the caller will do that).
+ */
+function onSelectHex(coord) {
+    highlightedHex = coord;
+    const playerAnts = gameState.colonies[playerColony].ants;
+    let selectedAnAnt = false;
+    playerAnts.forEach((ant, antNumber) => {
+        if (!selectedAnAnt) {
+            if (coordEqual(ant.location, coord)) {
+                // We just selected a player's ant!
+                onSelectAnt(playerColony, antNumber);
+            }
+        }
+    });
+}
+
+
+/*
+ * This is called when an ant becomes selected. It is passed the colony number and the
+ * ant number of the selected ant. It is NOT responsible for calling render() (the caller
+ * will do that).
+ */
+function onSelectAnt(colonyNumber, antNumber) {
+    indicatedHexes.length = 0; // clear out any indicated hexes
+    const moves = possibleMoves(gameState, colonyNumber, antNumber);
+    moves.forEach(coord => indicatedHexes.push(coord)); // make places we can move to be indicated
+}
+
+
+/*
+ * This is called when a hex becomes de-selected. It is passed the coordinates of the hex.
+ * It is NOT responsible for calling render() (the caller will do that).
+ */
+function onDeselectHex(coord) {
+    highlightedHex = null;
+    const playerAnts = gameState.colonies[playerColony].ants;
+    let selectedAnAnt = false;
+    playerAnts.forEach((ant, antNumber) => {
+        if (!selectedAnAnt) {
+            if (coordEqual(ant.location, coord)) {
+                // We just deselected a player's ant!
+                onDeselectAnt(playerColony, antNumber);
+            }
+        }
+    });
+}
+
+
+/*
+ * This is called when an ant becomes deselected. It is passed the colony number and the
+ * ant number of the selected ant. It is NOT responsible for calling render() (the caller
+ * will do that).
+ */
+function onDeselectAnt(colonyNumber, antNumber) {
+    // if ANYTHING is indicated we should clear it out
+    indicatedHexes.length = 0; // remove all items from the array
+}
+
+
+
+/*
+ * This is called when the user clicks on the canvas. It is passed the [x,y]
+ * pixel coordinates of the spot clicked on.
+ */
+function onCanvasClick(pixelCoord) {
+    const gridCoord = hexClicked(gameState, hexSize, pixelCoord)
+    if (gridCoord === null) {
+        if (highlightedHex === null) {
+            // we're not doing anything
+        } else {
+            // we are DE-selecting a hex
+            onDeselectHex(highlightedHex);
+            render();
+        }
+    } else {
+        if (highlightedHex === null) {
+            // we are selecting a hex
+            onSelectHex(gridCoord);
+            render();
+        } else if (coordEqual(gridCoord, highlightedHex)) {
+            // we are DE-selecting a hex
+            onDeselectHex(highlightedHex);
+            render();
+        } else {
+            // we are DE-selecting one hex and selecting another
+            onDeselectHex(highlightedHex);
+            onSelectHex(gridCoord);
+            render();
+        }
+    }
 }
 
 
@@ -141,16 +239,7 @@ window.addEventListener("load", function() {
     const canvas = document.getElementById("game-canvas");
     canvas.addEventListener("click", function(event) {
         const pixelCoord = [event.offsetX, event.offsetY];
-        const gridCoord = hexClicked(gameState, hexSize, pixelCoord)
-        if (gridCoord !== null) {
-            if (coordEqual(gridCoord, highlightedHex)) {
-                // we are DE-selecting a hex
-                highlightedHex = null;
-            } else {
-                highlightedHex = gridCoord;
-            }
-            render();
-        }
+        onCanvasClick(pixelCoord);
     });
 
     // ==== Prepare Game Start ====
