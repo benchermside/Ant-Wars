@@ -8,6 +8,8 @@ let gameState = null; // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let indicatedHexes = []; // list of [x,y] coordinates to mark
 let playerColony = 0; // which colony (by number) the current player is running
+let uiMode = null;
+let playerActionSelections = null;
 
 
 /* ========= Functions ========= */
@@ -27,6 +29,29 @@ function render() {
     drawItems(drawContext, gameState, hexSize);
 }
 
+
+/*
+ * This sets up to begin a new turn.
+ */
+function startNewTurn() {
+    // Set all ant startLocations to their current locations:
+    gameState.colonies.forEach(colony => {
+        colony.ants.forEach(ant => {
+            ant.startLocation = ant.location;
+        });
+    });
+
+    // begin with all ants having "null" for a move
+    playerActionSelections = gameState.colonies[playerColony].ants.map(() => null);
+
+    // begin with the end-turn button disabled
+    disableEndTurnButton();
+
+    // begin in readyToEnter uiMode.
+    uiMode = readyToEnterMoves;
+}
+
+
 /*
  * Call this to make the turn end and render the new update.
  */
@@ -36,19 +61,25 @@ function endTurn() {
 
     // === For each ant, select a random allowed destination to move to ===
     const colonySelections = gameState.colonies.map((colony, colonyNumber) => {
-        const actionSelections = colony.ants.map((antState, antNumber) => {
-            const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
-            const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-            return {name: "Move", destination: randomMove};
-        });
-        return {actionSelections: actionSelections}
+        if (colonyNumber === playerColony) {
+            // The player entered moves (probably). Replace any null with the do-nothing action, then use it.
+            const actionSelections = playerActionSelections.map(actionSelection =>
+                actionSelection === null ? {"name": "None"} : actionSelection
+            );
+            return {actionSelections: actionSelections};
+        } else {
+            // this is not the player. Select random moves
+            const actionSelections = colony.ants.map((antState, antNumber) => {
+                const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
+                const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
+                return {name: "Move", destination: randomMove};
+            });
+            return {actionSelections: actionSelections};
+        }
     });
 
     // === Perform the moves ===
     gameState = applyRules(gameState, colonySelections);
-
-    // === Render the screen ===
-    render();
 }
 
 
@@ -78,97 +109,27 @@ function onBoardResize() {
 
 
 /*
- * This is called when a hex becomes selected. It is passed the coordinates of the hex.
- * It is NOT responsible for calling render() (the caller will do that).
- */
-function onSelectHex(coord) {
-    highlightedHex = coord;
-    const playerAnts = gameState.colonies[playerColony].ants;
-    let selectedAnAnt = false;
-    playerAnts.forEach((ant, antNumber) => {
-        if (!selectedAnAnt) {
-            if (coordEqual(ant.location, coord)) {
-                // We just selected a player's ant!
-                onSelectAnt(playerColony, antNumber);
-            }
-        }
-    });
-}
-
-
-/*
- * This is called when an ant becomes selected. It is passed the colony number and the
- * ant number of the selected ant. It is NOT responsible for calling render() (the caller
- * will do that).
- */
-function onSelectAnt(colonyNumber, antNumber) {
-    indicatedHexes.length = 0; // clear out any indicated hexes
-    const moves = possibleMoves(gameState, colonyNumber, antNumber);
-    moves.forEach(coord => indicatedHexes.push(coord)); // make places we can move to be indicated
-}
-
-
-/*
- * This is called when a hex becomes de-selected. It is passed the coordinates of the hex.
- * It is NOT responsible for calling render() (the caller will do that).
- */
-function onDeselectHex(coord) {
-    highlightedHex = null;
-    const playerAnts = gameState.colonies[playerColony].ants;
-    let selectedAnAnt = false;
-    playerAnts.forEach((ant, antNumber) => {
-        if (!selectedAnAnt) {
-            if (coordEqual(ant.location, coord)) {
-                // We just deselected a player's ant!
-                onDeselectAnt(playerColony, antNumber);
-            }
-        }
-    });
-}
-
-
-/*
- * This is called when an ant becomes deselected. It is passed the colony number and the
- * ant number of the selected ant. It is NOT responsible for calling render() (the caller
- * will do that).
- */
-function onDeselectAnt(colonyNumber, antNumber) {
-    // if ANYTHING is indicated we should clear it out
-    indicatedHexes.length = 0; // remove all items from the array
-}
-
-
-
-/*
  * This is called when the user clicks on the canvas. It is passed the [x,y]
  * pixel coordinates of the spot clicked on.
  */
 function onCanvasClick(pixelCoord) {
     const gridCoord = hexClicked(gameState, hexSize, pixelCoord)
-    if (gridCoord === null) {
-        if (highlightedHex === null) {
-            // we're not doing anything
-        } else {
-            // we are DE-selecting a hex
-            onDeselectHex(highlightedHex);
-            render();
-        }
-    } else {
-        if (highlightedHex === null) {
-            // we are selecting a hex
-            onSelectHex(gridCoord);
-            render();
-        } else if (coordEqual(gridCoord, highlightedHex)) {
-            // we are DE-selecting a hex
-            onDeselectHex(highlightedHex);
-            render();
-        } else {
-            // we are DE-selecting one hex and selecting another
-            onDeselectHex(highlightedHex);
-            onSelectHex(gridCoord);
-            render();
-        }
-    }
+    uiMode.onClickHex(gridCoord);
+}
+
+/*
+ * Call this to disable the end-turn button because not all ants have orders yet.
+ */
+function disableEndTurnButton() {
+    document.getElementById("end-turn-btn").disabled = true;
+
+}
+
+/*
+ * Call this to enable the end-turn button when all ants have orders.
+ */
+function enableEndTurnButton() {
+    document.getElementById("end-turn-btn").disabled = false;
 }
 
 
@@ -209,6 +170,12 @@ function initializeStartingPosition() {
             antColor: "#750D06",
         },
     ];
+    // starting location = location for all ants:
+    startingColonies.forEach(colony => {
+        colony.ants.forEach(ant => {
+            ant.startLocation = ant.location;
+        });
+    });
     gameState = {
         terrainGrid: startingTerrainGrid,
         colonies: startingColonies,
@@ -233,7 +200,11 @@ window.addEventListener("load", function() {
         render();
     };
     const endTurnBtnElem = document.getElementById("end-turn-btn");
-    endTurnBtnElem.onclick = endTurn;
+    endTurnBtnElem.onclick = function() {
+        endTurn();
+        startNewTurn();
+        render();
+    };
 
     // === Set up canvas interaction actions ===
     const canvas = document.getElementById("game-canvas");
@@ -245,5 +216,6 @@ window.addEventListener("load", function() {
     // ==== Prepare Game Start ====
     initializeStartingPosition();
     onBoardResize();
+    startNewTurn();
     render();
 });
