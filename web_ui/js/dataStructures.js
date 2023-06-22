@@ -156,6 +156,16 @@
     //      * Means that this ant moves to a new location.
     //      * Additional fields:
     //         * "destination" a field of type Location, telling where the ant ends up.
+    //   * "NewMove":
+    //      * This is the NEW design for the "Move" action. It will replace the old Moves,
+    //        so it means that this ant moves to a new location. After we migrate to it,
+    //        we'll rename this to "Move".
+    //      * Additional fields:
+    //        * "steps" is a list of type Location. The locations tell where the ant
+    //          travels during this turn. The first location in the list will always be
+    //          the ant's current location at the start of this turn. The last location
+    //          in the list will always be the spot where the ant ends up. And each
+    //          pair of adjacent locations in the list will be adjacent hexagons.
     //
     // Examples:
     const action1 = {
@@ -165,32 +175,23 @@
         "name": "Move",
         "destination": [4, 4]
     };
+    const action3 = {
+        "name": "NewMove",
+        "steps": [
+            [5, 6],
+            [4, 5],
+            [4, 4],
+        ],
+    }
 
-
-    // ActionSelection:
-    //
-    // A ActionSelection is for recording all moves made in a turn.
-    //
-    // It is a list containing Actions. The list of actions must be exactly the same length as the list of
-    // ants in the GameState that goes with it.
-    //
-    // Example:
-    const actionSelection = [
-        {
-            "name": "None"
-        },
-        {
-            "name": "Move",
-            "destination": [2, 3]
-        },
-    ];
 
 
     // ColonySelections:
     //
     // A ColonySelections stores the information about what a particular colony wants to do on a turn.
     //
-    // It is an object with a single field, actionSelections which is an ActionSelection.
+    // It is an object with a single field, actionSelections which is a lists of Actions that is
+    // exactly the same length as the list of ants in the GameState.
     //
     // Example:
     const colonySelections = {
