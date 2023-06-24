@@ -11,7 +11,6 @@ A list of tasks:
  * Create disasters (anteater, flood, stepped on).
  * Allow ants of different colonies to fight.
  * Create an editor tool for creating maps.
- * Support input by the user to select where the ants should move. [in progress by Michael]
  * The ability to display a message to the user floating over the map.
  * Support multiplayer: ability to log in and view a game.
  * Support multiplayer: ability to enter moves for a colony.
@@ -22,3 +21,4 @@ A list of tasks:
  * Create image for drawing tunnels on a cell.
  * Create a concept and data structure for a "Colony" of ants.
  * Create multiple kinds of ants (queens, workers, larvae/pupae/egg, soldiers, males).
+ * Support input by the user to select where the ants should move.

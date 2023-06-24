@@ -8,7 +8,7 @@ let gameState = null; // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let indicatedHexes = []; // list of [x,y] coordinates to mark
 let playerColony = 0; // which colony (by number) the current player is running
-let uiMode = null;
+let uiMode = null; // ONLY set this by calling uiModes.<some-mode>.enterMode(), or inside that function.
 let playerActionSelections = null;
 
 
@@ -31,6 +31,54 @@ function render() {
 
 
 /*
+ * This is called with a list of "action buttons" and it displays them.
+ *
+ * Each button should be an object with fields "label" (a string giving the
+ * text to display), "action" (a function to call when the button is clicked),
+ * and "enabled" (a boolean controlling whether the button is enabled or
+ * disabled).
+ */
+function setActionButtons(buttons) {
+    const buttonsDivElem = document.getElementById("action-controls");
+
+    // --- Remove existing buttons ---
+    while (buttonsDivElem.firstChild) {
+        buttonsDivElem.removeChild(buttonsDivElem.lastChild);
+    }
+
+    // --- Add new buttons ---
+    buttons.forEach(button => {
+        const buttonElem = document.createElement("button");
+        buttonElem.innerText = button.label;
+        buttonElem.addEventListener('click', button.action);
+        buttonElem.disabled = !button.enabled;
+        buttonsDivElem.appendChild(buttonElem);
+    });
+}
+
+
+/*
+ * This is called to change the UIMode. It is the only place that is allowed to change the global
+ * variable uiMode.
+ */
+function changeUIMode(newUIMode) {
+    // Exit the existing mode
+    if (uiMode !== null) {
+        uiMode.exitMode();
+    }
+
+    // Assign to the global variable uiMode
+    uiMode = newUIMode;
+
+    // Enter the new mode
+    uiMode.enterMode()
+
+    // Reset the list of action buttons
+    setActionButtons(uiMode.actionButtons());
+}
+
+
+/*
  * This sets up to begin a new turn.
  */
 function startNewTurn() {
@@ -44,11 +92,8 @@ function startNewTurn() {
     // begin with all ants having "null" for a move
     playerActionSelections = gameState.colonies[playerColony].ants.map(() => null);
 
-    // begin with the end-turn button disabled
-    disableEndTurnButton();
-
     // begin in readyToEnter uiMode.
-    uiMode = readyToEnterMoves;
+    changeUIMode(uiModes.readyToEnterMoves);
 }
 
 
@@ -117,21 +162,6 @@ function onCanvasClick(pixelCoord) {
     uiMode.onClickHex(gridCoord);
 }
 
-/*
- * Call this to disable the end-turn button because not all ants have orders yet.
- */
-function disableEndTurnButton() {
-    document.getElementById("end-turn-btn").disabled = true;
-
-}
-
-/*
- * Call this to enable the end-turn button when all ants have orders.
- */
-function enableEndTurnButton() {
-    document.getElementById("end-turn-btn").disabled = false;
-}
-
 
 /*
  * This is called before we begin to set up the initial game position. It modifies the global
@@ -154,8 +184,10 @@ function initializeStartingPosition() {
     const startingColonies = [
         {
             ants: [
-                {location: [2, 3], facing: 7, cast: "Soldier"},
+                {location: [4, 3], facing: 7, cast: "Soldier"},
                 {location: [4, 5], facing: 3, cast: "Queen"},
+                {location: [5, 6], facing: 1, cast: "Worker"},
+                {location: [2, 8], facing: 5, cast: "Worker"},
             ],
             foodSupply: 20,
             antColor: "#000000",
@@ -197,12 +229,6 @@ window.addEventListener("load", function() {
     zoomOutBtnElem.onclick = function() {
         hexSize = hexSize / 1.2;
         onBoardResize();
-        render();
-    };
-    const endTurnBtnElem = document.getElementById("end-turn-btn");
-    endTurnBtnElem.onclick = function() {
-        endTurn();
-        startNewTurn();
         render();
     };
 
