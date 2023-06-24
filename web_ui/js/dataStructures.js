@@ -224,4 +224,20 @@
         [3, 2],
     ];
 
+
+    // Indicator:
+    //
+    // This describes how a hex is indicated.
+    //
+    // It is an object with two fields:
+    //   * location: an [x,y] grid coordinate of the hex
+    //   * color: a color string for the color of the indicator. Most color strings
+    //        will be partly transparent.
+    //
+    // Example:
+    let indicator = {
+        location: [3,4],
+        color: "#FFFF0066",
+    }
+
 }

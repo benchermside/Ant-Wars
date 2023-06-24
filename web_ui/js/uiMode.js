@@ -45,7 +45,11 @@ const readyToEnterMoves = {
         indicatedHexes.length = 0;
         playerActionSelections.forEach((actionSelection, antNumber) => {
             if (actionSelection === null) {
-                indicatedHexes.push(gameState.colonies[playerColony].ants[antNumber].location);
+                const indication = {
+                    location: gameState.colonies[playerColony].ants[antNumber].location,
+                    color: "#4D8BF066"
+                };
+                indicatedHexes.push(indication);
             }
         });
     },
@@ -143,7 +147,13 @@ const commandingAnAnt = {
         // now make visible the places we can move to
         indicatedHexes.length = 0; // clear out any indicated hexes
         const moves = possibleMoves(gameState, playerColony, selectedAntNumber);
-        moves.forEach(coord => indicatedHexes.push(coord)); // make places we can move to be indicated
+        moves.forEach(coord => {
+            const indication = {
+                location: coord,
+                color: "#FFFF0066",
+            };
+            indicatedHexes.push(indication);
+        }); // make places we can move to be indicated
 
         // Reset the list of action buttons
         setActionButtons(uiMode.actionButtons());
@@ -157,8 +167,8 @@ const commandingAnAnt = {
     onClickHex: function(coord) {
         // --- find out if we clicked a place we can move to ---
         let selectedADestination = false;
-        indicatedHexes.forEach(possibleDestination => {
-            if (coordEqual(coord, possibleDestination)) {
+        indicatedHexes.forEach(indication => {
+            if (coordEqual(coord, indication.location)) {
                 selectedADestination = true;
             }
         });

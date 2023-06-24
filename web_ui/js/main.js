@@ -6,7 +6,7 @@
 let hexSize = 120; // starting size
 let gameState = null; // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
-let indicatedHexes = []; // list of [x,y] coordinates to mark
+let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
 let playerColony = 0; // which colony (by number) the current player is running
 let uiMode = null; // ONLY set this by calling uiModes.<some-mode>.enterMode(), or inside that function.
 let playerActionSelections = null;
@@ -25,7 +25,7 @@ function render() {
     if (highlightedHex !== null) {
         highlightHex(drawContext, hexSize, highlightedHex);
     }
-    indicatedHexes.forEach(coord => indicateHex(drawContext, hexSize, coord));
+    indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
     drawItems(drawContext, gameState, hexSize);
 }
 
