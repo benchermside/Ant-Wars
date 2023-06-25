@@ -74,7 +74,16 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
     const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
     const moves = [];
-    moves[0] = {movingAnt.location:[movingAnt.location, null]};    
+    moves[0] = {};
+    moves[0][JSON.stringify(movingAnt.location)] = {"coord": movingAnt.location, "prevLocation": null};
+    for(let moveNumber = 1; moveNumber <= movementSpeed; moveNumber++){
+        for(let space in moves[moveNumber-1]){
+            const prevLocation = JSON.parse(space);
+            const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
+            console.log(neighbors);
+        }
+    }
+      
 }
 
 
