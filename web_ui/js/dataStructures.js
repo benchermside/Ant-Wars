@@ -167,11 +167,14 @@
     //        so it means that this ant moves to a new location. After we migrate to it,
     //        we'll rename this to "Move".
     //      * Additional fields:
-    //        * "steps" is a list of type Location. The locations tell where the ant
-    //          travels during this turn. The first location in the list will always be
-    //          the ant's current location at the start of this turn. The last location
-    //          in the list will always be the spot where the ant ends up. And each
-    //          pair of adjacent locations in the list will be adjacent hexagons.
+    //         * "steps" is a list of type Location. The locations tell where the ant
+    //           travels during this turn. The first location in the list will always be
+    //           the ant's current location at the start of this turn. The last location
+    //           in the list will always be the spot where the ant ends up. And each
+    //           pair of adjacent locations in the list will be adjacent hexagons.
+    //   * "LayEgg":
+    //      * Means that this ant will lay an egg (only Queens do this).
+    //      * Additional fields: There are no additional fields (the egg is laid wherever the Queen is)
     //
     // Examples:
     const action1 = {
@@ -188,6 +191,9 @@
             [4, 5],
             [4, 4],
         ],
+    }
+    const action4 = {
+        "name": "LayEgg",
     }
 
 
@@ -223,5 +229,21 @@
         [3, 1],
         [3, 2],
     ];
+
+
+    // Indicator:
+    //
+    // This describes how a hex is indicated.
+    //
+    // It is an object with two fields:
+    //   * location: an [x,y] grid coordinate of the hex
+    //   * color: a color string for the color of the indicator. Most color strings
+    //        will be partly transparent.
+    //
+    // Example:
+    let indicator = {
+        location: [3,4],
+        color: "#FFFF0066",
+    }
 
 }

@@ -190,14 +190,13 @@ function highlightHex(drawContext, hexSize, coord) {
 }
 
 /*
- * This is given a drawContext, the terrainGrid, the hexSize, and the coordinates of a
- * particular hex. It marks that particular hex as indicated.
+ * This is given a drawContext, the terrainGrid, the hexSize, and an indicator (see dataStructures.js).
+ * It draws that particular hex as indicated.
  */
-function indicateHex(drawContext, hexSize, coord) {
-    const pixelCoord = hexCenter(coord[0], coord[1], hexSize);
+function indicateHex(drawContext, hexSize, indicator) {
+    const pixelCoord = hexCenter(indicator.location[0], indicator.location[1], hexSize);
     createHexPath(drawContext, hexSize * (1 - 2 * lineWidthFraction), pixelCoord);
     drawContext.lineWidth = hexSize * lineWidthFraction;
-    drawContext.strokeStyle = "#FFFF0066";
+    drawContext.strokeStyle = indicator.color;
     drawContext.stroke()
 }
-

@@ -13,6 +13,8 @@ function applyRules(gameState, colonySelections) {
                 // do nothing
             } else if (action.name === "Move") {
                 gameState.colonies[colonyNumber].ants[antNumber].location = action.destination;
+            } else if (action.name === "LayEgg") {
+                // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
             } else {
                 throw Error("Invalid type for action");
             }

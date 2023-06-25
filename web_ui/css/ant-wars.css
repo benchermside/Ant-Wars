@@ -37,7 +37,7 @@
 #zoom-controls > button {
     width: 20px;
     height: 20px;
-    font-size: 12px;
+    font-size: 14px;
 }
 
 #action-controls {
@@ -51,5 +51,5 @@
 }
 
 #action-controls > button {
-    font-size: 14px;
+    font-size: 16px;
 }
