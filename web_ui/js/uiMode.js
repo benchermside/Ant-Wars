@@ -223,18 +223,24 @@ const commandingAnAnt = {
             }
         }
         if (selectedAnt.cast === "Worker") {
-            // Workers can dig (if there's a location by them)
-            const digTunnelActions = possibleDigTunnelActions(gameState, playerColony, uiMode.selectedAntNumber);
-            if (digTunnelActions.length > 0) {
-                buttons.push({
-                    label: "Dig Tunnel",
-                    enabled: true,
-                    action: function() {
-                        changeUIMode(uiModes.selectingDigTunnelLocation.newState(uiMode.selectedAntNumber));
-                        render();
-                    }
-                });
-            }
+            const thingsToDig = [
+                {whatToDig: "Tunnel", buttonLabel: "Dig Tunnel"},
+                {whatToDig: "Chamber", buttonLabel: "Dig Chamber"},
+            ];
+            // Workers may be able to dig a tunnel or a chamber (if there is an appropriate spot beside them)
+            thingsToDig.forEach(thingToDig => {
+                const digActions = possibleDigActions(gameState, playerColony, uiMode.selectedAntNumber, thingToDig.whatToDig);
+                if (digActions.length > 0) {
+                    buttons.push({
+                        label: thingToDig.buttonLabel,
+                        enabled: true,
+                        action: function() {
+                            changeUIMode(uiModes.selectingDigLocation.newState(uiMode.selectedAntNumber, thingToDig.whatToDig));
+                            render();
+                        }
+                    });
+                }
+            });
         }
         return buttons;
     },
@@ -246,27 +252,29 @@ const commandingAnAnt = {
 /*
  * This is a uiMode which is used when a player has selected an ant and told it to dig and is
  * giving it instructions on where to dig. There is a field, "selectedAntNumber" which will
- * always be set to the number of the ant that is being commanded. There is also a field "newState"
- * that is used for creating the specific commandingAnAnt instance that has the selectedAntNumber
- * field set.
+ * always be set to the number of the ant that is being commanded. There is also a field named
+ * "whatToDig" which is a WhatToDig (see dataStructures.js). There is also a field
+ * "newState" that is used for creating the specific commandingAnAnt instance that has the
+ * selectedAntNumber field set.
  */
-const selectingDigTunnelLocation = {
+const selectingDigLocation = {
 
     /*
-     * You don't enter the general "selectingDigTunnelLocation" mode, instead you make a SPECIFIC
-     * "selectingDigTunnelLocation" state for that particular ant. So call
-     * selectingDigTunnelLocation.newState(selectedAntNumber) to create that specific state to pass to the
-     * changeUIMode() function.
+     * You don't enter the general "selectingDigLocation" mode, instead you make a SPECIFIC
+     * "selectingDigTunnelLocation" state for that particular ant and the particular thing it is
+     * making. So call selectingDigTunnelLocation.newState(selectedAntNumber, whatToDig) to create
+     * that specific state to pass to the changeUIMode() function.
      */
-    newState: function(selectedAntNumber) {
+    newState: function(selectedAntNumber, whatToDig) {
         // Make a NEW copy since we'll be setting a field in the object
-        const newUIMode = Object.create(selectingDigTunnelLocation);
+        const newUIMode = Object.create(selectingDigLocation);
 
-        // record the selectedAntNumber
+        // record the fields
         newUIMode.selectedAntNumber = selectedAntNumber;
+        newUIMode.whatToDig = whatToDig;
 
         // record the digActions
-        newUIMode.digTunnelActions = possibleDigTunnelActions(gameState, playerColony, selectedAntNumber);
+        newUIMode.digActions = possibleDigActions(gameState, playerColony, selectedAntNumber, whatToDig);
 
         // return it
         return newUIMode;
@@ -279,7 +287,7 @@ const selectingDigTunnelLocation = {
         highlightedHex = gameState.colonies[playerColony].ants[selectedAntNumber].location;
 
         // indicate the hexes that it could dig
-        uiMode.digTunnelActions.forEach(digAction => {
+        uiMode.digActions.forEach(digAction => {
             const indication = {
                 location: digAction.location,
                 color: "#FFFF0066",
@@ -298,7 +306,7 @@ const selectingDigTunnelLocation = {
         playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
 
         // See if we clicked on one of the diggable locations...
-        uiMode.digTunnelActions.forEach(digAction => {
+        uiMode.digActions.forEach(digAction => {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
                 playerActionSelections[uiMode.selectedAntNumber] = digAction;
@@ -322,5 +330,5 @@ const selectingDigTunnelLocation = {
 uiModes = {
     readyToEnterMoves: readyToEnterMoves,
     commandingAnAnt: commandingAnAnt,
-    selectingDigTunnelLocation: selectingDigTunnelLocation,
+    selectingDigLocation: selectingDigLocation,
 }

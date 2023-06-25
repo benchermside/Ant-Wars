@@ -40,6 +40,15 @@
     // some dirt in between.
 
 
+    // WhatToDig:
+    //
+    // A WhatToDig is a simple enum specifying the different improvements that an ant can create.
+    //
+    // It is a string, which must be either "Tunnel" or "Chamber".
+    //
+    constwhatToDig = "Tunnel";
+
+
     // Location:
     //
     // A location is the way of specifying a particular spot on the hex grid.
@@ -175,10 +184,12 @@
     //   * "LayEgg":
     //      * Means that this ant will lay an egg (only Queens do this).
     //      * Additional fields: There are no additional fields (the egg is laid wherever the Queen is)
-    //   * "DigTunnel":
+    //   * "Dig":
     //      * Means that this ant will dig a tunnel.
     //      * Additional fields:
     //         * "location" a field of type Location, telling which space gets dug.
+    //         * "whatToDig" is a field containing a WhatToDig telling what will result after
+    //            the dig.
     //
     // Examples:
     const action1 = {
@@ -200,8 +211,9 @@
         "name": "LayEgg",
     };
     const action5 = {
-        "name": "DigTunnel",
+        "name": "Dig",
         "location": [6,4],
+        "whatToDig": "Tunnel",
     };
 
 

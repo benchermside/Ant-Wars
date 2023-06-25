@@ -15,10 +15,18 @@ function applyRules(gameState, colonySelections) {
                 gameState.colonies[colonyNumber].ants[antNumber].location = action.destination;
             } else if (action.name === "LayEgg") {
                 // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
-            } else if (action.name === "DigTunnel") {
+            } else if (action.name === "Dig") {
+                let newTerrainType;
+                if (action.whatToDig === "Tunnel") {
+                    newTerrainType = 4;
+                } else if (action.whatToDig === "Chamber") {
+                    newTerrainType = 5;
+                } else {
+                    throw Error(`Invalid value for whatToDig: ${action.whatToDig}`);
+                }
                 const coord = action.location;
-                gameState.terrainGrid[coord[1]][coord[0]] = 4; // change it to dug dirt
-                gameState.colonies[colonyNumber].ants[antNumber].location = action.location; // move the ant
+                gameState.terrainGrid[coord[1]][coord[0]] = newTerrainType; // change the terrain
+                gameState.colonies[colonyNumber].ants[antNumber].location = coord; // move the ant
             } else {
                 throw Error("Invalid type for action");
             }
@@ -60,16 +68,25 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
 
 /*
  * This finds the list of allowed dig actions for a specific ant (there might not be any!). It is passed
- * a GameState (see dataStructures.js), an integer specifying which colony we want the moves for, and an
- * integer specifying which ant in that colony we want the moves of. It returns a list of Action objects
- * (see dataStructures.js) all of which are DigTunnel actions.
+ * a GameState (see dataStructures.js), an integer specifying which colony we want the moves for, an
+ * integer specifying which ant in that colony we want the moves of, and a field specifying what we are
+ * trying to dig (a WhatToDig, see dataStructures.js). It returns a list of Action objects
+ * (see dataStructures.js) all of which are Dig actions.
  */
-function possibleDigTunnelActions(gameState, colonyNumber, antNumber) {
+function possibleDigActions(gameState, colonyNumber, antNumber, whatToDig) {
     const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
+    let eligibleTerrain;
+    if (whatToDig === "Tunnel") {
+        eligibleTerrain = 1;
+    } else if (whatToDig === "Chamber") {
+        eligibleTerrain = 4;
+    } else {
+        throw Error(`possibleDigActions passed invalid whatToDig of ${whatToDig}.`);
+    }
     return findNeighbors(gameState.terrainGrid, antLocation[0], antLocation[1])
-        .filter(loc => gameState.terrainGrid[loc[1]][loc[0]] === 1)
+        .filter(loc => gameState.terrainGrid[loc[1]][loc[0]] === eligibleTerrain)
         .map(loc => {
-            return {name: "DigTunnel", location: loc};
+            return {name: "Dig", location: loc, whatToDig: whatToDig};
         });
 }
 
