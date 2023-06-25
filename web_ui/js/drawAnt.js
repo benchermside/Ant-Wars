@@ -125,6 +125,15 @@ function twistLinePoints(points, scale, clockAngle) {
     });
 }
 
+function twistPoint (point, scale, clockAngle){
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    return {
+        x: scale * (point.x * cosAngle - point.y * sinAngle),
+        y: scale * (point.x * sinAngle + point.y * cosAngle),
+    };
+}
+
 /*
  * This is given a shape and returns an equivalent shape which has been resized
  * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
@@ -291,6 +300,7 @@ function drawLine(drawContext, shape, coord, color) {
     cx.strokeStyle = color;
     cx.stroke();
 }
+
 
 function drawShape(drawContext, shape, coord, color) {
     if (shape.type === "BezierShape") {
@@ -480,7 +490,6 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         const scaledDaggers = twistDiagram(daggers, hexSize * scaleFactor, antState.facing);
         drawDiagram(drawContext, scaledDaggers, coord, "#FFFF00");
 
-
     }
 
     if (antState.cast === "Queen") {
@@ -507,18 +516,46 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * scaleFactor, antState.facing);
         drawDiagram(drawContext, queenDiagram, coord, "#FFFF00");
     }
+    //StackSize Label
+    drawContext.beginPath();
+    const center = twistPoint({x:12, y:-13},hexSize * scaleFactor, antState.facing);
+    const shiftedCenter = {x:center.x + coord[0], y: center.y + coord[1]};
+    const radius = 6 * scaleFactor* hexSize;
+
+    drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
+    drawContext.stroke();
+    drawContext.fillStyle = "white";
+    drawContext.fill();
+    drawContext.beginPath();
+    drawContext.font = "60px serif";
+    drawContext.textAlign = "center";
+    drawContext.fillStyle = "black";
+    //drawContext.fillText("8", shiftedCenter.x, shiftedCenter.y);
+    colorText(drawContext, '2', shiftedCenter.x,shiftedCenter.y, "black", 10*scaleFactor*hexSize);
 
 }
 
+
+function colorText(drawContext, text, x, y, fillColor, fontSize) {
+    drawContext.beginPath();
+    drawContext.textAlign = "center";
+    drawContext.textBaseline = "middle";
+    drawContext.fillStyle = fillColor;
+    drawContext.font = `${fontSize}px ariel`;
+    drawContext.fillStyle = fillColor;
+    drawContext.fillText(text, x, y);
+}
 
 /*
  * Draws the "items" (ants and other mobile sprites) for the indicated gameState onto the
  * drawContext if the hexes are hexSize wide.
  */
 function drawItems(drawContext, gameState, hexSize) {
+
     gameState.colonies.forEach(colony => {
         colony.ants.forEach(antState => {
             drawAnt(drawContext, hexSize, colony, antState);
         });
     });
+    drawContext.strokeText("Hello world", 50, 90);
 }
