@@ -12,8 +12,9 @@
     //   1: Dirt
     //   2: Stone
     //   3: Sky
-    //   4: Dug-dirt
-    //   5: chamber (dirt background)
+    //   4: Dirt with Tunnel
+    //   5: Dirt with Chamber
+    //   6: Surface
     //
     // Example:
     const terrainId = 1;
