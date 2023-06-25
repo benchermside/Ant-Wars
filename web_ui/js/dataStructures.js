@@ -146,6 +146,39 @@
         ],
     };
 
+    //Game State to Render -- this has the same structure as game state and shows
+    // what the board currently looks like, with proposed moves
+    //drawn, ants that have proposed to be moved into the same hex are merged
+    const gameStateToRender = {
+        "terrainGrid": [
+            [3, 3, 3, 3, 3, 3],
+            [2, 1, 1, 1, 2, 1],
+            [2, 2, 1, 1, 1, 1],
+            [2, 2, 1, 1, 1, 2],
+            [0, 0, 0, 0, 0, 0],
+        ],
+        "colonies": [
+            {
+                "ants": [
+                    {
+                        "cast": "Worker",
+                        "facing": 7,
+                        "location": [2, 1],
+                        "numberOfAnts": 9
+                    },
+                    {
+                        "cast": "Queen",
+                        "facing": 3,
+                        "location": [4, 3],
+                        "numberOfAnts": 2
+                    }
+                ],
+                "foodSupply": 20,
+                "antColor": "#000000",
+            },
+        ],
+    };
+
 
     // Action
     //

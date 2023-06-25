@@ -333,7 +333,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const scaleFactor = 1/50;
     const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
-
+    console.log ("hexSize",hexSize);
 
     //things drawn under the ant
     if (antState.cast === "Soldier") {
@@ -522,16 +522,16 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const center = twistPoint({x:12, y:-13},hexSize * scaleFactor, antState.facing);
     const shiftedCenter = {x:center.x + coord[0], y: center.y + coord[1]};
     const radius = 6 * scaleFactor* hexSize;
+    console.log ("radius", radius);
+
 
     drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
     drawContext.stroke();
     drawContext.fillStyle = "white";
     drawContext.fill();
-    drawContext.beginPath();
-    drawContext.font = "60px serif";
-    drawContext.textAlign = "center";
-    drawContext.fillStyle = "black";
-    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", 10*scaleFactor*hexSize);
+    console.log (10*scaleFactor*hexSize);
+    const fontSize = Math.round(10*scaleFactor*hexSize);
+    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", fontSize);
 
 }
 
@@ -541,7 +541,7 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
     drawContext.textAlign = "center";
     drawContext.textBaseline = "middle";
     drawContext.fillStyle = fillColor;
-    drawContext.font = `${fontSize}px atlante`;
+    drawContext.font = `${fontSize}px lucida sans`;
     drawContext.fillStyle = fillColor;
     drawContext.fillText(text, x, y);
 }
@@ -551,9 +551,10 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
  * drawContext if the hexes are hexSize wide.
  */
 function drawItems(drawContext, gameState, hexSize) {
-
     gameState.colonies.forEach(colony => {
-        colony.ants.forEach(antState => {
+        const antsToRender = mergeAnts(colony.ants);
+        console.log ("antsToRender", antsToRender);
+        antsToRender.forEach(antState => {
             drawAnt(drawContext, hexSize, colony, antState);
         });
     });

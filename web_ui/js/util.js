@@ -16,7 +16,11 @@ function coordEqual(coord1, coord2) {
     } else {
         // must be 2 arrays
         if (coord1.length !== 2 || coord2.length !== 2) {
+            console.log ("coord1:",coord1);
+            console.log ("coord2:",coord2);
+
             throw Error("Coordinate not of length 2");
+
         }
         return coord1[0] === coord2[0] && coord1[1] === coord2[1];
     }
