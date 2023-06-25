@@ -70,6 +70,33 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
     return validMoves;
 }
 
+
+//helper function for new possable moves
+//returns true if the location in moves
+function spaceReached(moves, location){
+    for(let movesIndex=0; movesIndex<moves.length; movesIndex++){
+        if(!(moves[movesIndex][JSON.stringify(location)] === undefined)){
+            return true;
+        }
+    }
+    return false;
+
+}
+
+//helper for possable moves
+//takes in a place and gives the list of moves to get there
+function genroateMove(destination){
+    if(destination === null){
+        return [];
+    }
+    else{
+        const toReturn = genroateMove(destination.prevLocation);
+        toReturn.push(destination.coord);
+        return toReturn;
+    }
+}
+
+
 function newPossibleMoves(gameState, colonyNumber, antNumber){
     const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
@@ -77,14 +104,35 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
     moves[0] = {};
     moves[0][JSON.stringify(movingAnt.location)] = {"coord": movingAnt.location, "prevLocation": null};
     for(let moveNumber = 1; moveNumber <= movementSpeed; moveNumber++){
+        moves[moveNumber] = {};
         for(let space in moves[moveNumber-1]){
             const prevLocation = JSON.parse(space);
             const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
-            console.log(neighbors);
+            for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++){
+                const currNabor = neighbors[neighborIndex];
+                if (!notMovable.has(gameState.terrainGrid[currNabor[1]][currNabor[0]])){
+                    if (!spaceReached(moves, currNabor)){
+                        moves[moveNumber][JSON.stringify(currNabor)] = {"coord": currNabor, "prevLocation": moves[moveNumber-1][space]};
+                    }
+                }
+            }
+            
         }
     }
+    const toReturn = [];
+    for(let index=moves.length; index > -1; index=index-1){
+        for(let destination in moves[index]){
+            toReturn.push(genroateMove(moves[index][destination]));
+        }
+    
+    }
+    return toReturn;
+
       
 }
+
+
+
 
 
 /*
@@ -145,10 +193,10 @@ if (TESTING) {
 const inputState = {
     "terrainGrid": [
         [3, 3, 3, 3, 3, 3],
-          [2, 1, 1, 1, 2, 1],
-        [2, 2, 1, 1, 1, 1],
-          [2, 2, 1, 1, 1, 2],
-        [0, 0, 0, 0, 0, 0],
+          [2, 4, 6, 5, 2, 1],
+        [2, 2, 6, 4, 5, 3],
+          [2, 2, 4, 4, 6, 2],
+        [0, 0, 0, 4, 0, 0],
     ],
     "colonies": [
         {
@@ -172,8 +220,8 @@ const inputState = {
     ],
 };
 const testColonyNumber = 0;
-const antNumber = 1;
-newPossibleMoves(inputState, testColonyNumber, antNumber);
+const antNumber = 0;
+console.log(newPossibleMoves(inputState, testColonyNumber, antNumber));
 console.log("test compleat");
 
 //
