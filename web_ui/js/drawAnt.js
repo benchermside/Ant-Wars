@@ -330,7 +330,8 @@ function drawDiagram(drawContext, diagram, coord, color) {
  * "facing", and drawn in color "color".
  */
 function drawAnt(drawContext, hexSize, colony, antState) {
-    const scaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
+    const scaleFactor = 1/50;
+    const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
 
 
@@ -346,7 +347,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
             ]}
         const mandibles = [mandible, reflectXShape(mandible)];
-        const scaledMandibles = twistDiagram(mandibles, hexSize * scaleFactor, antState.facing);
+        const scaledMandibles = twistDiagram(mandibles, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, scaledMandibles, coord,colony.antColor);
 
 
@@ -377,7 +378,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         };
         const rightBottomWing = reflectXShape(leftBottomWing);
         const unscaledQueenWingsDiagram = [leftTopWing, rightTopWing, leftBottomWing, rightBottomWing];
-        const queenWingsDiagram = twistDiagram(unscaledQueenWingsDiagram, hexSize * scaleFactor, antState.facing);
+        const queenWingsDiagram = twistDiagram(unscaledQueenWingsDiagram, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, queenWingsDiagram, coord, "#FFFF00");
     }
 
@@ -449,7 +450,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const antennae2 = reflectXShape(antennae1);
 
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
-    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * scaleFactor, antState.facing);
+    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * antScaleFactor, antState.facing);
     drawDiagram(drawContext, antDiagram, coord, colony.antColor);
 
 
@@ -487,7 +488,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
         const daggers = [].concat(leftDaggers, rightDaggers, daggerCenter);
 
-        const scaledDaggers = twistDiagram(daggers, hexSize * scaleFactor, antState.facing);
+        const scaledDaggers = twistDiagram(daggers, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, scaledDaggers, coord, "#FFFF00");
 
     }
@@ -513,7 +514,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         }
         const rightEye = reflectXShape(leftEye);
         const unscaledQueenDiagram = [crown, leftEye, rightEye];
-        const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * scaleFactor, antState.facing);
+        const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, queenDiagram, coord, "#FFFF00");
     }
     //StackSize Label
@@ -530,8 +531,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     drawContext.font = "60px serif";
     drawContext.textAlign = "center";
     drawContext.fillStyle = "black";
-    //drawContext.fillText("8", shiftedCenter.x, shiftedCenter.y);
-    colorText(drawContext, '2', shiftedCenter.x,shiftedCenter.y, "black", 10*scaleFactor*hexSize);
+    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", 10*scaleFactor*hexSize);
 
 }
 
@@ -541,7 +541,7 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
     drawContext.textAlign = "center";
     drawContext.textBaseline = "middle";
     drawContext.fillStyle = fillColor;
-    drawContext.font = `${fontSize}px ariel`;
+    drawContext.font = `${fontSize}px atlante`;
     drawContext.fillStyle = fillColor;
     drawContext.fillText(text, x, y);
 }
@@ -557,5 +557,4 @@ function drawItems(drawContext, gameState, hexSize) {
             drawAnt(drawContext, hexSize, colony, antState);
         });
     });
-    drawContext.strokeText("Hello world", 50, 90);
 }
