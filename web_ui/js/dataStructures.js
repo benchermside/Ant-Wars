@@ -12,8 +12,9 @@
     //   1: Dirt
     //   2: Stone
     //   3: Sky
-    //   4: Dug-dirt
-    //   5: chamber (dirt background)
+    //   4: Dirt with Tunnel
+    //   5: Dirt with Chamber
+    //   6: Surface
     //
     // Example:
     const terrainId = 1;
@@ -38,6 +39,15 @@
     //
     // That is a grid with sky at the top, bedrock at the bottom, and a few scattered stones with
     // some dirt in between.
+
+
+    // WhatToDig:
+    //
+    // A WhatToDig is a simple enum specifying the different improvements that an ant can create.
+    //
+    // It is a string, which must be either "Tunnel" or "Chamber".
+    //
+    constwhatToDig = "Tunnel";
 
 
     // Location:
@@ -208,6 +218,12 @@
     //   * "LayEgg":
     //      * Means that this ant will lay an egg (only Queens do this).
     //      * Additional fields: There are no additional fields (the egg is laid wherever the Queen is)
+    //   * "Dig":
+    //      * Means that this ant will dig a tunnel.
+    //      * Additional fields:
+    //         * "location" a field of type Location, telling which space gets dug.
+    //         * "whatToDig" is a field containing a WhatToDig telling what will result after
+    //            the dig.
     //
     // Examples:
     const action1 = {
@@ -224,10 +240,15 @@
             [4, 5],
             [4, 4],
         ],
-    }
+    };
     const action4 = {
         "name": "LayEgg",
-    }
+    };
+    const action5 = {
+        "name": "Dig",
+        "location": [6,4],
+        "whatToDig": "Tunnel",
+    };
 
 
 

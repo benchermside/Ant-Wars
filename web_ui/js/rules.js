@@ -5,6 +5,11 @@
 // This updates after a set of moves has been selected. It is passed a GameState (see dataStructures.js)
 // and a colonySelections. It returns the new GameState.
 //
+const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
+const castMovementSpeeds = {"Worker":2, "Queen":1, "Warrior":2} //matches each ant to there movement speed
+
+
+
 function applyRules(gameState, colonySelections) {
     // FIXME: Should enforce the rules.
     colonySelections.forEach((colonySelections, colonyNumber) => {
@@ -15,6 +20,18 @@ function applyRules(gameState, colonySelections) {
                 gameState.colonies[colonyNumber].ants[antNumber].location = action.destination;
             } else if (action.name === "LayEgg") {
                 // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
+            } else if (action.name === "Dig") {
+                let newTerrainType;
+                if (action.whatToDig === "Tunnel") {
+                    newTerrainType = 4;
+                } else if (action.whatToDig === "Chamber") {
+                    newTerrainType = 5;
+                } else {
+                    throw Error(`Invalid value for whatToDig: ${action.whatToDig}`);
+                }
+                const coord = action.location;
+                gameState.terrainGrid[coord[1]][coord[0]] = newTerrainType; // change the terrain
+                gameState.colonies[colonyNumber].ants[antNumber].location = coord; // move the ant
             } else {
                 throw Error("Invalid type for action");
             }
@@ -27,7 +44,7 @@ function applyRules(gameState, colonySelections) {
 // dataStructures.js), an integer specifying which colony we want the moves for, and an integer
 // specifying which ant in that colony we want the moves of. It returns a MoveLocations.
 function possibleMoves(gameState, colonyNumber, antNumber) {
-    const notMovable = new Set([0, 2, 3])   //list of all hex types that you CANNOT move through
+    const notMovable = new Set([0, 1, 2, 3])   //list of all hex types that you CANNOT move through
     const possibleMoves = [];
     const numSteps = 1;
     const gridHeight = gameState.terrainGrid.length;
@@ -44,7 +61,7 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
     const validMoves = possibleMoves.filter(move => {
         if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
             var currPos = gameState.terrainGrid[move[1]][move[0]];
-            if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move thorugh
+            if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move through
                 return true;
             }
         }
@@ -52,6 +69,96 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
     });
     return validMoves;
 }
+
+
+//helper function for new possable moves
+//returns true if the location in moves
+function spaceReached(moves, location){
+    for(let movesIndex=0; movesIndex<moves.length; movesIndex++){
+        if(!(moves[movesIndex][JSON.stringify(location)] === undefined)){
+            return true;
+        }
+    }
+    return false;
+
+}
+
+//helper for possable moves
+//takes in a place and gives the list of moves to get there
+function genroateMove(destination){
+    if(destination === null){
+        return [];
+    }
+    else{
+        const toReturn = genroateMove(destination.prevLocation);
+        toReturn.push(destination.coord);
+        return toReturn;
+    }
+}
+
+
+function newPossibleMoves(gameState, colonyNumber, antNumber){
+    const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
+    const movementSpeed = castMovementSpeeds[movingAnt.cast];
+    const moves = [];
+    moves[0] = {};
+    moves[0][JSON.stringify(movingAnt.location)] = {"coord": movingAnt.location, "prevLocation": null};
+    for(let moveNumber = 1; moveNumber <= movementSpeed; moveNumber++){
+        moves[moveNumber] = {};
+        for(let space in moves[moveNumber-1]){
+            const prevLocation = JSON.parse(space);
+            const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
+            for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++){
+                const currNabor = neighbors[neighborIndex];
+                if (!notMovable.has(gameState.terrainGrid[currNabor[1]][currNabor[0]])){
+                    if (!spaceReached(moves, currNabor)){
+                        moves[moveNumber][JSON.stringify(currNabor)] = {"coord": currNabor, "prevLocation": moves[moveNumber-1][space]};
+                    }
+                }
+            }
+            
+        }
+    }
+    const toReturn = [];
+    for(let index=moves.length; index > -1; index=index-1){
+        for(let destination in moves[index]){
+            toReturn.push(genroateMove(moves[index][destination]));
+        }
+    
+    }
+    return toReturn;
+
+      
+}
+
+
+
+
+
+/*
+ * This finds the list of allowed dig actions for a specific ant (there might not be any!). It is passed
+ * a GameState (see dataStructures.js), an integer specifying which colony we want the moves for, an
+ * integer specifying which ant in that colony we want the moves of, and a field specifying what we are
+ * trying to dig (a WhatToDig, see dataStructures.js). It returns a list of Action objects
+ * (see dataStructures.js) all of which are Dig actions.
+ */
+function possibleDigActions(gameState, colonyNumber, antNumber, whatToDig) {
+    const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
+    let eligibleTerrain;
+    if (whatToDig === "Tunnel") {
+        eligibleTerrain = 1;
+    } else if (whatToDig === "Chamber") {
+        eligibleTerrain = 4;
+    } else {
+        throw Error(`possibleDigActions passed invalid whatToDig of ${whatToDig}.`);
+    }
+    return findNeighbors(gameState.terrainGrid, antLocation[0], antLocation[1])
+        .filter(loc => gameState.terrainGrid[loc[1]][loc[0]] === eligibleTerrain)
+        .map(loc => {
+            return {name: "Dig", location: loc, whatToDig: whatToDig};
+        });
+}
+
 
 //for testing delete later
 const TESTING = false;
@@ -83,3 +190,38 @@ if (TESTING) {
     console.log(possibleMoves(currentGameState, 0, 0));
 }
 //for testing delete later
+const inputState = {
+    "terrainGrid": [
+        [3, 3, 3, 3, 3, 3],
+          [2, 4, 6, 5, 2, 1],
+        [2, 2, 6, 4, 5, 3],
+          [2, 2, 4, 4, 6, 2],
+        [0, 0, 0, 4, 0, 0],
+    ],
+    "colonies": [
+        {
+            "ants": [
+                {
+                    "cast": "Worker",
+                    "facing": 7,
+                    "location": [2, 1],
+                    "numberOfAnts": 9
+                },
+                {
+                    "cast": "Queen",
+                    "facing": 3,
+                    "location": [4, 3],
+                    "numberOfAnts": 2
+                }
+            ],
+            "foodSupply": 20,
+            "antColor": "#000000",
+        },
+    ],
+};
+const testColonyNumber = 0;
+const antNumber = 0;
+console.log(newPossibleMoves(inputState, testColonyNumber, antNumber));
+console.log("test compleat");
+
+//

@@ -116,8 +116,12 @@ function endTurn() {
             // this is not the player. Select random moves
             const actionSelections = colony.ants.map((antState, antNumber) => {
                 const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
-                const randomMove = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-                return {name: "Move", destination: randomMove};
+                if (moveLocations.length === 0) {
+                    return {name: "None"}; // can't move; so do nothing
+                } else {
+                    const randomLocation = moveLocations[Math.floor(Math.random() * moveLocations.length)];
+                    return {name: "Move", destination: randomLocation};
+                }
             });
             return {actionSelections: actionSelections};
         }
@@ -170,15 +174,15 @@ function onCanvasClick(pixelCoord) {
 function initializeStartingPosition() {
     const startingTerrainGrid = [
         [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-          [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 2],
-          [2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 2],
-        [2, 1, 1, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-          [2, 1, 1, 4, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 2],
-        [2, 1, 4, 4, 4, 4, 5, 5, 1, 1, 2, 2, 1, 1, 2, 1, 1, 2],
-          [2, 4, 5, 4, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2],
-        [2, 2, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-          [2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 2, 2],
+          [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6],
+        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 4, 1, 2],
+          [2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 4, 1, 2],
+        [2, 1, 1, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 2],
+          [2, 1, 1, 4, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1, 4, 2, 4, 2],
+        [2, 1, 4, 4, 4, 4, 5, 5, 1, 1, 2, 2, 1, 1, 2, 4, 4, 2],
+          [2, 4, 5, 4, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 5, 1, 2],
+        [2, 2, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 2],
+          [2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 5, 4, 2, 2],
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
     const startingColonies = [

@@ -1,0 +1,14 @@
+Rules information
+
+ant types
+Warrior
+move speed: 2
+
+
+Worker
+move speed: 2
+
+
+Queen
+move speed: 2
+

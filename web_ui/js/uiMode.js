@@ -153,10 +153,7 @@ const commandingAnAnt = {
                 color: "#FFFF0066",
             };
             indicatedHexes.push(indication);
-        }); // make places we can move to be indicated
-
-        // Reset the list of action buttons
-        setActionButtons(uiMode.actionButtons());
+        });
     },
 
     exitMode: function() {
@@ -183,8 +180,6 @@ const commandingAnAnt = {
         } else {
             // clicked away; we should exit out of commanding an ant mode
         }
-        highlightedHex = null; // deselect it
-        indicatedHexes.length = 0; // remove all items from the array
         changeUIMode(uiModes.readyToEnterMoves);
         render();
     },
@@ -202,36 +197,48 @@ const commandingAnAnt = {
                 // Now change the ant's location (but not startLocation) to show it on the screen
                 selectedAnt.location = selectedAnt.startLocation;
                 // Now switch modes
-                highlightedHex = null; // deselect it
-                indicatedHexes.length = 0; // remove all items from the array
                 changeUIMode(uiModes.readyToEnterMoves);
                 render();
             },
         });
         if (selectedAnt.cast === "Queen") {
-            buttons.push({
-                label: "Lay Egg",
-                enabled: true,
-                action: function() {
-                    // We decided to lay an egg. Record that.
-                    playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
+            // Queens can lay an egg if they're in a chamber
+            const coord = selectedAnt.location;
+            const terrain = gameState.terrainGrid[coord[1]][coord[0]];
+            if (terrain === 5) {
+                buttons.push({
+                    label: "Lay Egg",
+                    enabled: true,
+                    action: function() {
+                        // We decided to lay an egg. Record that.
+                        playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
 
-                    // Now switch modes
-                    highlightedHex = null; // deselect it
-                    indicatedHexes.length = 0; // remove all items from the array
-                    changeUIMode(uiModes.readyToEnterMoves);
+                        // Now switch modes
+                        changeUIMode(uiModes.readyToEnterMoves);
 
-                    // Re-render the screen
-                    render();
-                },
-            });
+                        // Re-render the screen
+                        render();
+                    },
+                });
+            }
         }
         if (selectedAnt.cast === "Worker") {
-            buttons.push({
-                label: "Dig",
-                enabled: false, // FIXME: only because digging isn't implemented yet
-                action: function() {
-                    console.log("We should now set up digging."); // FIXME: Do it for real
+            const thingsToDig = [
+                {whatToDig: "Tunnel", buttonLabel: "Dig Tunnel"},
+                {whatToDig: "Chamber", buttonLabel: "Dig Chamber"},
+            ];
+            // Workers may be able to dig a tunnel or a chamber (if there is an appropriate spot beside them)
+            thingsToDig.forEach(thingToDig => {
+                const digActions = possibleDigActions(gameState, playerColony, uiMode.selectedAntNumber, thingToDig.whatToDig);
+                if (digActions.length > 0) {
+                    buttons.push({
+                        label: thingToDig.buttonLabel,
+                        enabled: true,
+                        action: function() {
+                            changeUIMode(uiModes.selectingDigLocation.newState(uiMode.selectedAntNumber, thingToDig.whatToDig));
+                            render();
+                        }
+                    });
                 }
             });
         }
@@ -242,7 +249,86 @@ const commandingAnAnt = {
 };
 
 
+/*
+ * This is a uiMode which is used when a player has selected an ant and told it to dig and is
+ * giving it instructions on where to dig. There is a field, "selectedAntNumber" which will
+ * always be set to the number of the ant that is being commanded. There is also a field named
+ * "whatToDig" which is a WhatToDig (see dataStructures.js). There is also a field
+ * "newState" that is used for creating the specific commandingAnAnt instance that has the
+ * selectedAntNumber field set.
+ */
+const selectingDigLocation = {
+
+    /*
+     * You don't enter the general "selectingDigLocation" mode, instead you make a SPECIFIC
+     * "selectingDigTunnelLocation" state for that particular ant and the particular thing it is
+     * making. So call selectingDigTunnelLocation.newState(selectedAntNumber, whatToDig) to create
+     * that specific state to pass to the changeUIMode() function.
+     */
+    newState: function(selectedAntNumber, whatToDig) {
+        // Make a NEW copy since we'll be setting a field in the object
+        const newUIMode = Object.create(selectingDigLocation);
+
+        // record the fields
+        newUIMode.selectedAntNumber = selectedAntNumber;
+        newUIMode.whatToDig = whatToDig;
+
+        // record the digActions
+        newUIMode.digActions = possibleDigActions(gameState, playerColony, selectedAntNumber, whatToDig);
+
+        // return it
+        return newUIMode;
+    },
+
+    enterMode: function() {
+        const selectedAntNumber = uiMode.selectedAntNumber;
+
+        // Highlight the digging ant
+        highlightedHex = gameState.colonies[playerColony].ants[selectedAntNumber].location;
+
+        // indicate the hexes that it could dig
+        uiMode.digActions.forEach(digAction => {
+            const indication = {
+                location: digAction.location,
+                color: "#FFFF0066",
+            };
+            indicatedHexes.push(indication);
+        });
+    },
+
+    exitMode: function() {
+        highlightedHex = null; // deselect it
+        indicatedHexes.length = 0; // remove all items from the array
+    },
+
+    onClickHex: function(coord) {
+        // In case we clicked wrong, default to setting the action to "None":
+        playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
+
+        // See if we clicked on one of the diggable locations...
+        uiMode.digActions.forEach(digAction => {
+            if (coordEqual(digAction.location, coord)) {
+                // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
+                playerActionSelections[uiMode.selectedAntNumber] = digAction;
+                // Now change the ant's location (but not startLocation) to show it on the screen
+                gameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
+            }
+        });
+
+        // Either way, we're exiting this short-term mode
+        changeUIMode(uiModes.readyToEnterMoves);
+        render();
+    },
+
+    actionButtons: function() {
+        return [];
+    },
+};
+
+
+
 uiModes = {
     readyToEnterMoves: readyToEnterMoves,
     commandingAnAnt: commandingAnAnt,
+    selectingDigLocation: selectingDigLocation,
 }
