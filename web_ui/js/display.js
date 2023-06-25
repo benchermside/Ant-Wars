@@ -125,26 +125,29 @@ function neighboringSide(x1, y1, x2, y2) {
 //
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
-    const colorNames = ["#36454F", "#734434", "grey", "#8bc1f7", "#734434", "#734434"];
+    const colorNames = [
+        "#36454F", // Bedrock
+        "#734434", // Dirt
+        "grey",    // Stone
+        "#8bc1f7", // Sky
+        "#734434", // Dirt with Tunnel
+        "#734434", // Dirt with Chamber
+        "#8bc1f7", // Surface
+    ];
 
     for(let x=0;x<terrainGrid[0].length; x++) {
         for (let y = 0; y < terrainGrid.length; y++) {
             const cord = hexCenter(x, y, hexSize);
-            drawContext.lineWidth = hexSize * lineWidthFraction;
+            const terrain = terrainGrid[y][x];
+            // --- Draw the background ---
             createHexPath(drawContext, hexSize, cord);
-            drawContext.fillStyle = colorNames[terrainGrid[y][x]];
+            drawContext.fillStyle = colorNames[terrain];
             drawContext.fill();
-            drawContext.strokeStyle = "black";
-            drawContext.stroke();
-        }
-    }
 
-    for(let x=0;x<terrainGrid[0].length; x++) {
-        for (let y = 0; y < terrainGrid.length; y++) {
-            const cord = hexCenter(x, y, hexSize);
-            if (terrainGrid[y][x] >=4) { //is a 4(tunnel) or 5(chamber)
+            // --- Draw tunnels and chambers ---
+            if ([4,5].includes(terrain)) { //is a 4(tunnel) or 5(chamber)
                 drawContext.fillStyle = "#b37470";
-                if(terrainGrid[y][x] === 5) {
+                if(terrain === 5) {
                     drawContext.beginPath();
                     drawContext.ellipse(cord[0], cord[1], hexSize / 2.5, hexSize / 2.8, 0, 0, Math.PI * 2);
                     drawContext.fill();
@@ -158,30 +161,39 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
                 drawContext.lineWidth = hexSize / 8;
                 const neighbors = findNeighbors(terrainGrid, x, y);
                 neighbors.forEach((neighbor) => {
-                    if (terrainGrid[neighbor[1]][neighbor[0]] >= 4) {//if a tunneled/chamber neighbor
+                    if ([4, 5, 6].includes(terrainGrid[neighbor[1]][neighbor[0]])) { //if a tunneled/chamber neighbor OR the surface
                         drawContext.moveTo(cord[0], cord[1]);
                         const neighborCenter = hexCenter(neighbor[0], neighbor[1], hexSize);
                         const sideCord = neighboringSide(cord[0], cord[1], neighborCenter[0], neighborCenter[1]);
-                        console.log("cord", cord);
-                        console.log("neighrbor", neighbor);
-                        console.log("sideCord", sideCord);
                         drawContext.lineTo(sideCord[0], sideCord[1]);
                         // drawContext.bezierCurveTo(cord[0]+2, cord[1]+2, sideCord[0]-2, sideCord[1]-2, sideCord[0], sideCord[1]);
                         drawContext.stroke();
                     }
                 });
-
-                // } else if(terrainGrid[y][x] === 5) {
-                //     drawContext.fillStyle = "#b37470";
-                //     drawContext.beginPath();
-                //     drawContext.ellipse(cord[0], cord[1], hexSize/2, hexSize/2, 0, 0, Math.PI*2);
-                //     drawContext.fill();
             }
+
+            // --- Draw the grass on Surface spaces ---
+            if (terrain === 6) {
+                drawContext.fillStyle = "#009900";
+                drawContext.beginPath();
+                drawContext.moveTo(cord[0]+hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
+                drawContext.lineTo(cord[0], cord[1]+hexSize/(Math.sqrt(3)));
+                drawContext.lineTo(cord[0]-hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
+                drawContext.closePath();
+                drawContext.fill();
+            }
+
+            // --- Draw the hex border ---
+            createHexPath(drawContext, hexSize, cord);
+            drawContext.lineWidth = hexSize * lineWidthFraction;
+            drawContext.strokeStyle = "black";
+            drawContext.stroke();
         }
     }
 }
 
 //ctx.ellipse(100, 100, 50, 75, Math.PI / 4, 0, 2 * Math.PI);
+
 /*
  * This is given a drawContext, the terrainGrid, the hexSize, and the coordinates of a
  * particular hex. It highlights that particular hex.
@@ -191,7 +203,7 @@ function highlightHex(drawContext, hexSize, coord) {
     createHexPath(drawContext, hexSize, pixelCoord);
     drawContext.lineWidth = hexSize * lineWidthFraction;
     drawContext.strokeStyle = "#FFFFFF";
-    drawContext.stroke()
+    drawContext.stroke();
 }
 
 /*
@@ -203,5 +215,5 @@ function indicateHex(drawContext, hexSize, indicator) {
     createHexPath(drawContext, hexSize * (1 - 2 * lineWidthFraction), pixelCoord);
     drawContext.lineWidth = hexSize * lineWidthFraction;
     drawContext.strokeStyle = indicator.color;
-    drawContext.stroke()
+    drawContext.stroke();
 }
