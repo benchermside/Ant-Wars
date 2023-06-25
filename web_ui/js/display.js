@@ -75,7 +75,12 @@ function createHexPath(drawContext, hexSize, cord) {
     drawContext.closePath();
 }
 
-function findNeighbors(terrainGrid, y, x){
+/*
+ * This is passed a terrainGrid (just to find the size of it) and x and y coordinates
+ * of a hex. It returns a list of [x,y] pairs of the hexes that are adjacent to the
+ * given location.
+ */
+function findNeighbors(terrainGrid, x, y) {
     const possibleNeighbors = [];
     const gridHeight = terrainGrid.length;
     const gridLength = terrainGrid[0].length;
@@ -151,7 +156,7 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
                 drawContext.beginPath();
                 drawContext.strokeStyle = "#b37470";
                 drawContext.lineWidth = hexSize / 8;
-                const neighbors = findNeighbors(terrainGrid, y, x);
+                const neighbors = findNeighbors(terrainGrid, x, y);
                 neighbors.forEach((neighbor) => {
                     if (terrainGrid[neighbor[1]][neighbor[0]] >= 4) {//if a tunneled/chamber neighbor
                         drawContext.moveTo(cord[0], cord[1]);

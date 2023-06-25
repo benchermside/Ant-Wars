@@ -169,6 +169,10 @@
     //   * "LayEgg":
     //      * Means that this ant will lay an egg (only Queens do this).
     //      * Additional fields: There are no additional fields (the egg is laid wherever the Queen is)
+    //   * "DigTunnel":
+    //      * Means that this ant will dig a tunnel.
+    //      * Additional fields:
+    //         * "location" a field of type Location, telling which space gets dug.
     //
     // Examples:
     const action1 = {
@@ -185,10 +189,14 @@
             [4, 5],
             [4, 4],
         ],
-    }
+    };
     const action4 = {
         "name": "LayEgg",
-    }
+    };
+    const action5 = {
+        "name": "DigTunnel",
+        "location": [6,4],
+    };
 
 
 
