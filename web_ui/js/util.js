@@ -21,3 +21,31 @@ function coordEqual(coord1, coord2) {
         return coord1[0] === coord2[0] && coord1[1] === coord2[1];
     }
 }
+
+/*
+ * This is passed a terrainGrid (just to find the size of it) and x and y coordinates
+ * of a hex. It returns a list of [x,y] pairs of the hexes that are adjacent to the
+ * given location.
+ */
+function findNeighbors(terrainGrid, x, y) {
+    const possibleNeighbors = [];
+    const gridHeight = terrainGrid.length;
+    const gridLength = terrainGrid[0].length;
+    possibleNeighbors.push([x-1 + (y%2), y+1]);
+    possibleNeighbors.push([x + (y%2), y+1]);
+    possibleNeighbors.push([x-1, y]);
+    possibleNeighbors.push([x, y]);
+    possibleNeighbors.push([x+1, y]);
+    possibleNeighbors.push([x-1 + (y%2), y-1]);
+    possibleNeighbors.push([x + (y%2), y-1]);
+    const neighbors = [];
+    for (let i = 0; i < possibleNeighbors.length; i++) {
+        if(possibleNeighbors[i][0] >= 0 && possibleNeighbors[i][0] < gridLength && possibleNeighbors[i][1] >= 0 && possibleNeighbors[i][1] < gridHeight){
+            neighbors.push(possibleNeighbors[i]);
+       }
+    }
+    return neighbors;
+}
+
+
+
