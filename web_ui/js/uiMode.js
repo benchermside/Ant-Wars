@@ -96,16 +96,14 @@ const readyToEnterMoves = {
     actionButtons: function() {
         // If we've entered moves for ALL ants, enable the end-turn button
         const enableEndTurn = playerActionSelections.every(action => action !== null);
-
         return [
             {
-                label: "End Turn",
+                label: enableEndTurn? "End Turn" : "Skip Remaining Ants",
                 action: function() {
                     endTurn();
                     startNewTurn();
                     render();
                 },
-                enabled: enableEndTurn,
             }
         ]
     }
@@ -190,7 +188,6 @@ const commandingAnAnt = {
 
         buttons.push({
             label: "Do Nothing",
-            enabled: true,
             action: function() {
                 // We decided to move this ant someplace. Record that.
                 playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
@@ -208,7 +205,6 @@ const commandingAnAnt = {
             if (terrain === 5) {
                 buttons.push({
                     label: "Lay Egg",
-                    enabled: true,
                     action: function() {
                         // We decided to lay an egg. Record that.
                         playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
@@ -233,7 +229,6 @@ const commandingAnAnt = {
                 if (digActions.length > 0) {
                     buttons.push({
                         label: thingToDig.buttonLabel,
-                        enabled: true,
                         action: function() {
                             changeUIMode(uiModes.selectingDigLocation.newState(uiMode.selectedAntNumber, thingToDig.whatToDig));
                             render();
