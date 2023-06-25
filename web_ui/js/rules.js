@@ -5,6 +5,11 @@
 // This updates after a set of moves has been selected. It is passed a GameState (see dataStructures.js)
 // and a colonySelections. It returns the new GameState.
 //
+const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
+const castMovementSpeeds = {"Worker":2, "Queen":1, "Warrior":2} //matches each ant to there movement speed
+
+
+
 function applyRules(gameState, colonySelections) {
     // FIXME: Should enforce the rules.
     colonySelections.forEach((colonySelections, colonyNumber) => {
@@ -57,6 +62,13 @@ function possibleMoves(gameState, colonyNumber, antNumber) {
     return validMoves;
 }
 
+function newPossibleMoves(gameState, colonyNumber, antNumber){
+    const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
+    const movementSpeed = castMovementSpeeds[movingAnt.cast];
+    const moves = [];
+    moves[0] = {movingAnt.location:[movingAnt.location, null]};    
+}
+
 
 /*
  * This finds the list of allowed dig actions for a specific ant (there might not be any!). It is passed
@@ -104,3 +116,38 @@ if (TESTING) {
     console.log(possibleMoves(currentGameState, 0, 0));
 }
 //for testing delete later
+const inputState = {
+    "terrainGrid": [
+        [3, 3, 3, 3, 3, 3],
+          [2, 1, 1, 1, 2, 1],
+        [2, 2, 1, 1, 1, 1],
+          [2, 2, 1, 1, 1, 2],
+        [0, 0, 0, 0, 0, 0],
+    ],
+    "colonies": [
+        {
+            "ants": [
+                {
+                    "cast": "Worker",
+                    "facing": 7,
+                    "location": [2, 1],
+                    "numberOfAnts": 9
+                },
+                {
+                    "cast": "Queen",
+                    "facing": 3,
+                    "location": [4, 3],
+                    "numberOfAnts": 2
+                }
+            ],
+            "foodSupply": 20,
+            "antColor": "#000000",
+        },
+    ],
+};
+const testColonyNumber = 0;
+const antNumber = 1;
+newPossibleMoves(inputState, testColonyNumber, antNumber);
+console.log("test compleat");
+
+//
