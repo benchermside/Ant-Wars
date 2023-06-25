@@ -54,7 +54,8 @@
 
     // AntState:
     //
-    // An AntState tells the current state of an ant BETWEEN turns.
+    // An AntState tells the current state of a stack of ants BETWEEN turns.
+    // Ant stacks have multiple ants in one location.   Ant stacks must be all the same cast of ant
     //
     // It is an object, with fields:
     //   * cast - this is either "Worker", "Queen", or "Warrior".
@@ -63,13 +64,14 @@
     //                and the intended destination of the ant while entering commands.
     //   * startLocation - This contains the [x,y] grid coordinate where the ant started at
     //                the beginning of the current turn.
-    //
+    //   *numberOfAnts - the number of ants in the stack
     // Example:
     const antState = {
         "cast": "Worker",
         "facing": 1,
         "location": [2, 3],
         "startLocation": [2, 3],
+        "numberOfAnts":3,
     };
 
 
@@ -89,12 +91,14 @@
             {
                 "cast": "Worker",
                 "facing": 7,
-                "location": [2, 1]
+                "location": [2, 1],
+                "numberOfAnts": 3
             },
             {
                 "cast": "Queen",
                 "facing": 3,
-                "location": [4, 3]
+                "location": [4, 3],
+                numberOfAnts: 1
             }
         ],
         "foodSupply": 20,
@@ -126,12 +130,14 @@
                     {
                         "cast": "Worker",
                         "facing": 7,
-                        "location": [2, 1]
+                        "location": [2, 1],
+                        "numberOfAnts": 9
                     },
                     {
                         "cast": "Queen",
                         "facing": 3,
-                        "location": [4, 3]
+                        "location": [4, 3],
+                        "numberOfAnts": 2
                     }
                 ],
                 "foodSupply": 20,

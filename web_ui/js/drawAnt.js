@@ -125,6 +125,15 @@ function twistLinePoints(points, scale, clockAngle) {
     });
 }
 
+function twistPoint (point, scale, clockAngle){
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    return {
+        x: scale * (point.x * cosAngle - point.y * sinAngle),
+        y: scale * (point.x * sinAngle + point.y * cosAngle),
+    };
+}
+
 /*
  * This is given a shape and returns an equivalent shape which has been resized
  * and rotated. The rotate angle is measured in "clock angles" (like numbers on a clock,
@@ -292,6 +301,7 @@ function drawLine(drawContext, shape, coord, color) {
     cx.stroke();
 }
 
+
 function drawShape(drawContext, shape, coord, color) {
     if (shape.type === "BezierShape") {
         return drawBezierShapePoints(drawContext, shape.points, coord, color);
@@ -320,7 +330,8 @@ function drawDiagram(drawContext, diagram, coord, color) {
  * "facing", and drawn in color "color".
  */
 function drawAnt(drawContext, hexSize, colony, antState) {
-    const scaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
+    const scaleFactor = 1/50;
+    const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
 
 
@@ -336,7 +347,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
             ]}
         const mandibles = [mandible, reflectXShape(mandible)];
-        const scaledMandibles = twistDiagram(mandibles, hexSize * scaleFactor, antState.facing);
+        const scaledMandibles = twistDiagram(mandibles, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, scaledMandibles, coord,colony.antColor);
 
 
@@ -367,7 +378,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         };
         const rightBottomWing = reflectXShape(leftBottomWing);
         const unscaledQueenWingsDiagram = [leftTopWing, rightTopWing, leftBottomWing, rightBottomWing];
-        const queenWingsDiagram = twistDiagram(unscaledQueenWingsDiagram, hexSize * scaleFactor, antState.facing);
+        const queenWingsDiagram = twistDiagram(unscaledQueenWingsDiagram, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, queenWingsDiagram, coord, "#FFFF00");
     }
 
@@ -439,7 +450,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const antennae2 = reflectXShape(antennae1);
 
     const unscaledAntDiagram = [body, leg1, leg2, leg3, leg4, leg5, leg6, antennae1, antennae2];
-    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * scaleFactor, antState.facing);
+    const antDiagram = twistDiagram(unscaledAntDiagram, hexSize * antScaleFactor, antState.facing);
     drawDiagram(drawContext, antDiagram, coord, colony.antColor);
 
 
@@ -477,9 +488,8 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
         const daggers = [].concat(leftDaggers, rightDaggers, daggerCenter);
 
-        const scaledDaggers = twistDiagram(daggers, hexSize * scaleFactor, antState.facing);
+        const scaledDaggers = twistDiagram(daggers, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, scaledDaggers, coord, "#FFFF00");
-
 
     }
 
@@ -504,18 +514,44 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         }
         const rightEye = reflectXShape(leftEye);
         const unscaledQueenDiagram = [crown, leftEye, rightEye];
-        const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * scaleFactor, antState.facing);
+        const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, queenDiagram, coord, "#FFFF00");
     }
+    //StackSize Label
+    drawContext.beginPath();
+    const center = twistPoint({x:12, y:-13},hexSize * scaleFactor, antState.facing);
+    const shiftedCenter = {x:center.x + coord[0], y: center.y + coord[1]};
+    const radius = 6 * scaleFactor* hexSize;
+
+    drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
+    drawContext.stroke();
+    drawContext.fillStyle = "white";
+    drawContext.fill();
+    drawContext.beginPath();
+    drawContext.font = "60px serif";
+    drawContext.textAlign = "center";
+    drawContext.fillStyle = "black";
+    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", 10*scaleFactor*hexSize);
 
 }
 
+
+function colorText(drawContext, text, x, y, fillColor, fontSize) {
+    drawContext.beginPath();
+    drawContext.textAlign = "center";
+    drawContext.textBaseline = "middle";
+    drawContext.fillStyle = fillColor;
+    drawContext.font = `${fontSize}px atlante`;
+    drawContext.fillStyle = fillColor;
+    drawContext.fillText(text, x, y);
+}
 
 /*
  * Draws the "items" (ants and other mobile sprites) for the indicated gameState onto the
  * drawContext if the hexes are hexSize wide.
  */
 function drawItems(drawContext, gameState, hexSize) {
+
     gameState.colonies.forEach(colony => {
         colony.ants.forEach(antState => {
             drawAnt(drawContext, hexSize, colony, antState);
