@@ -34,9 +34,7 @@ function render() {
  * This is called with a list of "action buttons" and it displays them.
  *
  * Each button should be an object with fields "label" (a string giving the
- * text to display), "action" (a function to call when the button is clicked),
- * and "enabled" (a boolean controlling whether the button is enabled or
- * disabled).
+ * text to display), and "action" (a function to call when the button is clicked).
  */
 function setActionButtons(buttons) {
     const buttonsDivElem = document.getElementById("action-controls");
@@ -51,7 +49,6 @@ function setActionButtons(buttons) {
         const buttonElem = document.createElement("button");
         buttonElem.innerText = button.label;
         buttonElem.addEventListener('click', button.action);
-        buttonElem.disabled = !button.enabled;
         buttonsDivElem.appendChild(buttonElem);
     });
 }
@@ -115,12 +112,12 @@ function endTurn() {
         } else {
             // this is not the player. Select random moves
             const actionSelections = colony.ants.map((antState, antNumber) => {
-                const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
-                if (moveLocations.length === 0) {
+                const moveActions = newPossibleMoves(gameState, colonyNumber, antNumber);
+                if (moveActions.length === 0) {
                     return {name: "None"}; // can't move; so do nothing
                 } else {
-                    const randomLocation = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-                    return {name: "Move", destination: randomLocation};
+                    // return a random move
+                    return moveActions[Math.floor(Math.random() * moveActions.length)];
                 }
             });
             return {actionSelections: actionSelections};

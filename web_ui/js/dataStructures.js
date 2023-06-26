@@ -68,7 +68,7 @@
     // Ant stacks have multiple ants in one location.   Ant stacks must be all the same cast of ant
     //
     // It is an object, with fields:
-    //   * cast - this is either "Worker", "Queen", or "Warrior".
+    //   * cast - this is either "Worker", "Queen", or "Soldier".
     //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
     //   * location - an [x,y] grid coordinate giving the location of the ant between turns
     //                and the intended destination of the ant while entering commands.
@@ -220,13 +220,7 @@
     //      * Means that this ant takes no action.
     //      * Additional fields: There are no additional fields.
     //   * "Move":
-    //      * Means that this ant moves to a new location.
-    //      * Additional fields:
-    //         * "destination" a field of type Location, telling where the ant ends up.
-    //   * "NewMove":
-    //      * This is the NEW design for the "Move" action. It will replace the old Moves,
-    //        so it means that this ant moves to a new location. After we migrate to it,
-    //        we'll rename this to "Move".
+    //      * This means that this ant moves to a new location (through a series of steps.)
     //      * Additional fields:
     //         * "steps" is a list of type Location. The locations tell where the ant
     //           travels during this turn. The first location in the list will always be
@@ -249,20 +243,16 @@
     };
     const action2 = {
         "name": "Move",
-        "destination": [4, 4]
-    };
-    const action3 = {
-        "name": "NewMove",
         "steps": [
             [5, 6],
             [4, 5],
             [4, 4],
         ],
     };
-    const action4 = {
+    const action3 = {
         "name": "LayEgg",
     };
-    const action5 = {
+    const action4 = {
         "name": "Dig",
         "location": [6,4],
         "whatToDig": "Tunnel",
