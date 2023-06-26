@@ -88,15 +88,25 @@
     // ColonyState:
     //
     // A ColonyState tells the current state of an ant colony BETWEEN turns. Ant colonies have
-    // a list of ants and they also have properties like foodSupply.
+    // a list of ants, a list of eggs and they also have properties like foodSupply.
     //
     // It is an object with the following fields:
+    //   * eggs: an array of EggStack, one for each stack of eggs in a given location (there can
+    //           only be one egg stack at a given location
     //   * ants: an array of AntState, one for each ant.
+
     //   * foodSupply: a number giving the amount of food the ant colony has
     //   * antColor: a string to use for coloring the ants of this colony.
     //
     // Example:
     const colonyState = {
+        "eggs":[
+            {
+                "numberOfEggs": 1,
+                "location": [7, 3],
+                "daysToHatch": 3
+            },
+        ],
         "ants": [
             {
                 "cast": "Worker",
@@ -136,6 +146,14 @@
         ],
         "colonies": [
             {
+                "eggs":[
+                    {
+                        "numberOfEggs": 1,
+                        "location": [7, 3],
+                        "daysToHatch": 3
+                    },
+                ],
+
                 "ants": [
                     {
                         "cast": "Worker",

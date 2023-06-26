@@ -186,7 +186,13 @@ function initializeStartingPosition() {
         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ];
     const startingColonies = [
-        {
+        {  eggs:[
+                {"numberOfEggs": 1, "location": [2, 7], "daysToHatch": 3},
+                {"numberOfEggs": 2, "location": [6, 5], "daysToHatch": 3},
+                {"numberOfEggs": 3, "location": [6, 6], "daysToHatch": 3},
+
+            ],
+
             ants: [
                 {location: [4, 3], facing: 7, cast: "Soldier", numberOfAnts: 3},
                 {location: [4, 5], facing: 3, cast: "Queen", numberOfAnts: 2},
@@ -197,6 +203,7 @@ function initializeStartingPosition() {
             antColor: "#000000",
         },
         {
+            eggs: [],
             ants: [
                 {location: [14,7],facing: 1, cast: "Worker", numberOfAnts: 2},
                 {location: [15, 6], facing: 1, cast: "Queen", numberOfAnts: 1},

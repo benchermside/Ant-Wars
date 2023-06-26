@@ -322,13 +322,84 @@ function drawDiagram(drawContext, diagram, coord, color) {
         drawShape(drawContext, shape, coord, color)
     });
 }
+function drawEgg(drawContext, hexSize, colony, eggStack) {
+    const scaleFactor = 1 / 50;
+    const coord = hexCenter(eggStack.location[0], eggStack.location[1], hexSize);
+    console.log("hexSize", hexSize);
+    drawContext.fillStyle = "#faf1d2";
 
 
-/*
- * Draw an ant onto the drawContext, sized for hexes of width hexSize and drawn at the
- * hex at coordinates "coord" (a [x,y] array, measured in pixels), rotated to angle
- * "facing", and drawn in color "color".
- */
+    if (eggStack.numberOfEggs === 1){
+        drawContext.beginPath();
+        center = coord;
+        const radiusX = 8 * scaleFactor* hexSize;
+        const radiusY = 4 * scaleFactor* hexSize;
+
+        drawContext.ellipse(coord[0], coord[1], radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fill();
+    }
+    if (eggStack.numberOfEggs === 2){
+        drawContext.beginPath();
+        center = coord;
+        const radiusX = 8 * scaleFactor* hexSize;
+        const radiusY = 4 * scaleFactor* hexSize;
+        const offset = 6 * scaleFactor*hexSize;
+
+        //drawContext.ellipse(coord[0], coord[1], radiusX-offset, radiusY-offset, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.ellipse(coord[0]-offset, coord[1], radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fill();
+
+        drawContext.beginPath();
+        drawContext.ellipse(coord[0]+offset, coord[1], radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fill();
+    }
+    if (eggStack.numberOfEggs === 3){
+        drawContext.beginPath();
+        center = coord;
+        const radiusX = 8 * scaleFactor* hexSize;
+        radiusY = 4 * scaleFactor* hexSize;
+        let offsetX = 7 * scaleFactor*hexSize;
+        let offsetY = 4 * scaleFactor*hexSize;
+
+        // //middle egg
+        // drawContext.ellipse(coord[0], coord[1], radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        // drawContext.stroke();
+        // drawContext.fill();
+
+        drawContext.beginPath();
+        drawContext.ellipse(coord[0]-offsetX, coord[1]+offsetY, radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fillStyle = "#faf1d2";
+        drawContext.fill();
+
+
+
+        offsetY = 6 * scaleFactor* hexSize;
+        //most right egg
+        drawContext.beginPath();
+        drawContext.ellipse(coord[0]+offsetX, coord[1]-offsetY, radiusX, radiusY, (Math.PI/3),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fill();
+
+        drawContext.ellipse(coord[0], coord[1], radiusX, radiusY, (Math.PI),0, 2 * Math.PI);
+        drawContext.stroke();
+        drawContext.fill();
+
+
+    }
+
+
+
+}
+
+    /*
+     * Draw an ant onto the drawContext, sized for hexes of width hexSize and drawn at the
+     * hex at coordinates "coord" (a [x,y] array, measured in pixels), rotated to angle
+     * "facing", and drawn in color "color".
+     */
 function drawAnt(drawContext, hexSize, colony, antState) {
     const scaleFactor = 1/50;
     const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
@@ -552,6 +623,13 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
  */
 function drawItems(drawContext, gameState, hexSize) {
     gameState.colonies.forEach(colony => {
+        // render eggs
+        const eggsToRender = colony.eggs;
+        eggsToRender.forEach(eggStack => {
+            drawEgg(drawContext, hexSize, colony, eggStack);
+        });
+
+        //render ants
         const antsToRender = mergeAnts(colony.ants);
         console.log ("antsToRender", antsToRender);
         antsToRender.forEach(antState => {
