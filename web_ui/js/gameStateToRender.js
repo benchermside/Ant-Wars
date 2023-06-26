@@ -38,13 +38,11 @@ function mergeAnts(ants){
         if (!merged[antNumber]){
             const antsAt = getAntsAt(ants, ant.location, antNumber);
             let newAnt = Object.assign({}, ant);
-            console.log ("before newAnt ", newAnt)
 
             //const obj4 = structuredClone(obj3);
             let copiedLocation = [ant.location[0], ant.location[1]];
             newAnt.location = copiedLocation;
             newAnt.numberOfAnts = 0;
-            console.log ("after newAnt ", newAnt)
             antsAt.forEach((antToMergeNumber)=>{
                 merged[antToMergeNumber] = true;
                 const antToMerge = ants[antToMergeNumber];

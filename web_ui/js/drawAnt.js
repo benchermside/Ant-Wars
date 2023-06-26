@@ -333,7 +333,6 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const scaleFactor = 1/50;
     const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
-    console.log ("hexSize",hexSize);
 
     //things drawn under the ant
     if (antState.cast === "Soldier") {
@@ -522,14 +521,12 @@ function drawAnt(drawContext, hexSize, colony, antState) {
     const center = twistPoint({x:12, y:-13},hexSize * scaleFactor, antState.facing);
     const shiftedCenter = {x:center.x + coord[0], y: center.y + coord[1]};
     const radius = 6 * scaleFactor* hexSize;
-    console.log ("radius", radius);
 
 
     drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
     drawContext.stroke();
     drawContext.fillStyle = "white";
     drawContext.fill();
-    console.log (10*scaleFactor*hexSize);
     const fontSize = Math.round(10*scaleFactor*hexSize);
     colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", fontSize);
 
@@ -553,7 +550,6 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
 function drawItems(drawContext, gameState, hexSize) {
     gameState.colonies.forEach(colony => {
         const antsToRender = mergeAnts(colony.ants);
-        console.log ("antsToRender", antsToRender);
         antsToRender.forEach(antState => {
             drawAnt(drawContext, hexSize, colony, antState);
         });

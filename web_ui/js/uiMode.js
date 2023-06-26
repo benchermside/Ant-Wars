@@ -113,7 +113,8 @@ const readyToEnterMoves = {
 /*
  * This is a uiMode which is used when the player has selected an ant and is giving instructions on
  * what that ant should do. There is a field, "selectedAntNumber" which will always be set to the
- * number of the ant that is being commanded. There is also a field "newState" that is used for
+ * number of the ant that is being commanded. There is a field "moveActions" which is an array of
+ * the move actions that the ant can take. There is also a field "newState" that is used for
  * creating the specific commandingAnAnt instance that has the selectedAntNumber field set.
  */
 const commandingAnAnt = {
@@ -127,8 +128,12 @@ const commandingAnAnt = {
         // Make a NEW copy since we'll be setting a field in the object
         const newUIMode = Object.create(commandingAnAnt);
 
-        // record the selectedAntNumber
+        // Find out the allowed moves
+        const moveActions = newPossibleMoves(gameState, playerColony, selectedAntNumber);
+
+        // record the selectedAntNumber and moveActions
         newUIMode.selectedAntNumber = selectedAntNumber;
+        newUIMode.moveActions = moveActions;
 
         // return it
         return newUIMode;
@@ -136,6 +141,7 @@ const commandingAnAnt = {
 
     enterMode: function() {
         const selectedAntNumber = uiMode.selectedAntNumber;
+        const moveActions = uiMode.moveActions;
 
         // put the ant back where it started from if it already moved
         const ant = gameState.colonies[playerColony].ants[selectedAntNumber];
@@ -144,10 +150,10 @@ const commandingAnAnt = {
 
         // now make visible the places we can move to
         indicatedHexes.length = 0; // clear out any indicated hexes
-        const moves = possibleMoves(gameState, playerColony, selectedAntNumber);
-        moves.forEach(coord => {
+        moveActions.forEach(moveAction => {
+            const destination = moveAction.steps[moveAction.steps.length - 1]; // last step is the location
             const indication = {
-                location: coord,
+                location: destination,
                 color: "#FFFF0066",
             };
             indicatedHexes.push(indication);
@@ -170,11 +176,23 @@ const commandingAnAnt = {
 
         // --- do things ---
         if (selectedADestination) {
-            // We decided to move this ant someplace. Record that.
-            playerActionSelections[uiMode.selectedAntNumber] = {name: "Move", destination: coord};
+            // We decided to move this ant someplace. Find that one and set it.
+            const movesEndingWhereWeSelected = uiMode.moveActions.filter(moveAction => {
+                const moveDestination = moveAction.steps[moveAction.steps.length - 1];
+                return coordEqual(moveDestination, coord);
+            });
+
+            // Make sure things are working right
+            if (movesEndingWhereWeSelected.length !== 1) {
+                throw Error(`Did NOT have exactly one move ending in the location, had ${movesEndingWhereWeSelected}`);
+            }
+            const move = movesEndingWhereWeSelected[0];
+
+            // Make the move
+            playerActionSelections[uiMode.selectedAntNumber] = move;
 
             // Now change the ant's location (but not startLocation) to show it on the screen
-            gameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
+            gameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = move.steps[move.steps.length - 1];
         } else {
             // clicked away; we should exit out of commanding an ant mode
         }

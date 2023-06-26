@@ -112,12 +112,12 @@ function endTurn() {
         } else {
             // this is not the player. Select random moves
             const actionSelections = colony.ants.map((antState, antNumber) => {
-                const moveLocations = possibleMoves(gameState, colonyNumber, antNumber);
-                if (moveLocations.length === 0) {
+                const moveActions = newPossibleMoves(gameState, colonyNumber, antNumber);
+                if (moveActions.length === 0) {
                     return {name: "None"}; // can't move; so do nothing
                 } else {
-                    const randomLocation = moveLocations[Math.floor(Math.random() * moveLocations.length)];
-                    return {name: "Move", destination: randomLocation};
+                    // return a random move
+                    return moveActions[Math.floor(Math.random() * moveActions.length)];
                 }
             });
             return {actionSelections: actionSelections};

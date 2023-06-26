@@ -6,7 +6,7 @@
 // and a colonySelections. It returns the new GameState.
 //
 const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
-const castMovementSpeeds = {"Worker":2, "Queen":1, "Warrior":2} //matches each ant to there movement speed
+const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2} //matches each ant to their movement speed
 
 
 
@@ -17,7 +17,9 @@ function applyRules(gameState, colonySelections) {
             if (action.name === "None") {
                 // do nothing
             } else if (action.name === "Move") {
-                gameState.colonies[colonyNumber].ants[antNumber].location = action.destination;
+                // FIXME: Until we animate the moves, all the intermediate steps are just never seen
+                const moveDestination = action.steps[action.steps.length - 1];
+                gameState.colonies[colonyNumber].ants[antNumber].location = moveDestination;
             } else if (action.name === "LayEgg") {
                 // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
             } else if (action.name === "Dig") {
@@ -85,18 +87,18 @@ function spaceReached(moves, location){
 
 //helper for possable moves
 //takes in a place and gives the list of moves to get there
-function genroateMove(destination){
+function generateSteps(destination){
     if(destination === null){
         return [];
     }
     else{
-        const toReturn = genroateMove(destination.prevLocation);
+        const toReturn = generateSteps(destination.prevLocation);
         toReturn.push(destination.coord);
         return toReturn;
     }
 }
 
-
+// FIXME: Rename this
 function newPossibleMoves(gameState, colonyNumber, antNumber){
     const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
@@ -109,10 +111,10 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
             const prevLocation = JSON.parse(space);
             const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
             for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++){
-                const currNabor = neighbors[neighborIndex];
-                if (!notMovable.has(gameState.terrainGrid[currNabor[1]][currNabor[0]])){
-                    if (!spaceReached(moves, currNabor)){
-                        moves[moveNumber][JSON.stringify(currNabor)] = {"coord": currNabor, "prevLocation": moves[moveNumber-1][space]};
+                const currNeighbor = neighbors[neighborIndex];
+                if (!notMovable.has(gameState.terrainGrid[currNeighbor[1]][currNeighbor[0]])){
+                    if (!spaceReached(moves, currNeighbor)){
+                        moves[moveNumber][JSON.stringify(currNeighbor)] = {"coord": currNeighbor, "prevLocation": moves[moveNumber-1][space]};
                     }
                 }
             }
@@ -122,9 +124,13 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
     const toReturn = [];
     for(let index=moves.length; index > -1; index=index-1){
         for(let destination in moves[index]){
-            toReturn.push(genroateMove(moves[index][destination]));
+            const steps = generateSteps(moves[index][destination]);
+            const action = {
+                "name": "Move",
+                "steps": steps,
+            };
+            toReturn.push(action);
         }
-    
     }
     return toReturn;
 
@@ -221,7 +227,5 @@ const inputState = {
 };
 const testColonyNumber = 0;
 const antNumber = 0;
-console.log(newPossibleMoves(inputState, testColonyNumber, antNumber));
-console.log("test compleat");
 
 //
