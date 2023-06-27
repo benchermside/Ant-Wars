@@ -242,8 +242,10 @@ function reflectXDiagram(diagram){
  * This is passed a draw context, an array of BezierShapePoint objects (where the first and
  * last object are the same), an x,y position, and a color. It draws the shape to the drawContext
  * in the given color at that location.
+ * strokeWidth and strokeColor are optional, if defined the shape will be outlined in the
+ * with the specified lineWidth and color
  */
-function drawBezierShapePoints(drawContext, points, coord, color) {
+function drawBezierShapePoints(drawContext, points, coord, color, strokeWidth, strokeColor) {
     console.assert(points[0].x === points[points.length - 1].x);
     console.assert(points[0].y === points[points.length - 1].y);
 
@@ -279,6 +281,14 @@ function drawBezierShapePoints(drawContext, points, coord, color) {
     cx.closePath();
     cx.fillStyle = color;
     cx.fill();
+
+    if (strokeWidth !== undefined) {
+        cx.lineWidth = strokeWidth;
+        if (strokeColor !== undefined) {
+            cx.strokeStyle = strokeColor;
+        }
+        cx.stroke();
+    }
 }
 
 /*
@@ -302,9 +312,9 @@ function drawLine(drawContext, shape, coord, color) {
 }
 
 
-function drawShape(drawContext, shape, coord, color) {
+function drawShape(drawContext, shape, coord, color, strokeWidth, strokeColor) {
     if (shape.type === "BezierShape") {
-        return drawBezierShapePoints(drawContext, shape.points, coord, color);
+        return drawBezierShapePoints(drawContext, shape.points, coord, color, strokeWidth, strokeColor);
     } else if (shape.type === "Line") {
         return drawLine(drawContext, shape, coord, color);
     } else {
@@ -317,17 +327,56 @@ function drawShape(drawContext, shape, coord, color) {
  * pixels), and a color (a string which that can be used to specify a drawing context color).
  * It draws the shapes to the drawContext (in black) at that location in that color.
  */
-function drawDiagram(drawContext, diagram, coord, color) {
+function drawDiagram(drawContext, diagram, coord, color, strokeWidth, strokeColor) {
     diagram.forEach(shape => {
-        drawShape(drawContext, shape, coord, color)
+        drawShape(drawContext, shape, coord, color, strokeWidth, strokeColor)
     });
+}
+function drawLarva(drawContext, hexSize, colony,antState){
+    const scaleFactor = 1 / 50;
+
+    let placeToDraw = hexCenter(antState.location[0], antState.location[1], hexSize) ;
+    placeToDraw[1] = placeToDraw[1] -15/120*hexSize;
+
+    for (let i = 7; i >=0; i--) {
+        const larvaSegment = {
+            type: "BezierShape",
+            points: [
+                {x:0 + (.2*i*i)-i,  y:2 +i*1.8,  angle:9,  flat:3},
+                {x:4+(.2*i*i)-i ,  y:0 +i*1.8,   angle:i>3?(i===7?5:5):6,   flat:1.5},
+                {x:0+(.2*i*i)-i,  y:0+i*1.8,   angle:3,   flat:4},
+                {x:-4+(.2*i*i)-i,  y:0+i*1.8,   angle:1,   flat:1.5},
+                {x:0+(.2*i*i)-i,  y:2+i*1.8,  angle:9,  flat:3},
+
+            ]};
+        const larvaDiagram = twistDiagram([larvaSegment], hexSize * scaleFactor, 0);
+        const lineWidth = 1*hexSize *1/170;
+        drawDiagram(drawContext, larvaDiagram, placeToDraw, "white",lineWidth, colony.antColor);
+
+        const head = {
+            type: "BezierShape",
+            points: [
+                {x:-3.7,  y:-1.2,  angle:5, flat:1},
+                {x:-1.7,  y:-4.5, angle:8, flat:1},
+                {x:2.3,   y:-5.2,  angle:9,  flat:2},
+                {x:4.3,   y:-1.2,  angle:2,  flat:1},
+                {x:0.3,   y:-0.2,   angle:3,  flat:2},
+                {x:-3.7,  y:-1.2,  angle:5, flat:1},
+            ]
+        };
+        const headDiagram = twistDiagram([head], hexSize * scaleFactor, 0);
+        drawDiagram(drawContext, headDiagram, placeToDraw, "white", lineWidth, colony.antColor);
+
+        drawLabel(drawContext, hexSize, scaleFactor, antState);
+
+    }
+
 }
 function drawEgg(drawContext, hexSize, colony, eggStack) {
     const scaleFactor = 1 / 50;
     const coord = hexCenter(eggStack.location[0], eggStack.location[1], hexSize);
-    console.log("hexSize", hexSize);
-    drawContext.fillStyle = "#faf1d2";
 
+    drawContext.fillStyle = "#faf1d2";
 
     if (eggStack.numberOfEggs === 1){
         drawContext.beginPath();
@@ -395,12 +444,31 @@ function drawEgg(drawContext, hexSize, colony, eggStack) {
 
 }
 
-    /*
+function drawLabel(drawContext, hexSize, scaleFactor, antState) {
+    //StackSize Label
+    const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
+    drawContext.beginPath();
+    const center = twistPoint({x: 12, y: -13}, hexSize * scaleFactor, antState.facing);
+    const shiftedCenter = {x: center.x + coord[0], y: center.y + coord[1]};
+    const radius = 6 * scaleFactor * hexSize;
+
+
+    drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
+    drawContext.stroke();
+    drawContext.fillStyle = "white";
+    drawContext.fill();
+    const fontSize = Math.round(10 * scaleFactor * hexSize);
+    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x, shiftedCenter.y, "black", fontSize);
+}
+
+/*
      * Draw an ant onto the drawContext, sized for hexes of width hexSize and drawn at the
      * hex at coordinates "coord" (a [x,y] array, measured in pixels), rotated to angle
      * "facing", and drawn in color "color".
      */
 function drawAnt(drawContext, hexSize, colony, antState) {
+
+
     const scaleFactor = 1/50;
     const antScaleFactor = antState.cast === "Worker" ? 1/70: 1/50; // multiply by this to scale to normal ant size
     const coord = hexCenter(antState.location[0], antState.location[1], hexSize);
@@ -587,19 +655,7 @@ function drawAnt(drawContext, hexSize, colony, antState) {
         const queenDiagram = twistDiagram(unscaledQueenDiagram, hexSize * antScaleFactor, antState.facing);
         drawDiagram(drawContext, queenDiagram, coord, "#FFFF00");
     }
-    //StackSize Label
-    drawContext.beginPath();
-    const center = twistPoint({x:12, y:-13},hexSize * scaleFactor, antState.facing);
-    const shiftedCenter = {x:center.x + coord[0], y: center.y + coord[1]};
-    const radius = 6 * scaleFactor* hexSize;
-
-
-    drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
-    drawContext.stroke();
-    drawContext.fillStyle = "white";
-    drawContext.fill();
-    const fontSize = Math.round(10*scaleFactor*hexSize);
-    colorText(drawContext, antState.numberOfAnts, shiftedCenter.x,shiftedCenter.y, "black", fontSize);
+    drawLabel(drawContext, hexSize, scaleFactor, antState);
 
 }
 
@@ -629,7 +685,11 @@ function drawItems(drawContext, gameState, hexSize) {
         //render ants
         const antsToRender = mergeAnts(colony.ants);
         antsToRender.forEach(antState => {
-            drawAnt(drawContext, hexSize, colony, antState);
+            if (antState.cast === "Larva"){
+                drawLarva(drawContext, hexSize, colony, antState);
+            } else {
+                drawAnt(drawContext, hexSize, colony, antState);
+            }
         });
     });
 }

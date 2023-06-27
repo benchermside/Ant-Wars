@@ -166,6 +166,11 @@
                         "facing": 3,
                         "location": [4, 3],
                         "numberOfAnts": 2
+                    },
+                    {
+                        "cast":"Larva",
+                        "location":[4,4],
+                        "numberOfAnts":3
                     }
                 ],
                 "foodSupply": 20,

@@ -192,9 +192,10 @@ function initializeStartingPosition() {
 
             ants: [
                 {location: [4, 3], facing: 7, cast: "Soldier", numberOfAnts: 3},
-                {location: [4, 5], facing: 3, cast: "Queen", numberOfAnts: 2},
+                {location: [4, 5], facing: 6, cast: "Queen", numberOfAnts: 2},
                 {location: [5, 6], facing: 1, cast: "Worker", numberOfAnts:2},
                 {location: [2, 8], facing: 5, cast: "Worker", numberOfAnts: 5},
+                {location: [7,6],  facing: 6, cast: "Larva", numberOfAnts: 3}
             ],
             foodSupply: 20,
             antColor: "#000000",
@@ -205,6 +206,7 @@ function initializeStartingPosition() {
                 {location: [14,7],facing: 1, cast: "Worker", numberOfAnts: 2},
                 {location: [15, 6], facing: 1, cast: "Queen", numberOfAnts: 1},
                 {location: [15, 8], facing: 1, cast: "Soldier",numberOfAnts: 4},
+                {location: [15,7], facing: 6, cast:"Larva", numberOfAnts: 1}
             ],
             foodSupply: 50,
             antColor: "#750D06",
