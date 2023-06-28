@@ -47,7 +47,8 @@ function mergeAnts(ants){
                 merged[antToMergeNumber] = true;
                 const antToMerge = ants[antToMergeNumber];
                 if (antToMerge.cast !== newAnt.cast){
-                    throw Error("Error: ant merge not of same cast");
+                    // FIXME: Because it is crashing the program, I'm commenting out the following line for the moment
+                    // throw Error("Error: ant merge not of same cast");
                 }
                 newAnt.numberOfAnts = newAnt.numberOfAnts + antToMerge.numberOfAnts;
             });

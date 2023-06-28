@@ -34,6 +34,35 @@
 // colony which is currently being commanded.
 
 
+const watchingTurnHappen = {
+    enterMode: function() {
+        // --- Put the game state back to how it started ---
+        // FIXME: This won't be needed if later on we keep a separate startGameState and gameStateToRender
+        gameState.colonies.forEach(colony => {
+            colony.ants.forEach(ant => {
+                ant.location = ant.startLocation;
+            });
+        });
+
+        // --- Now call the animation function which will run for a few seconds, then exit the mode ---
+        const animationState = {
+            startGameState: gameState,
+            colonySelections: getColonySelections(),
+            stage: 0,
+        };
+        sweepScreen("#000000"); // show blank screen briefly
+        setTimeout(animate, 500, animationState); // then run the animation
+    },
+
+    exitMode: function() {
+    },
+
+    onClickHex: function(coord) {
+    },
+
+    actionButtons: () => [],
+};
+
 /*
  * This is a uiMode which is used when the player is ready to begin entering the actions for
  * their colony. This is the starting mode when a player's turn begins, and in many ways is
@@ -100,9 +129,8 @@ const readyToEnterMoves = {
             {
                 label: enableEndTurn? "End Turn" : "Skip Remaining Ants",
                 action: function() {
-                    endTurn();
-                    startNewTurn();
-                    render();
+                    // The turn is truly ended and now we're going to watch the turn happen.
+                    changeUIMode(uiModes.watchingTurnHappen);
                 },
             }
         ]
@@ -341,7 +369,8 @@ const selectingDigLocation = {
 
 
 uiModes = {
-    readyToEnterMoves: readyToEnterMoves,
-    commandingAnAnt: commandingAnAnt,
-    selectingDigLocation: selectingDigLocation,
+    watchingTurnHappen,
+    readyToEnterMoves,
+    commandingAnAnt,
+    selectingDigLocation,
 }

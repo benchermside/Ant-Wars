@@ -10,38 +10,6 @@ const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2} //matches each a
 
 
 
-function applyRules(gameState, colonySelections) {
-    // FIXME: Should enforce the rules.
-    colonySelections.forEach((colonySelections, colonyNumber) => {
-        colonySelections.actionSelections.forEach((action, antNumber) => {
-            if (action.name === "None") {
-                // do nothing
-            } else if (action.name === "Move") {
-                // FIXME: Until we animate the moves, all the intermediate steps are just never seen
-                const moveDestination = action.steps[action.steps.length - 1];
-                gameState.colonies[colonyNumber].ants[antNumber].location = moveDestination;
-            } else if (action.name === "LayEgg") {
-                // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
-            } else if (action.name === "Dig") {
-                let newTerrainType;
-                if (action.whatToDig === "Tunnel") {
-                    newTerrainType = 4;
-                } else if (action.whatToDig === "Chamber") {
-                    newTerrainType = 5;
-                } else {
-                    throw Error(`Invalid value for whatToDig: ${action.whatToDig}`);
-                }
-                const coord = action.location;
-                gameState.terrainGrid[coord[1]][coord[0]] = newTerrainType; // change the terrain
-                gameState.colonies[colonyNumber].ants[antNumber].location = coord; // move the ant
-            } else {
-                throw Error("Invalid type for action");
-            }
-        })
-    });
-    return gameState;
-}
-
 // This finds the list of allowed locations an ant can move to. It is passed a GameState (see
 // dataStructures.js), an integer specifying which colony we want the moves for, and an integer
 // specifying which ant in that colony we want the moves of. It returns a MoveLocations.

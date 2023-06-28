@@ -15,6 +15,18 @@ let playerActionSelections = null;
 /* ========= Functions ========= */
 
 /*
+ * Call this passing a color to fill the screen with a solid color. It is used briefly
+ * during animation to indicate that we're and finishing the animation.
+ */
+function sweepScreen(color) {
+    const gameCanvasElem = document.getElementById("game-canvas");
+    const drawContext = gameCanvasElem.getContext("2d");
+    drawContext.fillStyle = color;
+    drawContext.fillRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
+}
+
+
+/*
  * Call this to re-draw all the game graphics.
  */
 function render() {
@@ -95,14 +107,11 @@ function startNewTurn() {
 
 
 /*
- * Call this to make the turn end and render the new update.
+ * This returns the selections (desired actions) for all the colonies. It obtains them from wherever
+ * it needs to -- actions entered, AI logic, or things transmitted over the network.
  */
-function endTurn() {
-    // === When the turn ends, clear any UI interaction in progress ===
-    highlightedHex = null;
-
-    // === For each ant, select a random allowed destination to move to ===
-    const colonySelections = gameState.colonies.map((colony, colonyNumber) => {
+function getColonySelections() {
+    return gameState.colonies.map((colony, colonyNumber) => {
         if (colonyNumber === playerColony) {
             // The player entered moves (probably). Replace any null with the do-nothing action, then use it.
             const actionSelections = playerActionSelections.map(actionSelection =>
@@ -110,7 +119,7 @@ function endTurn() {
             );
             return {actionSelections: actionSelections};
         } else {
-            // this is not the player. Select random moves
+            // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
             const actionSelections = colony.ants.map((antState, antNumber) => {
                 const moveActions = newPossibleMoves(gameState, colonyNumber, antNumber);
                 if (moveActions.length === 0) {
@@ -123,9 +132,6 @@ function endTurn() {
             return {actionSelections: actionSelections};
         }
     });
-
-    // === Perform the moves ===
-    gameState = applyRules(gameState, colonySelections);
 }
 
 
