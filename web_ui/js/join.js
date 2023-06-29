@@ -19,18 +19,24 @@ function isValidUsername(username) {
 
 window.addEventListener("load", function() {
     // ==== Set up button actions ====
-    document.getElementById("single-player-btn").onclick = function() {
-        window.location.href = "/index.html";
+    function hide(id) {
+        document.getElementById(id).classList.add("hidden");
+    }
+    function show(id) {
+        document.getElementById(id).classList.remove("hidden");
+    }
+    const buttonActions = {
+        "single-player-btn": () => {window.location.href = "/index.html";},
+        "multi-player-btn": () => {hide("pick-player-count-panel"); show("host-or-join-panel");},
+        "host-or-join-back-btn": () => {hide("host-or-join-panel"); show("pick-player-count-panel");},
+        "host-game-btn": () => {hide("host-or-join-panel"); show("host-game-panel");},
+        "host-game-back-btn": () => {hide("host-game-panel"); show("host-or-join-panel");},
+        "join-game-btn": () => {hide("host-or-join-panel"); show("join-game-panel");},
+        "join-game-back-btn": () => {hide("join-game-panel"); show("host-or-join-panel");},
     };
-    document.getElementById("multi-player-btn").onclick = function() {
-        document.getElementById("pick-player-count-panel").classList.add("hidden");
-        document.getElementById("host-or-join-panel").classList.remove("hidden");
-
-    };
-    document.getElementById("host-game-btn").onclick = function() {
-        document.getElementById("host-or-join-panel").classList.add("hidden");
-        document.getElementById("host-game-panel").classList.remove("hidden");
-    };
+    for (const btnName in buttonActions) {
+        document.getElementById(btnName).onclick = buttonActions[btnName];
+    }
 
     // === Set up other actions ===
     document.getElementById("username-field").addEventListener("input", function(e) {

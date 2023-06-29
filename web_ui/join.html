@@ -28,13 +28,19 @@
     </div>
 
     <div id="host-or-join-panel" class="joining-controls hidden">
-      <h1>Ant-War</h1>
+      <h1 class="has-back-button">
+        <button id="host-or-join-back-btn" class="back-button">Back</button>
+        <span>Ant-War</span>
+      </h1>
       <button id="host-game-btn">Host Game</button>
       <button id="join-game-btn">Join Game</button>
     </div>
 
     <div id="host-game-panel" class="joining-controls hidden">
-      <h1>Ant-War</h1>
+      <h1 class="has-back-button">
+        <button id="host-game-back-btn" class="back-button">Back</button>
+        <span>Ant-War</span>
+      </h1>
       <div class="labeled-field-div">
         <label for="pick-map-field">Map:</label>
         <select id="pick-map-field">
@@ -52,6 +58,41 @@
         <label for="is-private-field">Private</label>
       </div>
       <button id="invite-btn">Invite</button>
+    </div>
+
+    <div id="join-game-panel" class="joining-controls hidden">
+      <h1 class="has-back-button">
+        <button id="join-game-back-btn" class="back-button">Back</button>
+        <span>Ant-War</span>
+      </h1>
+      <div id="game-chooser">
+        <div id="zero-games-widget" class="hidden">No Games Available</div>
+        <table id="multi-games-widget">
+          <tr>
+            <th></th>
+            <th>User</th>
+            <th>Map</th>
+            <th>Rules</th>
+          </tr>
+          <tr>
+            <td><input type="radio" name="game"></td>
+            <td>mcherm</td>
+            <td>Default Map</td>
+            <td>Default Rules</td>
+          </tr>
+          <tr>
+            <td><input type="radio" name="game"></td>
+            <td>grapefruit</td>
+            <td>Default Map</td>
+            <td>Default Rules</td>
+          </tr>
+        </table>
+      </div>
+      <div class="labeled-field-div">
+        <label for="game-code-field">Game Code:</label>
+        <input type="text" id="game-code-field" required>
+      </div>
+      <button id="begin-game">Begin Game</button>
     </div>
 
     <script src="js/vendor/modernizr-3.11.2.min.js"></script>

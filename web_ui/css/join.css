@@ -26,7 +26,7 @@
 
 .joining-controls h1 {
     text-align: center;
-    margin: 0px;
+    margin: 0;
 }
 
 .joining-controls button {
@@ -43,4 +43,36 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+}
+
+.has-back-button {
+    position: relative;
+}
+
+.has-back-button .back-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: small;
+}
+
+#game-chooser {
+}
+
+#zero-games-widget {
+    text-align: center;
+    border: 1px solid black;
+}
+
+#multi-games-widget {
+    border-collapse: collapse;
+    border:1px solid black;
+}
+
+#multi-games-widget th {
+    border:1px solid black;
+}
+
+#multi-games-widget td {
+    border:1px solid black;
 }
