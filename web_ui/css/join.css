@@ -1,0 +1,46 @@
+/*
+ * Contains the css used by the screens allowing players to join a game.
+ */
+
+.hidden {
+    display: none;
+}
+
+.top-level {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+    font-family: Calibri, Candara, Segoe, Segoe UI, Arial, sans-serif;
+}
+
+.joining-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1em;
+    min-width: 20%;
+}
+
+.joining-controls h1 {
+    text-align: center;
+    margin: 0px;
+}
+
+.joining-controls button {
+    font-size: large;
+}
+
+.labeled-field-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#host-game-panel .labeled-field-div {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}

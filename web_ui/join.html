@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <title>Ant-War</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="apple-touch-icon" href="icon.png">
+    <!-- Place favicon.ico in the root directory -->
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/join.css">
+    <meta name="theme-color" content="#fafafa">
+  </head>
+
+  <body class="top-level">
+
+    <div id="pick-player-count-panel" class="joining-controls">
+      <h1>Ant-War</h1>
+      <button id="single-player-btn">Single-Player</button>
+      <button id="multi-player-btn" disabled>Multi-Player</button>
+      <div class="labeled-field-div">
+        <label for="username-field">Username:</label>
+        <input type="text" id="username-field" required size="15">
+      </div>
+    </div>
+
+    <div id="host-or-join-panel" class="joining-controls hidden">
+      <h1>Ant-War</h1>
+      <button id="host-game-btn">Host Game</button>
+      <button id="join-game-btn">Join Game</button>
+    </div>
+
+    <div id="host-game-panel" class="joining-controls hidden">
+      <h1>Ant-War</h1>
+      <div class="labeled-field-div">
+        <label for="pick-map-field">Map:</label>
+        <select id="pick-map-field">
+          <option value="map1">Default Map</option>
+        </select>
+      </div>
+      <div class="labeled-field-div">
+        <label for="pick-rules-field">Rules:</label>
+        <select id="pick-rules-field">
+          <option value="rules1">Default Rules</option>
+        </select>
+      </div>
+      <div>
+        <input type="checkbox" id="is-private-field">
+        <label for="is-private-field">Private</label>
+      </div>
+      <button id="invite-btn">Invite</button>
+    </div>
+
+    <script src="js/vendor/modernizr-3.11.2.min.js"></script>
+    <script src="js/plugins.js"></script>
+    <script src="js/join.js"></script>
+  </body>
+
+</html>
