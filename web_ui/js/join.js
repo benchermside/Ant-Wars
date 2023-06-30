@@ -84,6 +84,9 @@ function addGameToGamePanel(gameData) {
  * This is called when we need to refresh the data in the find-game-panel.
  */
 function refreshFindGamePanel() {
+    // --- clear out the game code ---
+    document.getElementById("game-code-field").value = "";
+
     // --- we just arrived, so clear the game panel ---
     clearGamePanel();
 
@@ -122,6 +125,7 @@ function announceNewGame() {
     const username = document.getElementById("username-field").value;
     const selectedMap = document.getElementById("pick-map-field").value;
     const selectedRules = document.getElementById("pick-rules-field").value;
+    const offeredGameCode = document.getElementById("offered-game-code-field").value;
     const isPrivateGame = document.getElementById("is-private-field").checked;
 
     if (!isPrivateGame) {
@@ -175,6 +179,62 @@ function advertisingHostedGameSocketListener(messageData) {
     }
 }
 
+/* ========= Screen Logic ========= */
+// Contains code for declaring "screens". A screen will have behavior when you enter it
+// (like showing some elements or setting up a particular socket listener) and behavior
+// when you exit it. The function goToScreen() can be called to switch screens. Screens
+// are keyed by names.
+
+const screenConfig = {
+    pickPlayerCount: {
+        // enter: () => {},
+        // exit: () => {},
+        elementId: "pick-player-count-panel",
+    },
+    hostOrJoin: {
+        elementId: "host-or-join-panel",
+    },
+    hostGame: {
+        elementId: "host-game-panel",
+    },
+    findGame: {
+        enter: refreshFindGamePanel,
+        exit: () => {
+            socketListener = ignoreEverythingSocketListener;
+        },
+        elementId: "find-game-panel",
+    },
+    waitForPlayers: {
+        enter: () => {
+            document.getElementById("offered-game-code-field").value = pickRandomGameId();
+            socketListener = advertisingHostedGameSocketListener;
+            announceNewGame();
+        },
+        exit: () => {
+            document.getElementById("offered-game-code-field").value = "";
+            socketListener = ignoreEverythingSocketListener;
+        },
+        elementId: "wait-for-players-panel",
+    },
+};
+
+
+/*
+ * Call this to go to the given screen.
+ */
+function goToScreen(screenName) {
+    hideElemById(currentScreen.elementId);
+    if (currentScreen.exit) {
+        currentScreen.exit();
+    }
+    const newScreen = screenConfig[screenName];
+    currentScreen = newScreen;
+    if (newScreen.enter) {
+        newScreen.enter();
+    }
+    showElemById(newScreen.elementId);
+}
+
 
 /* ========= Global Constants ========= */
 const webSocketEndpoint = "wss://8v29xiw2v8.execute-api.us-east-1.amazonaws.com/production";
@@ -185,7 +245,7 @@ const webSocket = new WebSocket(webSocketEndpoint);
 let socketListener = ignoreEverythingSocketListener;
 const availableGameData = [];
 let offeredGameCode = null; // FIXME: This will be a field in the page once I HAVE a page, not a global
-
+let currentScreen = screenConfig["pickPlayerCount"]; // FIXME: Does this really need to be a global variable?
 
 /* ========= Run Stuff On Load ========= */
 window.addEventListener("load", function() {
@@ -198,13 +258,14 @@ window.addEventListener("load", function() {
     // ==== Set up button actions ====
     const buttonActions = {
         "single-player-btn": () => {window.location.href = "/index.html";},
-        "multi-player-btn": () => {hideElemById("pick-player-count-panel"); showElemById("host-or-join-panel"); registerPlayerInLobby();},
-        "host-or-join-back-btn": () => {hideElemById("host-or-join-panel"); showElemById("pick-player-count-panel");},
-        "host-game-btn": () => {hideElemById("host-or-join-panel"); showElemById("host-game-panel");},
-        "host-game-back-btn": () => {hideElemById("host-game-panel"); showElemById("host-or-join-panel");},
-        "find-game-btn": () => {hideElemById("host-or-join-panel"); showElemById("find-game-panel"); refreshFindGamePanel(); },
-        "find-game-back-btn": () => {hideElemById("find-game-panel"); showElemById("host-or-join-panel");},
-        "invite-btn": () => { offeredGameCode = pickRandomGameId(); socketListener = advertisingHostedGameSocketListener; announceNewGame(); },
+        "multi-player-btn": () => {goToScreen("hostOrJoin"); registerPlayerInLobby();},
+        "host-or-join-back-btn": () => {goToScreen("pickPlayerCount");},
+        "host-game-btn": () => {goToScreen("hostGame");},
+        "host-game-back-btn": () => {goToScreen("hostOrJoin");},
+        "find-game-btn": () => {goToScreen("findGame");},
+        "find-game-back-btn": () => {goToScreen("hostOrJoin");},
+        "invite-btn": () => {goToScreen("waitForPlayers");},
+        "wait-for-players-back-btn": () => {goToScreen("hostGame")},
     };
     for (const btnName in buttonActions) {
         document.getElementById(btnName).onclick = buttonActions[btnName];
