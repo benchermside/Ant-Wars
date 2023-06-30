@@ -20,7 +20,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 1em;
+    gap: 1.5em;
     min-width: 20%;
 }
 
@@ -33,10 +33,17 @@
     font-size: large;
 }
 
+#multi-player-widget {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5em;
+}
+
 .labeled-field-div {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
 }
 
 #host-game-panel .labeled-field-div {
@@ -67,12 +74,15 @@
 #multi-games-widget {
     border-collapse: collapse;
     border:1px solid black;
+    width: 100%;
 }
 
 #multi-games-widget th {
     border:1px solid black;
+    padding: 2px 4px;
 }
 
 #multi-games-widget td {
     border:1px solid black;
+    padding: 2px 4px;
 }
