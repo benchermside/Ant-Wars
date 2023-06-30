@@ -26,13 +26,18 @@ function isValidUsername(username) {
  * This removes all displayed games from the game panel.
  */
 function clearGamePanel() {
+    // --- clear the variable we keep ---
     availableGameData.length = 0;
-    // --- update the panel ---
-    // FIXME: Should deal with empty list!
+
+    // --- clear games shown in the panel ---
     const tableElem = document.getElementById("multi-games-widget");
     const oldTBodyElem = tableElem.getElementsByTagName('tbody')[0];
     const newTBodyElem = document.createElement('tbody');
     tableElem.replaceChild(newTBodyElem, oldTBodyElem);
+
+    // --- display length zero ---
+    hideElemById("multi-games-widget");
+    showElemById("zero-games-widget");
 }
 
 
@@ -41,36 +46,36 @@ function clearGamePanel() {
  * "map", and "rules") and it adds that game to the list displayed in the games panel.
  */
 function addGameToGamePanel(gameData) {
-    // FIXME: Need to check for duplicates and not add them
-    availableGameData.push(gameData); // add it to the array we keep
-    const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName('tbody')[0];
-    const rowElem = tBodyElem.insertRow();
-    rowElem.innerHTML = `<tr>` +
-        `<td><input type="radio" name="game" value="${gameData.gameCode}" class="game-select"></td>` +
-        `<td>${gameData.hostUsername}</td>` +
-        `<td>${gameData.map}</td>` +
-        `<td>${gameData.rules}</td>` +
-        `</tr>`;
-    rowElem.getElementsByClassName("game-select")[0].addEventListener("change", () => {
-        document.getElementById("game-code-field").value = gameData.gameCode;
-        document.getElementById("join-game-btn").disabled = false;
+    let alreadyInList = false;
+    availableGameData.forEach(aGameData => {
+        if (aGameData.gameCode === gameData.gameCode) {
+            alreadyInList = true;
+        }
     });
-}
 
+    if (!alreadyInList) {
+        // --- if we're adding the FIRST one, switch from displaying "no items" to displaying the table ---
+        if (availableGameData.length === 0) {
+            hideElemById("zero-games-widget");
+            showElemById("multi-games-widget");
+        }
 
-/*
- * When this is called with data about the active games it populates the table of games
- * to join.
- */
-function populateGameChooser(availableGameData) {
-    if (availableGameData.length === 0) {
-        hideElemById("multi-games-widget");
-        showElemById("zero-games-widget");
-    } else {
-        clearGamePanel();
-        availableGameData.forEach(addGameToGamePanel);
-        showElemById("multi-games-widget");
-        hideElemById("zero-games-widget");
+        // --- add it to the array we keep ---
+        availableGameData.push(gameData);
+
+        // --- add it to the list ---
+        const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName('tbody')[0];
+        const rowElem = tBodyElem.insertRow();
+        rowElem.innerHTML = `<tr>` +
+            `<td><input type="radio" name="game" value="${gameData.gameCode}" class="game-select"></td>` +
+            `<td>${gameData.hostUsername}</td>` +
+            `<td>${gameData.map}</td>` +
+            `<td>${gameData.rules}</td>` +
+            `</tr>`;
+        rowElem.getElementsByClassName("game-select")[0].addEventListener("change", () => {
+            document.getElementById("game-code-field").value = gameData.gameCode;
+            document.getElementById("join-game-btn").disabled = false;
+        });
     }
 }
 
@@ -79,13 +84,8 @@ function populateGameChooser(availableGameData) {
  * This is called when we need to refresh the data in the find-game-panel.
  */
 function refreshFindGamePanel() {
-    // FIXME: Need to handle the case of zero games.
-    [
-        { gameCode: "87433", hostUsername: "mcherm", map: "Default Map", rules: "Default Rules", },
-        { gameCode: "53902", hostUsername: "grapefruit", map: "Default Map", rules: "Default Rules", },
-        { gameCode: "66839", hostUsername: "melissa", map: "Other Map", rules: "Default Rules", },
-    ].forEach(gameData => availableGameData.push(gameData));
-    populateGameChooser(availableGameData);
+    // --- we just arrived, so clear the game panel ---
+    clearGamePanel();
 
     // --- start listening for new games that get announced ---
     socketListener = displayLobbyGamesSocketListener;
@@ -128,7 +128,7 @@ function announceNewGame() {
         const messageBody = {
             event: "announceNewGame",
             gameData: {
-                gameCode: "ant-war:87433",
+                gameCode: `${offeredGameCode}`,
                 hostUsername: username,
                 map: selectedMap,
                 rules: selectedRules,
@@ -141,6 +141,14 @@ function announceNewGame() {
     }
 }
 
+
+/*
+ * This returns a random GameId. Right now, GameIds are 5-digit numbers that do not begin with 0.
+ */
+function pickRandomGameId() {
+    return Math.floor( Math.random() * (100000 - 10000) + 10000 );
+}
+
 /* ========= Socket Listeners ========= */
 
 /*
@@ -148,7 +156,7 @@ function announceNewGame() {
  * be controlled by the global variable, "socketListener".
  */
 function onReceiveMessage(event) {
-    console.log("Received websocket message", event);
+    console.log("Received websocket message", event, "dispatching to", socketListener); // log incoming messages and handler
     socketListener(JSON.parse(event.data));
 }
 
@@ -176,6 +184,7 @@ const webSocket = new WebSocket(webSocketEndpoint);
 /* ========= Global Variables ========= */
 let socketListener = ignoreEverythingSocketListener;
 const availableGameData = [];
+let offeredGameCode = null; // FIXME: This will be a field in the page once I HAVE a page, not a global
 
 
 /* ========= Run Stuff On Load ========= */
@@ -195,7 +204,7 @@ window.addEventListener("load", function() {
         "host-game-back-btn": () => {hideElemById("host-game-panel"); showElemById("host-or-join-panel");},
         "find-game-btn": () => {hideElemById("host-or-join-panel"); showElemById("find-game-panel"); refreshFindGamePanel(); },
         "find-game-back-btn": () => {hideElemById("find-game-panel"); showElemById("host-or-join-panel");},
-        "invite-btn": () => { socketListener = advertisingHostedGameSocketListener; announceNewGame(); },
+        "invite-btn": () => { offeredGameCode = pickRandomGameId(); socketListener = advertisingHostedGameSocketListener; announceNewGame(); },
     };
     for (const btnName in buttonActions) {
         document.getElementById(btnName).onclick = buttonActions[btnName];
