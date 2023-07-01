@@ -4,7 +4,8 @@
 
 /* ========= Global Variables ========= */
 let hexSize = 120; // starting size
-let gameState = null; // will be populated during initialization
+let startOfTurnGameState = null; // will be populated during initialization
+let displayedGameState = null;  // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
 let playerColony = 0; // which colony (by number) the current player is running
@@ -33,12 +34,12 @@ function render() {
     const gameCanvasElem = document.getElementById("game-canvas");
     const drawContext = gameCanvasElem.getContext("2d");
     drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
-    drawBackground(drawContext, gameState.terrainGrid, hexSize);
+    drawBackground(drawContext, displayedGameState.terrainGrid, hexSize);
     if (highlightedHex !== null) {
         highlightHex(drawContext, hexSize, highlightedHex);
     }
     indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
-    drawItems(drawContext, gameState, hexSize);
+    drawItems(drawContext, displayedGameState, hexSize);
 }
 
 
@@ -91,15 +92,8 @@ function changeUIMode(newUIMode) {
  * This sets up to begin a new turn.
  */
 function startNewTurn() {
-    // Set all ant startLocations to their current locations:
-    gameState.colonies.forEach(colony => {
-        colony.ants.forEach(ant => {
-            ant.startLocation = ant.location;
-        });
-    });
-
     // begin with all ants having "null" for a move
-    playerActionSelections = gameState.colonies[playerColony].ants.map(() => null);
+    playerActionSelections = startOfTurnGameState.colonies[playerColony].ants.map(() => null);
 
     // begin in readyToEnter uiMode.
     changeUIMode(uiModes.readyToEnterMoves);
@@ -111,7 +105,7 @@ function startNewTurn() {
  * it needs to -- actions entered, AI logic, or things transmitted over the network.
  */
 function getColonySelections() {
-    return gameState.colonies.map((colony, colonyNumber) => {
+    return startOfTurnGameState.colonies.map((colony, colonyNumber) => {
         if (colonyNumber === playerColony) {
             // The player entered moves (probably). Replace any null with the do-nothing action, then use it.
             const actionSelections = playerActionSelections.map(actionSelection =>
@@ -121,7 +115,7 @@ function getColonySelections() {
         } else {
             // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
             const actionSelections = colony.ants.map((antState, antNumber) => {
-                const moveActions = newPossibleMoves(gameState, colonyNumber, antNumber);
+                const moveActions = newPossibleMoves(startOfTurnGameState, colonyNumber, antNumber);
                 if (moveActions.length === 0) {
                     return {name: "None"}; // can't move; so do nothing
                 } else {
@@ -154,7 +148,7 @@ function gameBoardDimensions(gameState, hexSize) {
  */
 function onBoardResize() {
     const gameCanvasElem = document.getElementById("game-canvas");
-    const screenDims = gameBoardDimensions(gameState, hexSize);
+    const screenDims = gameBoardDimensions(displayedGameState, hexSize);
     gameCanvasElem.width = screenDims[0];
     gameCanvasElem.height = screenDims[1];
 }
@@ -165,7 +159,7 @@ function onBoardResize() {
  * pixel coordinates of the spot clicked on.
  */
 function onCanvasClick(pixelCoord) {
-    const gridCoord = hexClicked(gameState, hexSize, pixelCoord)
+    const gridCoord = hexClicked(displayedGameState, hexSize, pixelCoord)
     uiMode.onClickHex(gridCoord);
 }
 
@@ -218,16 +212,11 @@ function initializeStartingPosition() {
             antColor: "#750D06",
         },
     ];
-    // starting location = location for all ants:
-    startingColonies.forEach(colony => {
-        colony.ants.forEach(ant => {
-            ant.startLocation = ant.location;
-        });
-    });
-    gameState = {
+    startOfTurnGameState = {
         terrainGrid: startingTerrainGrid,
         colonies: startingColonies,
-    }
+    };
+    displayedGameState = structuredClone(startOfTurnGameState);
 }
 
 

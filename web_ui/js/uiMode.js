@@ -37,16 +37,10 @@
 const watchingTurnHappen = {
     enterMode: function() {
         // --- Put the game state back to how it started ---
-        // FIXME: This won't be needed if later on we keep a separate startGameState and gameStateToRender
-        gameState.colonies.forEach(colony => {
-            colony.ants.forEach(ant => {
-                ant.location = ant.startLocation;
-            });
-        });
+        displayedGameState = structuredClone(startOfTurnGameState);
 
         // --- Now call the animation function which will run for a few seconds, then exit the mode ---
         const animationState = {
-            startGameState: gameState,
             colonySelections: getColonySelections(),
             stage: 0,
         };
@@ -70,12 +64,12 @@ const watchingTurnHappen = {
  */
 const readyToEnterMoves = {
     enterMode: function() {
-        // Indicate the ants that still need to be moved
+        // Indicate the ants that still need to be moved`
         indicatedHexes.length = 0;
         playerActionSelections.forEach((actionSelection, antNumber) => {
             if (actionSelection === null) {
                 const indication = {
-                    location: gameState.colonies[playerColony].ants[antNumber].location,
+                    location: displayedGameState.colonies[playerColony].ants[antNumber].location,
                     color: "#4D8BF066"
                 };
                 indicatedHexes.push(indication);
@@ -107,7 +101,7 @@ const readyToEnterMoves = {
                 highlightedHex = null; // de-select the currently selected location (if any)
                 highlightedHex = coord;
                 let selectedAnAnt = false;
-                const playerAnts = gameState.colonies[playerColony].ants;
+                const playerAnts = displayedGameState.colonies[playerColony].ants;
                 playerAnts.forEach((ant, antNumber) => {
                     if (!selectedAnAnt) {
                         if (coordEqual(ant.location, coord)) {
@@ -157,7 +151,7 @@ const commandingAnAnt = {
         const newUIMode = Object.create(commandingAnAnt);
 
         // Find out the allowed moves
-        const moveActions = newPossibleMoves(gameState, playerColony, selectedAntNumber);
+        const moveActions = newPossibleMoves(startOfTurnGameState, playerColony, selectedAntNumber);
 
         // record the selectedAntNumber and moveActions
         newUIMode.selectedAntNumber = selectedAntNumber;
@@ -172,8 +166,8 @@ const commandingAnAnt = {
         const moveActions = uiMode.moveActions;
 
         // put the ant back where it started from if it already moved
-        const ant = gameState.colonies[playerColony].ants[selectedAntNumber];
-        ant.location = ant.startLocation;
+        const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
+        displayedAnt.location = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber].location;
         playerActionSelections[selectedAntNumber] = {"name": "None"};
 
         // now make visible the places we can move to
@@ -219,8 +213,8 @@ const commandingAnAnt = {
             // Make the move
             playerActionSelections[uiMode.selectedAntNumber] = move;
 
-            // Now change the ant's location (but not startLocation) to show it on the screen
-            gameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = move.steps[move.steps.length - 1];
+            // Now change the ant's displayed location to show it on the screen
+            displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = move.steps[move.steps.length - 1];
         } else {
             // clicked away; we should exit out of commanding an ant mode
         }
@@ -230,30 +224,34 @@ const commandingAnAnt = {
 
     actionButtons: function() {
         const buttons = [];
-        const selectedAnt = gameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
+        const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
+        const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
 
         buttons.push({
             label: "Do Nothing",
             action: function() {
                 // We decided to move this ant someplace. Record that.
                 playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
-                // Now change the ant's location (but not startLocation) to show it on the screen
-                selectedAnt.location = selectedAnt.startLocation;
+                // Now change the ant's displayed location back to its start location to show it on the screen
+                selectedAntDisplayed.location = selectedAntStartOfTurn.location;
                 // Now switch modes
                 changeUIMode(uiModes.readyToEnterMoves);
                 render();
             },
         });
-        if (selectedAnt.cast === "Queen") {
+        if (selectedAntDisplayed.cast === "Queen") {
             // Queens can lay an egg if they're in a chamber
-            const coord = selectedAnt.location;
-            const terrain = gameState.terrainGrid[coord[1]][coord[0]];
+            const coord = selectedAntDisplayed.location;
+            const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
             if (terrain === 5) {
                 buttons.push({
                     label: "Lay Egg",
                     action: function() {
                         // We decided to lay an egg. Record that.
                         playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
+
+                        // Don't move anywhere
+                        selectedAntDisplayed.location = selectedAntStartOfTurn.location;
 
                         // Now switch modes
                         changeUIMode(uiModes.readyToEnterMoves);
@@ -264,14 +262,14 @@ const commandingAnAnt = {
                 });
             }
         }
-        if (selectedAnt.cast === "Worker") {
+        if (selectedAntDisplayed.cast === "Worker") {
             const thingsToDig = [
                 {whatToDig: "Tunnel", buttonLabel: "Dig Tunnel"},
                 {whatToDig: "Chamber", buttonLabel: "Dig Chamber"},
             ];
             // Workers may be able to dig a tunnel or a chamber (if there is an appropriate spot beside them)
             thingsToDig.forEach(thingToDig => {
-                const digActions = possibleDigActions(gameState, playerColony, uiMode.selectedAntNumber, thingToDig.whatToDig);
+                const digActions = possibleDigActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber, thingToDig.whatToDig);
                 if (digActions.length > 0) {
                     buttons.push({
                         label: thingToDig.buttonLabel,
@@ -315,7 +313,7 @@ const selectingDigLocation = {
         newUIMode.whatToDig = whatToDig;
 
         // record the digActions
-        newUIMode.digActions = possibleDigActions(gameState, playerColony, selectedAntNumber, whatToDig);
+        newUIMode.digActions = possibleDigActions(startOfTurnGameState, playerColony, selectedAntNumber, whatToDig);
 
         // return it
         return newUIMode;
@@ -325,7 +323,7 @@ const selectingDigLocation = {
         const selectedAntNumber = uiMode.selectedAntNumber;
 
         // Highlight the digging ant
-        highlightedHex = gameState.colonies[playerColony].ants[selectedAntNumber].location;
+        highlightedHex = displayedGameState.colonies[playerColony].ants[selectedAntNumber].location;
 
         // indicate the hexes that it could dig
         uiMode.digActions.forEach(digAction => {
@@ -351,8 +349,8 @@ const selectingDigLocation = {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
                 playerActionSelections[uiMode.selectedAntNumber] = digAction;
-                // Now change the ant's location (but not startLocation) to show it on the screen
-                gameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
+                // Now change the ant's displayed location to show it on the screen
+                displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
             }
         });
 

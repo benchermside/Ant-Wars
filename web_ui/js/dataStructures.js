@@ -47,7 +47,7 @@
     //
     // It is a string, which must be either "Tunnel" or "Chamber".
     //
-    constwhatToDig = "Tunnel";
+    const whatToDig = "Tunnel";
 
 
     // Location:
@@ -72,15 +72,12 @@
     //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
     //   * location - an [x,y] grid coordinate giving the location of the ant between turns
     //                and the intended destination of the ant while entering commands.
-    //   * startLocation - This contains the [x,y] grid coordinate where the ant started at
-    //                the beginning of the current turn.
-    //   *numberOfAnts - the number of ants in the stack
+    //   * numberOfAnts - the number of ants in the stack
     // Example:
     const antState = {
         "cast": "Worker",
         "facing": 1,
         "location": [2, 3],
-        "startLocation": [2, 3],
         "numberOfAnts":3,
     };
 

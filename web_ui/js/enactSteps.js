@@ -93,21 +93,19 @@ function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
 
 /*
  * This function is passed the following fields:
- *   * startGameState - a GameState (see dataStructures.js) which contains the state of the game
- *       BEFORE any actions were taken.
  *   * colonySelections - an array of ColonySelections (see dataStructures.js), one for each colony
  *       which contains the intended actions for the ants of that colony.
  *   * stage - the stage to render. Must be a number 0 through 12 (inclusive).
  *
  * It returns a new GameState which is a copy of the original that has been modified to perform the
- * indicated stage of the requested actions. (Except that, as a special case, for stage 0 it will
- * return the original itself since stage 0 always has no changes.)
+ * indicated stage of the requested actions. (As a special case, for stage 0 it will return a copy
+ * of the original itself since stage 0 always has no changes.)
  */
-function stagedGameState(startGameState, colonySelections, stage) {
+function stagedGameState(colonySelections, stage) {
     if (stage === 0) {
-        return startGameState;
+        return structuredClone(startOfTurnGameState);
     } else {
-        let newGameState = structuredClone(startGameState);
+        let newGameState = structuredClone(startOfTurnGameState);
         colonySelections.forEach((colonySelection, colonyNumber) => {
             colonySelection.actionSelections.forEach((action, antNumber) => {
                 applyActionStage(newGameState, colonyNumber, antNumber, action, stage)
@@ -126,13 +124,13 @@ function stagedGameState(startGameState, colonySelections, stage) {
  *  * colonySelections -- the choices of what actions all the ants and colonies want to take
  *  * stage -- set to 0 initially, it will range up to 12 as we step through the steps of the animation
  *
- * This function sets the global gameState to a single stage of the animation (which one depends on the
- * stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
+ * This function sets the global displayedGameState to a single stage of the animation (which one depends
+ * on the stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
  * (showing the NEXT step...) after a few moments UNLESS we've shown the final stage of the animation,
- * in which cases it moves into the state for entering the next turn's actions.
+ * in which cases it advances to the next turn and moves into the state for entering the next turn's actions.
  */
 function animate(animationState) {
-    gameState = stagedGameState(animationState.startGameState, animationState.colonySelections, animationState.stage);
+    displayedGameState = stagedGameState(animationState.colonySelections, animationState.stage);
     render();
     animationState.stage += 1;
     if (animationState.stage <= 12) {
@@ -141,6 +139,7 @@ function animate(animationState) {
         sweepScreen("#FFFFFF"); // show blank screen briefly
         setTimeout(
             function() {
+                startOfTurnGameState = structuredClone(displayedGameState); // advance to the new turn!
                 startNewTurn();
                 render();
             },
