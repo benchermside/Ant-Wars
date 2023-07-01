@@ -26,9 +26,6 @@ function isValidUsername(username) {
  * This removes all displayed games from the game panel.
  */
 function clearGamePanel() {
-    // --- clear the variable we keep ---
-    availableGameData.length = 0;
-
     // --- clear games shown in the panel ---
     const tableElem = document.getElementById("multi-games-widget");
     const oldTBodyElem = tableElem.getElementsByTagName('tbody')[0];
@@ -46,25 +43,26 @@ function clearGamePanel() {
  * "map", and "rules") and it adds that game to the list displayed in the games panel.
  */
 function addGameToGamePanel(gameData) {
+    const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName("tbody")[0];
+    const rowElems = tBodyElem.getElementsByTagName("tr");
     let alreadyInList = false;
-    availableGameData.forEach(aGameData => {
-        if (aGameData.gameCode === gameData.gameCode) {
+    for (let rowNum=0; rowNum < rowElems.length; rowNum++) {
+        const rowElem = rowElems[rowNum];
+        const rowGameCode = rowElem.getElementsByClassName("game-select")[0].value;
+        if (rowGameCode === gameData.gameCode) {
             alreadyInList = true;
         }
-    });
+    }
 
     if (!alreadyInList) {
         // --- if we're adding the FIRST one, switch from displaying "no items" to displaying the table ---
-        if (availableGameData.length === 0) {
+        if (rowElems.length === 0) {
             hideElemById("zero-games-widget");
             showElemById("multi-games-widget");
         }
 
-        // --- add it to the array we keep ---
-        availableGameData.push(gameData);
-
         // --- add it to the list ---
-        const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName('tbody')[0];
+        const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName("tbody")[0];
         const rowElem = tBodyElem.insertRow();
         rowElem.innerHTML = `<tr>` +
             `<td><input type="radio" name="game" value="${gameData.gameCode}" class="game-select"></td>` +
@@ -76,6 +74,37 @@ function addGameToGamePanel(gameData) {
             document.getElementById("game-code-field").value = gameData.gameCode;
             document.getElementById("join-game-btn").disabled = false;
         });
+    }
+}
+
+
+/*
+ * This is passed the data on a game to join which has been withdrawn and is no longer available to
+ * join. (The data has a field "gameCode".) It removes that game from the display (if it is shown).
+ *
+ * Because the rows are assumed to have unique gameCodes, we will only delete the first row
+ * found that matches the gameCode.
+ */
+function removeGameFromGamePanel(gameData) {
+    const tBodyElem = document.getElementById("multi-games-widget").getElementsByTagName("tbody")[0];
+    const rowElems = tBodyElem.getElementsByTagName("tr");
+    for (let rowNum=0; rowNum<rowElems.length; rowNum++) {
+        const rowElem = rowElems[rowNum];
+        const rowGameCode = rowElem.getElementsByClassName("game-select")[0].value;
+        if (rowGameCode === gameData.gameCode) {
+            // --- delete the row ---
+            tBodyElem.deleteRow(rowNum);
+
+            // --- check if we got to length 0 and if so, switch to the zero-length display ---
+            const newRowElems = tBodyElem.getElementsByTagName("tr");
+            if (newRowElems.length === 0) {
+                showElemById("zero-games-widget");
+                hideElemById("multi-games-widget");
+            }
+
+            // --- all done ---
+            return;
+        }
     }
 }
 
@@ -113,7 +142,7 @@ function registerPlayerInLobby() {
     const message = {action: "setGame", gameId: "ant-war:lobby", playerId: username};
     const messageAsText = JSON.stringify(message);
     webSocket.send(messageAsText);
-    console.log("registered player in lobby", message);
+    console.log("Sending", message); // Log the message
 }
 
 
@@ -136,6 +165,29 @@ function announceNewGame() {
                 hostUsername: username,
                 map: selectedMap,
                 rules: selectedRules,
+            },
+        };
+        const fullMessage = {action: "sendMessage", gameId: "ant-war:lobby", data: messageBody};
+        const messageAsText = JSON.stringify(fullMessage);
+        webSocket.send(messageAsText);
+        console.log("Sending", fullMessage); // Log the message
+    }
+}
+
+
+/*
+ * Announce to the lobby that a game we were offering is no longer available. It actually WON'T be announced
+ * if the game is private.
+ */
+function withdrawNewGame() {
+    const offeredGameCode = document.getElementById("offered-game-code-field").value;
+    const isPrivateGame = document.getElementById("is-private-field").checked;
+
+    if (!isPrivateGame) {
+        const messageBody = {
+            event: "withdrawNewGame",
+            gameData: {
+                gameCode: `${offeredGameCode}`,
             },
         };
         const fullMessage = {action: "sendMessage", gameId: "ant-war:lobby", data: messageBody};
@@ -170,6 +222,8 @@ function ignoreEverythingSocketListener(messageData) {
 function displayLobbyGamesSocketListener(messageData) {
     if (messageData.event === "announceNewGame") {
         addGameToGamePanel(messageData.gameData);
+    } else if (messageData.event === "withdrawNewGame") {
+        removeGameFromGamePanel(messageData.gameData);
     }
 }
 
@@ -211,8 +265,9 @@ const screenConfig = {
             announceNewGame();
         },
         exit: () => {
-            document.getElementById("offered-game-code-field").value = "";
             socketListener = ignoreEverythingSocketListener;
+            withdrawNewGame();
+            document.getElementById("offered-game-code-field").value = "";
         },
         elementId: "wait-for-players-panel",
     },
@@ -243,8 +298,6 @@ const webSocket = new WebSocket(webSocketEndpoint);
 
 /* ========= Global Variables ========= */
 let socketListener = ignoreEverythingSocketListener;
-const availableGameData = [];
-let offeredGameCode = null; // FIXME: This will be a field in the page once I HAVE a page, not a global
 let currentScreen = screenConfig["pickPlayerCount"]; // FIXME: Does this really need to be a global variable?
 
 /* ========= Run Stuff On Load ========= */
