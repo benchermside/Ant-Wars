@@ -101,36 +101,44 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
         }
     }
     return toReturn;
-
-      
 }
 
 
 
 
-
 /*
- * This finds the list of allowed dig actions for a specific ant (there might not be any!). It is passed
- * a GameState (see dataStructures.js), an integer specifying which colony we want the moves for, an
- * integer specifying which ant in that colony we want the moves of, and a field specifying what we are
- * trying to dig (a WhatToDig, see dataStructures.js). It returns a list of Action objects
- * (see dataStructures.js) all of which are Dig actions.
+ * This finds the list of allowed dig actions with whatToDig = "Tunnel" for a specific ant (there might
+ * not be any!). It is passed a GameState (see dataStructures.js), an integer specifying which colony we
+ * want the moves for, and an integer specifying which ant in that colony we want the moves of. It returns
+ * a list of Action objects (see dataStructures.js) all of which are Dig actions with whatToDig of "Tunnel".
  */
-function possibleDigActions(gameState, colonyNumber, antNumber, whatToDig) {
+function possibleDigTunnelActions(gameState, colonyNumber, antNumber) {
     const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
-    let eligibleTerrain;
-    if (whatToDig === "Tunnel") {
-        eligibleTerrain = 1;
-    } else if (whatToDig === "Chamber") {
-        eligibleTerrain = 4;
-    } else {
-        throw Error(`possibleDigActions passed invalid whatToDig of ${whatToDig}.`);
-    }
+    // Tunneling can happen only in dirt and only in a neighboring location
+    const eligibleTerrain = 1;
     return findNeighbors(gameState.terrainGrid, antLocation[0], antLocation[1])
         .filter(loc => gameState.terrainGrid[loc[1]][loc[0]] === eligibleTerrain)
         .map(loc => {
-            return {name: "Dig", location: loc, whatToDig: whatToDig};
+            return {name: "Dig", location: loc, whatToDig: "Tunnel"};
         });
+}
+
+
+/*
+ * This finds the list of allowed dig actions with whatToDig = "Chamber" for a specific ant (there might
+ * not be any!). It is passed a GameState (see dataStructures.js), an integer specifying which colony we
+ * want the moves for, and an integer specifying which ant in that colony we want the moves of. It returns
+ * a list of Action objects (see dataStructures.js) all of which are Dig actions with whatToDig of "Chamber".
+ */
+function possibleDigChamberActions(gameState, colonyNumber, antNumber) {
+    const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
+    // Chambers can only be dug on an existing tunnel and only in the current location
+    const eligibleTerrain = 4;
+    if (gameState.terrainGrid[antLocation[1]][antLocation[0]] === eligibleTerrain) {
+        return [{name: "Dig", location: antLocation, whatToDig: "Chamber"}];
+    } else {
+        return [];
+    }
 }
 
 

@@ -165,9 +165,31 @@ const commandingAnAnt = {
         const selectedAntNumber = uiMode.selectedAntNumber;
         const moveActions = uiMode.moveActions;
 
-        // put the ant back where it started from if it already moved
-        const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
-        displayedAnt.location = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber].location;
+        // Find previous action (if any) so we can revert it
+        const prevAction = playerActionSelections[selectedAntNumber];
+
+        if (prevAction === null || prevAction.name === "None") {
+            // nothing to put back
+        } else if (prevAction.name === "Move") {
+            // put the ant back where it started from
+            const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
+            const startOfTurnAnt = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber];
+            displayedAnt.location = startOfTurnAnt.location;
+        } else if (prevAction.name === "Dig") {
+            // put the ant back where it started from
+            const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
+            const startOfTurnAnt = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber];
+            displayedAnt.location = startOfTurnAnt.location;
+            // put the terrainGrid back as it was
+            const loc = prevAction.location;
+            displayedGameState.terrainGrid[loc[1]][loc[0]] = startOfTurnGameState.terrainGrid[loc[1]][loc[0]];
+        } else if (prevAction.name === "LayEgg") {
+            // nothing to put back for now
+        } else {
+            throw Error(`Unexpected type of action: ${prevAction.name}`);
+        }
+
+        // Now put us back to an action of "None".
         playerActionSelections[selectedAntNumber] = {"name": "None"};
 
         // now make visible the places we can move to
@@ -263,23 +285,34 @@ const commandingAnAnt = {
             }
         }
         if (selectedAntDisplayed.cast === "Worker") {
-            const thingsToDig = [
-                {whatToDig: "Tunnel", buttonLabel: "Dig Tunnel"},
-                {whatToDig: "Chamber", buttonLabel: "Dig Chamber"},
-            ];
-            // Workers may be able to dig a tunnel or a chamber (if there is an appropriate spot beside them)
-            thingsToDig.forEach(thingToDig => {
-                const digActions = possibleDigActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber, thingToDig.whatToDig);
-                if (digActions.length > 0) {
-                    buttons.push({
-                        label: thingToDig.buttonLabel,
-                        action: function() {
-                            changeUIMode(uiModes.selectingDigLocation.newState(uiMode.selectedAntNumber, thingToDig.whatToDig));
-                            render();
-                        }
-                    });
-                }
-            });
+            const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber);
+            if (digTunnelActions.length > 0) {
+                buttons.push({
+                    label: "Dig Tunnel",
+                    action: function() {
+                        changeUIMode(uiModes.selectingDigTunnelLocation.newState(uiMode.selectedAntNumber, digTunnelActions));
+                        render();
+                    }
+                });
+            }
+
+            const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber);
+            if (digChamberActions.length > 0) {
+                const digAction = digChamberActions[0]; // there will only be one, and this is it
+                buttons.push({
+                    label: "Dig Chamber",
+                    action: function() {
+                        // Record the action
+                        playerActionSelections[uiMode.selectedAntNumber] = digAction;
+                        // Display that it will be dug
+                        const loc = digAction.location;
+                        displayedGameState.terrainGrid[loc[1]][loc[0]] = 5;
+                        // Return to entering commands
+                        changeUIMode(uiModes.readyToEnterMoves);
+                        render();
+                    }
+                });
+            }
         }
         return buttons;
     },
@@ -296,24 +329,21 @@ const commandingAnAnt = {
  * "newState" that is used for creating the specific commandingAnAnt instance that has the
  * selectedAntNumber field set.
  */
-const selectingDigLocation = {
+const selectingDigTunnelLocation = {
 
     /*
-     * You don't enter the general "selectingDigLocation" mode, instead you make a SPECIFIC
+     * You don't enter the general "selectingDigTunnelLocation" mode, instead you make a SPECIFIC
      * "selectingDigTunnelLocation" state for that particular ant and the particular thing it is
-     * making. So call selectingDigTunnelLocation.newState(selectedAntNumber, whatToDig) to create
-     * that specific state to pass to the changeUIMode() function.
+     * making. So call selectingDigTunnelLocation.newState(selectedAntNumber, digTunnelActions) to
+     * create that specific state to pass to the changeUIMode() function.
      */
-    newState: function(selectedAntNumber, whatToDig) {
+    newState: function(selectedAntNumber, digTunnelActions) {
         // Make a NEW copy since we'll be setting a field in the object
-        const newUIMode = Object.create(selectingDigLocation);
+        const newUIMode = Object.create(selectingDigTunnelLocation);
 
         // record the fields
         newUIMode.selectedAntNumber = selectedAntNumber;
-        newUIMode.whatToDig = whatToDig;
-
-        // record the digActions
-        newUIMode.digActions = possibleDigActions(startOfTurnGameState, playerColony, selectedAntNumber, whatToDig);
+        newUIMode.digTunnelActions = digTunnelActions;
 
         // return it
         return newUIMode;
@@ -326,7 +356,7 @@ const selectingDigLocation = {
         highlightedHex = displayedGameState.colonies[playerColony].ants[selectedAntNumber].location;
 
         // indicate the hexes that it could dig
-        uiMode.digActions.forEach(digAction => {
+        uiMode.digTunnelActions.forEach(digAction => {
             const indication = {
                 location: digAction.location,
                 color: "#FFFF0066",
@@ -345,12 +375,14 @@ const selectingDigLocation = {
         playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
 
         // See if we clicked on one of the diggable locations...
-        uiMode.digActions.forEach(digAction => {
+        uiMode.digTunnelActions.forEach(digAction => {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
                 playerActionSelections[uiMode.selectedAntNumber] = digAction;
                 // Now change the ant's displayed location to show it on the screen
                 displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
+                // Now show the tunnel as having been dug!
+                displayedGameState.terrainGrid[coord[1]][coord[0]] = 4;
             }
         });
 
@@ -370,5 +402,5 @@ uiModes = {
     watchingTurnHappen,
     readyToEnterMoves,
     commandingAnAnt,
-    selectingDigLocation,
+    selectingDigTunnelLocation,
 }
