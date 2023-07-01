@@ -38,6 +38,8 @@ function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
 /*
  * This performs applyActionStage in the case where the action is a Dig action. See
  * that function for the requirements.
+ *
+ * Dug things appear in stage 11.
  */
 function applyDigAction(gameState, colonyNumber, antNumber, action, stage) {
     const coord = action.location;
@@ -45,8 +47,8 @@ function applyDigAction(gameState, colonyNumber, antNumber, action, stage) {
     if (stage > 3) {
         gameState.colonies[colonyNumber].ants[antNumber].location = coord; // move the ant
     }
-    // --- Update the tile at stage 12 ---
-    if (stage === 12) {
+    // --- Update the tile if at stage 11 or more  ---
+    if (stage >= 11) {
         let newTerrainType;
         if (action.whatToDig === "Tunnel") {
             newTerrainType = 4;
@@ -130,10 +132,10 @@ function stagedGameState(colonySelections, stage) {
  * in which cases it advances to the next turn and moves into the state for entering the next turn's actions.
  */
 function animate(animationState) {
-    displayedGameState = stagedGameState(animationState.colonySelections, animationState.stage);
-    render();
-    animationState.stage += 1;
     if (animationState.stage <= 12) {
+        displayedGameState = stagedGameState(animationState.colonySelections, animationState.stage);
+        render();
+        animationState.stage += 1;
         setTimeout(animate, 500, animationState);
     } else {
         sweepScreen("#FFFFFF"); // show blank screen briefly
