@@ -30,7 +30,15 @@
 function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
     const indexOfStep = Math.ceil(action.steps.length * (stage / 12)) - 1; // spread the steps out over our 12-step timeline
     if (indexOfStep !== 0) { // if index === 0 then we don't need to do any update anyway
+        let facing;
+        if (indexOfStep ===0) {
+            facing = getNewFacing(gameState.colonies[colonyNumber].ants[antNumber].location, action.steps[indexOfStep]);
+        } else {
+            facing = getNewFacing(action.steps[indexOfStep-1], action.steps[indexOfStep]);
+        }
+        gameState.colonies[colonyNumber].ants[antNumber].facing = facing;
         gameState.colonies[colonyNumber].ants[antNumber].location = action.steps[indexOfStep];
+
     }
 }
 
