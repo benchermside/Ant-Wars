@@ -377,6 +377,10 @@ function drawEgg(drawContext, hexSize, colony, eggStack) {
     const coord = hexCenter(eggStack.location[0], eggStack.location[1], hexSize);
 
     drawContext.fillStyle = "#faf1d2";
+    drawContext.strokeStyle = colony.antColor;
+    drawContext.lineWidth = 1*hexSize *1/100;
+
+
 
     if (eggStack.numberOfEggs === 1){
         drawContext.beginPath();
