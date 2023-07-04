@@ -39,6 +39,10 @@ const watchingTurnHappen = {
         // --- Put the game state back to how it started ---
         displayedGameState = structuredClone(startOfTurnGameState);
 
+        //reduce all turn to hatch eggs by 1; if any reach 0 put an action on the quuee???
+
+
+
         // --- Find the random seed for this turn. ---
         // NOTE: Later we'll need to get this from the host
         // NOTE: Pick a random number that fits into 32 bits

@@ -66,6 +66,17 @@ function generateSteps(destination){
     }
 }
 
+//helper for possable moves
+//takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
+function isCast(ants, cast){
+    for(var i=0; i<ants.length; i++){
+        if(!(ants[i].cast === cast)){
+            return false;
+        }
+    }
+    return true;
+}
+
 // FIXME: Rename this
 function newPossibleMoves(gameState, colonyNumber, antNumber){
     const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
@@ -92,12 +103,16 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
     const toReturn = [];
     for(let index=moves.length; index > -1; index=index-1){
         for(let destination in moves[index]){
-            const steps = generateSteps(moves[index][destination]);
-            const action = {
-                "name": "Move",
-                "steps": steps,
-            };
-            toReturn.push(action);
+            let playerColony = 0; // which colony (by number) the current player is running
+            const occupents = getAntsAt(gameState.colonies[colonyNumber].ants, moves[index][destination].coord);
+            if(isCast(occupents, movingAnt.cast)) {
+                const steps = generateSteps(moves[index][destination]);
+                const action = {
+                    "name": "Move",
+                    "steps": steps,
+                };
+                toReturn.push(action);
+            }
         }
     }
     return toReturn;
