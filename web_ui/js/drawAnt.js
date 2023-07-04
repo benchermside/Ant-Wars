@@ -349,7 +349,7 @@ function drawLarva(drawContext, hexSize, colony,antState){
                 {x:0+(.2*i*i)-i,  y:2+i*1.8,  angle:9,  flat:3},
 
             ]};
-        const larvaDiagram = twistDiagram([larvaSegment], hexSize * scaleFactor, 0);
+        const larvaDiagram = twistDiagram([larvaSegment], hexSize * scaleFactor, antState.facing);
         const lineWidth = 1*hexSize *1/170;
         drawDiagram(drawContext, larvaDiagram, placeToDraw, "white",lineWidth, colony.antColor);
 
@@ -364,7 +364,7 @@ function drawLarva(drawContext, hexSize, colony,antState){
                 {x:-3.7,  y:-1.2,  angle:5, flat:1},
             ]
         };
-        const headDiagram = twistDiagram([head], hexSize * scaleFactor, 0);
+        const headDiagram = twistDiagram([head], hexSize * scaleFactor, antState.facing);
         drawDiagram(drawContext, headDiagram, placeToDraw, "white", lineWidth, colony.antColor);
 
         drawLabel(drawContext, hexSize, scaleFactor, antState);

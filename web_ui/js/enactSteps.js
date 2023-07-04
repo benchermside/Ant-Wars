@@ -34,6 +34,20 @@ function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
     }
 }
 
+function applyLayEggAction(gameState, colonyNumber, antNumber, action, stage) {
+    if (stage >= 11){
+        let eggStack = getEggAt(gameState.colonies[colonyNumber].eggs, gameState.colonies[colonyNumber].ants[antNumber].location);
+        if (eggStack === null){
+            const eggLoc = gameState.colonies[colonyNumber].ants[antNumber].location;
+            eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
+            gameState.colonies[playerColony].eggs.push(eggStack);
+        } else {
+            if (eggStack.numberOfEggs <= Rules.MAX_EGGS){
+                eggStack.numberOfEggs += 1;
+            }
+        }
+    }
+}
 
 /*
  * This performs applyActionStage in the case where the action is a Dig action. See
@@ -84,6 +98,7 @@ function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
     } else if (action.name === "Move") {
         applyMoveAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "LayEgg") {
+        applyLayEggAction(gameState, colonyNumber, antNumber, action, stage);
         // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
     } else if (action.name === "Dig") {
         applyDigAction(gameState, colonyNumber, antNumber, action, stage);

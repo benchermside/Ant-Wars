@@ -274,22 +274,37 @@ const commandingAnAnt = {
             const coord = selectedAntDisplayed.location;
             const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
             if (terrain === 5) {
-                buttons.push({
-                    label: "Lay Egg",
-                    action: function() {
-                        // We decided to lay an egg. Record that.
-                        playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
+                const eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, selectedAntDisplayed.location);
+                if(eggStack === null || eggStack.numberOfEggs < 3) {
+                    buttons.push({
+                        label: "Lay Egg",
+                        action: function() {
+                            //lay egg here
+                            //need to check for MAX EGG NUMBERS!!!!!!!!!!
+                            console.log("Layinging at eggggggggggg");
+                            const eggLoc = selectedAntDisplayed.location;
+                            let eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, eggLoc);
+                            if(eggStack === null) {
+                                eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
+                                displayedGameState.colonies[playerColony].eggs.push(eggStack);
+                            } else {
+                                eggStack.numberOfEggs += 1;
+                            }
+                            // We decided to lay an egg. Record that.
+                            playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
 
-                        // Don't move anywhere
-                        selectedAntDisplayed.location = selectedAntStartOfTurn.location;
 
-                        // Now switch modes
-                        changeUIMode(uiModes.readyToEnterMoves);
+                            // Don't move anywhere
+                            selectedAntDisplayed.location = selectedAntStartOfTurn.location;
 
-                        // Re-render the screen
-                        render();
-                    },
-                });
+                            // Now switch modes
+                            changeUIMode(uiModes.readyToEnterMoves);
+
+                            // Re-render the screen
+                            render();
+                        },
+                    });
+                }
             }
         }
         if (selectedAntDisplayed.cast === "Worker") {

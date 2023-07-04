@@ -23,7 +23,24 @@ function getAntsAt(ants, coord, beginIndex){
         }
     }
     return antsAt;
+}
 
+/*
+Given an array of eggStacks, Returns the eggStack at the specified coord.  If beginIndex is given returns egg from that index to the end of the
+array.  If it is not specified returns all eggs at that coord.
+ */
+function getEggAt(eggs, coord, beginIndex){
+    if (beginIndex===undefined){
+        beginIndex = 0;
+    }
+
+    const eggAt = {};
+    for (let i = beginIndex; i < eggs.length; i++) {
+        if (coordEqual(eggs[i].location, coord)){
+            return eggs[i];
+        }
+    }
+    return null;
 }
 
 /*
