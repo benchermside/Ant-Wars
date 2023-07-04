@@ -49,4 +49,21 @@ function findNeighbors(terrainGrid, x, y) {
 }
 
 
-
+/*
+ * This is passed a seed (any 32 bit number). It will return a function of no arguments which can be called
+ * repeatedly to return a series of different floats in the range from 0 (inclusive) to 1 (exclusive). For
+ * the same seed, the same series of numbers will be generated.
+ *
+ * This is intended to be used as a repeatable pseudo-random number generator. The source code comes from
+ * https://stackoverflow.com/questions/521295/seeding-the-random-number-generator-in-javascript/47593316#47593316
+ * (where it is called "mulberry32"). Some research shows that this PSRNG isn't great but it's fairly good for
+ * one that has only 32 bits of seed -- and that's satisfactory for our purposes for now.
+ */
+function newRandomSequence(seed) {
+    return function() {
+        var t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}

@@ -94,27 +94,72 @@ function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
 
 
 /*
- * This function is passed the following fields:
- *   * colonySelections - an array of ColonySelections (see dataStructures.js), one for each colony
- *       which contains the intended actions for the ants of that colony.
- *   * stage - the stage to render. Must be a number 0 through 12 (inclusive).
+ * This function is passed an animationState.
  *
- * It returns a new GameState which is a copy of the original that has been modified to perform the
- * indicated stage of the requested actions. (As a special case, for stage 0 it will return a copy
- * of the original itself since stage 0 always has no changes.)
+ * It returns a new GameState which is a copy of the startOfTurnGameState that has been modified
+ * to perform the animationState's current stage. When the substage is "Before" or "Interacting"
+ * it returns the game state taking into account interactions up to that stage but NOT the
+ * interactions from that stage. When the substage is "After" it takes into account the interactions
+ * from that stage as well. (It does NOT show the interactions in the "Interacting" stage, because
+ * that's not part of the GameState.)
  */
-function stagedGameState(colonySelections, stage) {
-    if (stage === 0) {
-        return structuredClone(startOfTurnGameState);
-    } else {
-        let newGameState = structuredClone(startOfTurnGameState);
-        colonySelections.forEach((colonySelection, colonyNumber) => {
-            colonySelection.actionSelections.forEach((action, antNumber) => {
-                applyActionStage(newGameState, colonyNumber, antNumber, action, stage)
-            })
+function gameStateForStage(animationState) {
+    // --- Start with a copy of the startOfTurnGameState ---
+    let newGameState = structuredClone(startOfTurnGameState);
+
+    // --- Move the pieces ---
+    animationState.colonySelections.forEach((colonySelection, colonyNumber) => {
+        colonySelection.actionSelections.forEach((action, antNumber) => {
+            applyActionStage(newGameState, colonyNumber, antNumber, action, animationState.stage)
+        })
+    });
+
+    // --- Apply interactions ---
+    const numInteractionsToApply = animationState.substage === "After" ? animationState.stage : animationState.stage - 1;
+    for (let stageNum = 0; stageNum < numInteractionsToApply; stageNum++) {
+        animationState.interactions[stageNum].forEach(i => {
+            newGameState.colonies[i.colonyNumber].ants[i.antNumber].numberOfAnts -= i.numberLost;
         });
-        return newGameState;
     }
+
+    // --- Return it ---
+    return newGameState;
+}
+
+
+/*
+ * This is where unplanned things like interactions between colonies occur.
+ *
+ * It gets called after each stage 1..12. It is passed the displayedGameState for that
+ * stage PRIOR to applying any interactions, and it returns the list of interactions to
+ * apply. It is allowed (encouraged!) to use the randomNumberSource in animationState
+ * to determine outcomes. (WARNING: When we allow running it backward, this way of using
+ * the randomNumberSource will need to change.
+ */
+function interactionsForStage(displayedGameState, animationState) {
+    return []; // FIXME: Need to write this
+}
+
+
+/*
+ * This is called during animation to display the interactions (battles). It is passed a
+ * single stage's list of interactions to be displayed. It can read displayedGameState
+ * for information. It should not modify it -- the interactions are not part of the
+ * game state.
+ *
+ * For now, we're using indicated hexes to show the battles, but we'll eventually want
+ * better graphics.
+ */
+function showInteractions(interactions) {
+    interactions.forEach(i => {
+        const coord = displayedGameState.colonies[i.colonyNumber].ants[i.antNumber].location;
+        indicatedHexes.push(
+            {
+                location: coord,
+                color: "#FF0000",
+            }
+        );
+    });
 }
 
 
@@ -122,9 +167,17 @@ function stagedGameState(colonySelections, stage) {
  * This is a key part of watching the turn happen.
  *
  * It gets called with an animationState which is an object containing these fields:
- *  * startGameState -- a GameState showing how things were BEFORE we begin moving
  *  * colonySelections -- the choices of what actions all the ants and colonies want to take
  *  * stage -- set to 0 initially, it will range up to 12 as we step through the steps of the animation
+ *  * substage -- set to one of "Before", "Interacting", or "After". Stage 0 will only have "After"; all
+ *        the other stages will run through the substages in order.
+ *  * interactions -- this is an array of interactions objects (see dataStrucures.js). After
+ *        first animating each stage, a new entry will be added, so the interactions for stage x are at
+ *        interactions[x-1].
+ *  * randomNumberSource -- a sequence that generates random numbers to use during the animation. It
+ *        is a function which can be called to return a number such that 0 <= x < 1. The series of
+ *        numbers returned will be the same for the randomNumberSource passed to each machine that is
+ *        executing the animation.
  *
  * This function sets the global displayedGameState to a single stage of the animation (which one depends
  * on the stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
@@ -132,16 +185,53 @@ function stagedGameState(colonySelections, stage) {
  * in which cases it advances to the next turn and moves into the state for entering the next turn's actions.
  */
 function animate(animationState) {
-    if (animationState.stage <= 12) {
-        displayedGameState = stagedGameState(animationState.colonySelections, animationState.stage);
+    if (animationState.stage === 0) {
+        displayedGameState = structuredClone(startOfTurnGameState);
         render();
         animationState.stage += 1;
-        setTimeout(animate, 500, animationState);
+        animationState.substage = "Before";
+        setTimeout(animate, 200, animationState);
+    } else if (animationState.stage <= 12) {
+        if (animationState.substage === "Before") {
+            displayedGameState = gameStateForStage(animationState);
+            render();
+            animationState.substage = "Interacting";
+            setTimeout(animate, 200, animationState);
+        } else if (animationState.substage === "Interacting") {
+            // NOTE: if we're always moving forward, then displayedGameState is already correct
+            const newInteractions = interactionsForStage(displayedGameState, animationState);
+            animationState.interactions.push(newInteractions);
+            showInteractions(newInteractions);
+            render();
+            animationState.substage = "After";
+            setTimeout(animate, 200, animationState);
+        } else if (animationState.substage === "After") {
+            indicatedHexes.length = 0; // remove interactions
+            displayedGameState = gameStateForStage(animationState);
+            render();
+            animationState.stage += 1;
+            animationState.substage = "Before";
+            setTimeout(animate, 200, animationState);
+        } else {
+            throw Error(`Invalid animationState.substage of '${animationState.substage}'.`);
+        }
     } else {
         sweepScreen("#FFFFFF"); // show blank screen briefly
         setTimeout(
             function() {
-                startOfTurnGameState = structuredClone(displayedGameState); // advance to the new turn!
+                // --- make what we're displaying be the new turn's state ---
+                startOfTurnGameState = displayedGameState; // advance to the new turn!
+
+                // --- merge any ant stacks ---
+                // Merge any stacks that have joined together
+                startOfTurnGameState.colonies.forEach(colony => {
+                    colony.ants = mergeAnts(colony.ants);
+                });
+
+                // --- base the new displayedGameState on the updated startOfTurnGameState ---
+                displayedGameState = structuredClone(startOfTurnGameState);
+
+                // --- start the new turn ---
                 startNewTurn();
                 render();
             },

@@ -39,10 +39,18 @@ const watchingTurnHappen = {
         // --- Put the game state back to how it started ---
         displayedGameState = structuredClone(startOfTurnGameState);
 
+        // --- Find the random seed for this turn. ---
+        // NOTE: Later we'll need to get this from the host
+        // NOTE: Pick a random number that fits into 32 bits
+        const seed = Math.floor(Math.random() * 0xFFFFFFFF);
+
         // --- Now call the animation function which will run for a few seconds, then exit the mode ---
         const animationState = {
             colonySelections: getColonySelections(),
             stage: 0,
+            substage: "After",
+            interactions: [],
+            randomNumberSource: newRandomSequence(seed),
         };
         sweepScreen("#000000"); // show blank screen briefly
         setTimeout(animate, 500, animationState); // then run the animation

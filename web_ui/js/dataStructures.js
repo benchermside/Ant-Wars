@@ -310,4 +310,20 @@
         color: "#FFFF0066",
     }
 
+
+    // Interactions:
+    //
+    // This describes all the interactions between different colonies that that happened in a
+    // particular stage of enacting a turn.
+    //
+    // In the future we almost certainly will need a whole different structure, but for now the
+    // ONLY kind of interaction that can happen is loss of ants from some stacks. So this is
+    // simply a list of {colonyNumber, antNumber, numberLost} objects. The count is only the
+    // amount lost in THIS stage, NOT the cumulative amount lost since the beginning of the turn.
+    //
+    // Example:
+    let interactions = [
+        {colonyNumber: 0, antNumber: 2, numberLost: 2},
+        {colonyNumber: 1, antNumber: 1, numberLost: 1},
+    ];
 }
