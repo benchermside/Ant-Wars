@@ -244,7 +244,12 @@ const commandingAnAnt = {
             playerActionSelections[uiMode.selectedAntNumber] = move;
 
             // Now change the ant's displayed location to show it on the screen
-            displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = move.steps[move.steps.length - 1];
+            const displayedAnt = displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
+            if (move.steps.length >1){
+                displayedAnt.facing = getNewFacing(move.steps[move.steps.length - 2],move.steps[move.steps.length - 1] );
+            }
+            displayedAnt.location = move.steps[move.steps.length - 1];
+
         } else {
             // clicked away; we should exit out of commanding an ant mode
         }
