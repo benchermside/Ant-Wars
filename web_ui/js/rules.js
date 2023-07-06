@@ -13,7 +13,7 @@ const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2} //matches each a
 // This finds the list of allowed locations an ant can move to. It is passed a GameState (see
 // dataStructures.js), an integer specifying which colony we want the moves for, and an integer
 // specifying which ant in that colony we want the moves of. It returns a MoveLocations.
-function possibleMoves(gameState, colonyNumber, antNumber) {
+function oldPossibleMoves(gameState, colonyNumber, antNumber) {
     const notMovable = new Set([0, 1, 2, 3])   //list of all hex types that you CANNOT move through
     const possibleMoves = [];
     const numSteps = 1;
@@ -66,7 +66,7 @@ function generateSteps(destination){
     }
 }
 
-//helper for possable moves
+//helper for possibleMoves
 //takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
 function isCast(ants, cast){
     for(var i=0; i<ants.length; i++){
@@ -77,8 +77,22 @@ function isCast(ants, cast){
     return true;
 }
 
-// FIXME: Rename this
-function newPossibleMoves(gameState, colonyNumber, antNumber){
+//helper for possibleMoves
+//takes a list of ant stacks and checks if all ant stacks are in the same colony, if so returns true. otherwise returns false
+function isColony(ants, colony){
+    for(var i=0; i<ants.length; i++){
+        if(!(ants[i].colony === colony)){
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+// finds the allowed moves an ant can move to and returns a list of the paths
+// of those moves (I think)
+function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
     const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
     const moves = [];
@@ -104,8 +118,8 @@ function newPossibleMoves(gameState, colonyNumber, antNumber){
     for(let index=moves.length; index > -1; index=index-1){
         for(let destination in moves[index]){
             let playerColony = 0; // which colony (by number) the current player is running
-            const occupents = getAntsAt(gameState.colonies[colonyNumber].ants, moves[index][destination].coord);
-            if(isCast(occupents, movingAnt.cast)) {
+            const occupents = getAntsAt(displayedGameState.colonies[colonyNumber].ants, moves[index][destination].coord);
+            if(isColony(occupents, colonyNumber, isCast(occupents, movingAnt.cast)) {
                 const steps = generateSteps(moves[index][destination]);
                 const action = {
                     "name": "Move",
@@ -184,7 +198,7 @@ if (TESTING) {
             },
         ],
     };
-    console.log(possibleMoves(currentGameState, 0, 0));
+    console.log(oldPossibleMoves(currentGameState, 0, 0));
 }
 //for testing delete later
 const inputState = {

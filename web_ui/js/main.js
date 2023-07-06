@@ -120,7 +120,7 @@ function getColonySelections() {
         } else {
             // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
             const actionSelections = colony.ants.map((antState, antNumber) => {
-                const moveActions = newPossibleMoves(startOfTurnGameState, colonyNumber, antNumber);
+                const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, colonyNumber, antNumber);
                 if (moveActions.length === 0) {
                     return {name: "None"}; // can't move; so do nothing
                 } else {
@@ -209,6 +209,7 @@ function initializeStartingPosition() {
             eggs: [],
             ants: [
                 {location: [14,7],facing: 1, cast: "Worker", numberOfAnts: 2},
+                {location: [6,6],facing: 1, cast: "Worker", numberOfAnts: 2},
                 {location: [15, 6], facing: 1, cast: "Queen", numberOfAnts: 1},
                 {location: [15, 8], facing: 1, cast: "Soldier",numberOfAnts: 4},
                 {location: [15,7], facing: 0, cast:"Larva", numberOfAnts: 1}

@@ -163,7 +163,7 @@ const commandingAnAnt = {
         const newUIMode = Object.create(commandingAnAnt);
 
         // Find out the allowed moves
-        const moveActions = newPossibleMoves(startOfTurnGameState, playerColony, selectedAntNumber);
+        const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // record the selectedAntNumber and moveActions
         newUIMode.selectedAntNumber = selectedAntNumber;
