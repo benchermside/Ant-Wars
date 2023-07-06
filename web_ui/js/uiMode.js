@@ -29,13 +29,12 @@
 // to get the list of buttons to display for the user actions. Each button is an object that
 // matches the specifications documented in the function "setActionButtons".
 //
-// Some UI modes have additional fields. Specifically, the commandingAnAnt mode has a field
-// named "selectedAntNumber" which will always be set to the number of an ant in the player's
-// colony which is currently being commanded.
+// Some UI modes need to track additional information. This will be stored in the uiModeData
+// global variable which is cleared out and re-created each time we change modes.
 
 
 const watchingTurnHappen = {
-    enterMode: function() {
+    enterMode: function(uiModeData) {
         // --- Put the game state back to how it started ---
         displayedGameState = structuredClone(startOfTurnGameState);
 
@@ -55,18 +54,25 @@ const watchingTurnHappen = {
             substage: "After",
             interactions: [],
             randomNumberSource: newRandomSequence(seed),
+            animateSpeed: 50,
         };
+        uiModeData.animationState = animationState;
         sweepScreen("#000000"); // show blank screen briefly
         setTimeout(animate, 500, animationState); // then run the animation
     },
 
-    exitMode: function() {
+    exitMode: function(uiModeData) {
     },
 
-    onClickHex: function(coord) {
+    onClickHex: function(coord, uiModeData) {
+        // If you click while watching the turn play out we'll assume you're in a hurry, and we'll just
+        // speed up the rest of the animation.
+        uiModeData.animationState.animateSpeed = 1;
     },
 
-    actionButtons: () => [],
+    actionButtons: function(uiModeData) {
+        return [];
+    },
 };
 
 /*
@@ -75,7 +81,7 @@ const watchingTurnHappen = {
  * the "default" mode.
  */
 const readyToEnterMoves = {
-    enterMode: function() {
+    enterMode: function(uiModeData) {
         // Indicate the ants that still need to be moved`
         indicatedHexes.length = 0;
         playerActionSelections.forEach((actionSelection, antNumber) => {
@@ -89,11 +95,11 @@ const readyToEnterMoves = {
         });
     },
 
-    exitMode: function() {
+    exitMode: function(uiModeData) {
         highlightedHex = null; // de-select the currently selected location (if any)
     },
 
-    onClickHex: function(coord) {
+    onClickHex: function(coord, uiModeData) {
         if (coord === null) { // if we clicked off the map
             if (highlightedHex === null) {
                 // Nothing was selected, and we clicked off the map: nothing at all happens!
@@ -119,7 +125,10 @@ const readyToEnterMoves = {
                         if (coordEqual(ant.location, coord)) {
                             // We just selected a player's ant!
                             selectedAnAnt = true;
-                            changeUIMode(uiModes.commandingAnAnt.newState(antNumber));
+                            const data = {
+                                selectedAntNumber: antNumber,
+                            };
+                            changeUIMode("commandingAnAnt", data);
                         }
                     }
                 });
@@ -128,7 +137,7 @@ const readyToEnterMoves = {
         }
     },
 
-    actionButtons: function() {
+    actionButtons: function(uiModeData) {
         // If we've entered moves for ALL ants, enable the end-turn button
         const enableEndTurn = playerActionSelections.every(action => action !== null);
         return [
@@ -136,7 +145,7 @@ const readyToEnterMoves = {
                 label: enableEndTurn? "End Turn" : "Skip Remaining Ants",
                 action: function() {
                     // The turn is truly ended and now we're going to watch the turn happen.
-                    changeUIMode(uiModes.watchingTurnHappen);
+                    changeUIMode("watchingTurnHappen");
                 },
             }
         ]
@@ -146,36 +155,15 @@ const readyToEnterMoves = {
 
 /*
  * This is a uiMode which is used when the player has selected an ant and is giving instructions on
- * what that ant should do. There is a field, "selectedAntNumber" which will always be set to the
- * number of the ant that is being commanded. There is a field "moveActions" which is an array of
- * the move actions that the ant can take. There is also a field "newState" that is used for
- * creating the specific commandingAnAnt instance that has the selectedAntNumber field set.
+ * what that ant should do. In uiModeData it expects a field, "selectedAntNumber" which will always
+ * be set to the number of the ant that is being commanded and a field "moveActions" which is an array
+ * of the move actions that the ant can take.
  */
 const commandingAnAnt = {
 
-    /*
-     * You don't enter the general "commandingAnAnt" mode, instead you make a SPECIFIC "commandingAnAnt"
-     * state for that particular ant. So call commandingAnAnt.newState(selectedAntNumber) to create that
-     * specific state to pass to the changeUIMode() function.
-     */
-    newState: function(selectedAntNumber) {
-        // Make a NEW copy since we'll be setting a field in the object
-        const newUIMode = Object.create(commandingAnAnt);
-
-        // Find out the allowed moves
-        const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
-
-        // record the selectedAntNumber and moveActions
-        newUIMode.selectedAntNumber = selectedAntNumber;
-        newUIMode.moveActions = moveActions;
-
-        // return it
-        return newUIMode;
-    },
-
-    enterMode: function() {
-        const selectedAntNumber = uiMode.selectedAntNumber;
-        const moveActions = uiMode.moveActions;
+    enterMode: function(uiModeData) {
+        const selectedAntNumber = uiModeData.selectedAntNumber;
+        uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // Find previous action (if any) so we can revert it
         const prevAction = playerActionSelections[selectedAntNumber];
@@ -206,7 +194,7 @@ const commandingAnAnt = {
 
         // now make visible the places we can move to
         indicatedHexes.length = 0; // clear out any indicated hexes
-        moveActions.forEach(moveAction => {
+        uiModeData.moveActions.forEach(moveAction => {
             const destination = moveAction.steps[moveAction.steps.length - 1]; // last step is the location
             const indication = {
                 location: destination,
@@ -216,12 +204,12 @@ const commandingAnAnt = {
         });
     },
 
-    exitMode: function() {
+    exitMode: function(uiModeData) {
         highlightedHex = null; // deselect it
         indicatedHexes.length = 0; // remove all items from the array
     },
 
-    onClickHex: function(coord) {
+    onClickHex: function(coord, uiModeData) {
         // --- find out if we clicked a place we can move to ---
         let selectedADestination = false;
         indicatedHexes.forEach(indication => {
@@ -233,7 +221,7 @@ const commandingAnAnt = {
         // --- do things ---
         if (selectedADestination) {
             // We decided to move this ant someplace. Find that one and set it.
-            const movesEndingWhereWeSelected = uiMode.moveActions.filter(moveAction => {
+            const movesEndingWhereWeSelected = uiModeData.moveActions.filter(moveAction => {
                 const moveDestination = moveAction.steps[moveAction.steps.length - 1];
                 return coordEqual(moveDestination, coord);
             });
@@ -245,10 +233,10 @@ const commandingAnAnt = {
             const move = movesEndingWhereWeSelected[0];
 
             // Make the move
-            playerActionSelections[uiMode.selectedAntNumber] = move;
+            playerActionSelections[uiModeData.selectedAntNumber] = move;
 
             // Now change the ant's displayed location to show it on the screen
-            const displayedAnt = displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
+            const displayedAnt = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
             if (move.steps.length >1){
                 displayedAnt.facing = getNewFacing(move.steps[move.steps.length - 2],move.steps[move.steps.length - 1] );
             }
@@ -257,24 +245,24 @@ const commandingAnAnt = {
         } else {
             // clicked away; we should exit out of commanding an ant mode
         }
-        changeUIMode(uiModes.readyToEnterMoves);
+        changeUIMode("readyToEnterMoves");
         render();
     },
 
-    actionButtons: function() {
+    actionButtons: function(uiModeData) {
         const buttons = [];
-        const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
-        const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber];
+        const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+        const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
 
         buttons.push({
             label: "Do Nothing",
             action: function() {
                 // We decided to move this ant someplace. Record that.
-                playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
+                playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
                 // Now change the ant's displayed location back to its start location to show it on the screen
                 selectedAntDisplayed.location = selectedAntStartOfTurn.location;
                 // Now switch modes
-                changeUIMode(uiModes.readyToEnterMoves);
+                changeUIMode("readyToEnterMoves");
                 render();
             },
         });
@@ -300,14 +288,14 @@ const commandingAnAnt = {
                                 eggStack.numberOfEggs += 1;
                             }
                             // We decided to lay an egg. Record that.
-                            playerActionSelections[uiMode.selectedAntNumber] = {name: "LayEgg"};
+                            playerActionSelections[uiModeData.selectedAntNumber] = {name: "LayEgg"};
 
 
                             // Don't move anywhere
                             selectedAntDisplayed.location = selectedAntStartOfTurn.location;
 
                             // Now switch modes
-                            changeUIMode(uiModes.readyToEnterMoves);
+                            changeUIMode("readyToEnterMoves");
 
                             // Re-render the screen
                             render();
@@ -317,30 +305,34 @@ const commandingAnAnt = {
             }
         }
         if (selectedAntDisplayed.cast === "Worker") {
-            const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber);
+            const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
             if (digTunnelActions.length > 0) {
                 buttons.push({
                     label: "Dig Tunnel",
                     action: function() {
-                        changeUIMode(uiModes.selectingDigTunnelLocation.newState(uiMode.selectedAntNumber, digTunnelActions));
+                        const data = {
+                            selectedAntNumber: uiModeData.selectedAntNumber,
+                            digTunnelActions: digTunnelActions,
+                        };
+                        changeUIMode("selectingDigTunnelLocation", data);
                         render();
                     }
                 });
             }
 
-            const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiMode.selectedAntNumber);
+            const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
             if (digChamberActions.length > 0) {
                 const digAction = digChamberActions[0]; // there will only be one, and this is it
                 buttons.push({
                     label: "Dig Chamber",
                     action: function() {
                         // Record the action
-                        playerActionSelections[uiMode.selectedAntNumber] = digAction;
+                        playerActionSelections[uiModeData.selectedAntNumber] = digAction;
                         // Display that it will be dug
                         const loc = digAction.location;
                         displayedGameState.terrainGrid[loc[1]][loc[0]] = 5;
                         // Return to entering commands
-                        changeUIMode(uiModes.readyToEnterMoves);
+                        changeUIMode("readyToEnterMoves");
                         render();
                     }
                 });
@@ -349,46 +341,23 @@ const commandingAnAnt = {
         return buttons;
     },
 
-    selectedAntNumber: 0, // this will get set to the ant number of the ant that is selected.
 };
 
 
 /*
  * This is a uiMode which is used when a player has selected an ant and told it to dig and is
- * giving it instructions on where to dig. There is a field, "selectedAntNumber" which will
- * always be set to the number of the ant that is being commanded. There is also a field named
- * "whatToDig" which is a WhatToDig (see dataStructures.js). There is also a field
- * "newState" that is used for creating the specific commandingAnAnt instance that has the
- * selectedAntNumber field set.
+ * giving it instructions on where to dig. In the uiModeData, there is a field, "selectedAntNumber"
+ * which will always be set to the number of the ant that is being commanded. There is also a field
+ * named "whatToDig" which is a WhatToDig (see dataStructures.js).
  */
 const selectingDigTunnelLocation = {
 
-    /*
-     * You don't enter the general "selectingDigTunnelLocation" mode, instead you make a SPECIFIC
-     * "selectingDigTunnelLocation" state for that particular ant and the particular thing it is
-     * making. So call selectingDigTunnelLocation.newState(selectedAntNumber, digTunnelActions) to
-     * create that specific state to pass to the changeUIMode() function.
-     */
-    newState: function(selectedAntNumber, digTunnelActions) {
-        // Make a NEW copy since we'll be setting a field in the object
-        const newUIMode = Object.create(selectingDigTunnelLocation);
-
-        // record the fields
-        newUIMode.selectedAntNumber = selectedAntNumber;
-        newUIMode.digTunnelActions = digTunnelActions;
-
-        // return it
-        return newUIMode;
-    },
-
-    enterMode: function() {
-        const selectedAntNumber = uiMode.selectedAntNumber;
-
+    enterMode: function(uiModeData) {
         // Highlight the digging ant
-        highlightedHex = displayedGameState.colonies[playerColony].ants[selectedAntNumber].location;
+        highlightedHex = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].location;
 
         // indicate the hexes that it could dig
-        uiMode.digTunnelActions.forEach(digAction => {
+        uiModeData.digTunnelActions.forEach(digAction => {
             const indication = {
                 location: digAction.location,
                 color: "#FFFF0066",
@@ -397,33 +366,33 @@ const selectingDigTunnelLocation = {
         });
     },
 
-    exitMode: function() {
+    exitMode: function(uiModeData) {
         highlightedHex = null; // deselect it
         indicatedHexes.length = 0; // remove all items from the array
     },
 
-    onClickHex: function(coord) {
+    onClickHex: function(coord, uiModeData) {
         // In case we clicked wrong, default to setting the action to "None":
-        playerActionSelections[uiMode.selectedAntNumber] = {name: "None"};
+        playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
 
         // See if we clicked on one of the diggable locations...
-        uiMode.digTunnelActions.forEach(digAction => {
+        uiModeData.digTunnelActions.forEach(digAction => {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
-                playerActionSelections[uiMode.selectedAntNumber] = digAction;
+                playerActionSelections[uiModeData.selectedAntNumber] = digAction;
                 // Now change the ant's displayed location to show it on the screen
-                displayedGameState.colonies[playerColony].ants[uiMode.selectedAntNumber].location = coord;
+                displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].location = coord;
                 // Now show the tunnel as having been dug!
                 displayedGameState.terrainGrid[coord[1]][coord[0]] = 4;
             }
         });
 
         // Either way, we're exiting this short-term mode
-        changeUIMode(uiModes.readyToEnterMoves);
+        changeUIMode("readyToEnterMoves");
         render();
     },
 
-    actionButtons: function() {
+    actionButtons: function(uiModeData) {
         return [];
     },
 };

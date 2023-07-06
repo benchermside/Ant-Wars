@@ -201,6 +201,8 @@ function showInteractions(interactions) {
  *        is a function which can be called to return a number such that 0 <= x < 1. The series of
  *        numbers returned will be the same for the randomNumberSource passed to each machine that is
  *        executing the animation.
+ * * animateSpeed - a number that controls the speed of the animation. 100 is "pretty darn slow", 1 is
+ *        "as fast as possible". Must be a positive integer.
  *
  * This function sets the global displayedGameState to a single stage of the animation (which one depends
  * on the stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
@@ -213,13 +215,13 @@ function animate(animationState) {
         render();
         animationState.stage += 1;
         animationState.substage = "Before";
-        setTimeout(animate, 200, animationState);
+        setTimeout(animate, 2 * animationState.animateSpeed, animationState);
     } else if (animationState.stage <= 12) {
         if (animationState.substage === "Before") {
             displayedGameState = gameStateForStage(animationState);
             render();
             animationState.substage = "Interacting";
-            setTimeout(animate, 200, animationState);
+            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
         } else if (animationState.substage === "Interacting") {
             // NOTE: if we're always moving forward, then displayedGameState is already correct
             const newInteractions = interactionsForStage(displayedGameState, animationState);
@@ -227,14 +229,14 @@ function animate(animationState) {
             showInteractions(newInteractions);
             render();
             animationState.substage = "After";
-            setTimeout(animate, 200, animationState);
+            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
         } else if (animationState.substage === "After") {
             indicatedHexes.length = 0; // remove interactions
             displayedGameState = gameStateForStage(animationState);
             render();
             animationState.stage += 1;
             animationState.substage = "Before";
-            setTimeout(animate, 200, animationState);
+            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
         } else {
             throw Error(`Invalid animationState.substage of '${animationState.substage}'.`);
         }

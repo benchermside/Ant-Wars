@@ -119,7 +119,8 @@ function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
         for(let destination in moves[index]){
             let playerColony = 0; // which colony (by number) the current player is running
             const occupents = getAntsAt(displayedGameState.colonies[colonyNumber].ants, moves[index][destination].coord);
-            if(isColony(occupents, colonyNumber, isCast(occupents, movingAnt.cast)) {
+            if(isColony(occupents, colonyNumber, isCast(occupents, movingAnt.cast)))
+            {
                 const steps = generateSteps(moves[index][destination]);
                 const action = {
                     "name": "Move",

@@ -9,13 +9,16 @@ let displayedGameState = null;  // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
 let playerColony = 0; // which colony (by number) the current player is running
-let uiMode = null; // ONLY set this by calling uiModes.<some-mode>.enterMode(), or inside that function.
 let playerActionSelections = null;
 
 let  Rules = {
     MAX_EGGS:3,
     TURNS_TO_HATCH:3
 };
+
+/* ========= Variables Private to This File ========= */
+let uiMode = null; // ONLY set this by calling changeUIMode()
+let uiModeData = {}; // an object where the uiMode can store some data fields. Access it ONLY in this file.
 
 
 /* ========= Functions ========= */
@@ -74,22 +77,30 @@ function setActionButtons(buttons) {
 
 /*
  * This is called to change the UIMode. It is the only place that is allowed to change the global
- * variable uiMode.
+ * variable uiMode. The first parameter must be a sting which is a field in uiModes identifying
+ * the mode to enter. The second parameter is optional -- if provided it should be an object
+ * which will be used as the uiModeData.
  */
-function changeUIMode(newUIMode) {
+function changeUIMode(newUIMode, data) {
     // Exit the existing mode
     if (uiMode !== null) {
-        uiMode.exitMode();
+        uiMode.exitMode(uiModeData);
     }
 
+    // Reset the data
+    uiModeData = data === undefined ? {} : data;
+
     // Assign to the global variable uiMode
-    uiMode = newUIMode;
+    uiMode = uiModes[newUIMode];
+    if (uiMode === undefined) {
+        throw new Error(`changeUIMode() called with invalid mode ${newUIMode}.`);
+    }
 
     // Enter the new mode
-    uiMode.enterMode()
+    uiMode.enterMode(uiModeData);
 
     // Reset the list of action buttons
-    setActionButtons(uiMode.actionButtons());
+    setActionButtons(uiMode.actionButtons(uiModeData));
 }
 
 
@@ -101,7 +112,7 @@ function startNewTurn() {
     playerActionSelections = startOfTurnGameState.colonies[playerColony].ants.map(() => null);
 
     // begin in readyToEnter uiMode.
-    changeUIMode(uiModes.readyToEnterMoves);
+    changeUIMode("readyToEnterMoves");
 }
 
 
@@ -165,7 +176,7 @@ function onBoardResize() {
  */
 function onCanvasClick(pixelCoord) {
     const gridCoord = hexClicked(displayedGameState, hexSize, pixelCoord)
-    uiMode.onClickHex(gridCoord);
+    uiMode.onClickHex(gridCoord, uiModeData);
 }
 
 
