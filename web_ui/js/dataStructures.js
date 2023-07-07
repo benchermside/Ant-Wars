@@ -321,6 +321,9 @@
     // simply a list of {colonyNumber, antNumber, numberLost} objects. The count is only the
     // amount lost in THIS stage, NOT the cumulative amount lost since the beginning of the turn.
     //
+    // The field numberLost must always be a non-negative integer, but it CAN be zero (which is an
+    // interaction that has no effect).
+    //
     // Example:
     let interactions = [
         {colonyNumber: 0, antNumber: 2, numberLost: 2},

@@ -151,6 +151,41 @@ function gameStateForStage(animationState) {
 
 
 /*
+ * This handles a fight between two different ant stacks.
+ *
+ * It takes as input two ants (known to be of different colonies) and a
+ * randomNumberSource. It uses the randomNumberSource to generate random
+ * numbers as needed, and it returns an array of two numbers, which are
+ * the number of ants lost from each ant stack (in order). Either (or both)
+ * number can be zero. The numberLost values are returned in the same order
+ * as the two ants that were passed.
+ */
+function fight(ant0, ant1, randomNumberSource) {
+    let numberLost0 = 0;
+    for (let i = 0; i < ant1.numberOfAnts; i++) {
+        if (numberLost0 < ant0.numberOfAnts) {
+            const chanceToKill = 1 / 3;
+            if (randomNumberSource() < chanceToKill) {
+                numberLost0 += 1;
+            }
+        }
+    }
+
+    let numberLost1 = 0;
+    for (let i = 0; i < ant0.numberOfAnts; i++) {
+        if (numberLost1 < ant1.numberOfAnts) {
+            const chanceToKill = 1 / 3;
+            if (randomNumberSource() < chanceToKill) {
+                numberLost1 += 1;
+            }
+        }
+    }
+
+    return [numberLost0, numberLost1];
+}
+
+
+/*
  * This is where unplanned things like interactions between colonies occur.
  *
  * It gets called after each stage 1..12. It is passed the displayedGameState for that
@@ -160,7 +195,33 @@ function gameStateForStage(animationState) {
  * the randomNumberSource will need to change.
  */
 function interactionsForStage(displayedGameState, animationState) {
-    return []; // FIXME: Need to write this
+    const result = []; // an array of interactions
+    const colonies = displayedGameState.colonies;
+
+    // Let's compare every pair of colonies
+    for (let someColonyNum = 0; someColonyNum < colonies.length; someColonyNum++) {
+        const someColony = colonies[someColonyNum];
+        const someAnts = someColony.ants;
+        for (let otherColonyNum = someColonyNum + 1; otherColonyNum < colonies.length; otherColonyNum++) {
+            const otherColony = colonies[otherColonyNum];
+            const otherAnts = otherColony.ants;
+            // at this point we have two different colonies, each with a list of ants
+
+            someAnts.forEach((someAnt, someAntNum) => {
+                otherAnts.forEach((otherAnt, otherAntNum) => {
+                    if (coordEqual(someAnt.location, otherAnt.location)) {
+                        // at this point we have 2 ants... let them fight!!
+                        const numbersLost = fight(someAnt, otherAnt, animationState.randomNumberSource);
+                        result.push( {colonyNumber: someColonyNum, antNumber: someAntNum, numberLost: numbersLost[0]} );
+                        result.push( {colonyNumber: otherColonyNum, antNumber: otherAntNum, numberLost: numbersLost[1]} );
+                    }
+                });
+            });
+
+        }
+    }
+
+    return result;
 }
 
 
