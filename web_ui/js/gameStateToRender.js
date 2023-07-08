@@ -11,7 +11,7 @@ Given an array of antStates, Returns an array of indexes into that array that in
 ants at the specified coord.  If beginIndex is given returns ants from that index to the end of the
 array.  If it is not specified returns all ants at that coord.
  */
-function getAntsAt(ants, coord, beginIndex){
+function getAntNumsAt(ants, coord, beginIndex){
     if (beginIndex===undefined){
         beginIndex = 0;
     }
@@ -74,7 +74,7 @@ function mergeAnts(ants){
 
     ants.forEach((ant, antNumber) => {
         if (!merged[antNumber]){
-            const antsAt = getAntsAt(ants, ant.location, antNumber);
+            const antsAt = getAntNumsAt(ants, ant.location, antNumber);
             let newAnt = structuredClone(ant);
 
             //const obj4 = structuredClone(obj3);
