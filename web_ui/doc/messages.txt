@@ -1,0 +1,121 @@
+This file contains a description of the various messages that we are sending
+between browsers to implement multi-player behavior.
+
+
+================================
+===== Game "ant-war:lobby" =====
+
+<join lobby>
+    Description:
+        This is called to enter the lobby and begin engaging with other users in
+        the process of selecting who will join a game.
+    Example:
+        {
+            action: "setGame",
+            gameId: "ant-war:lobby",
+            playerId: <username>,
+        }
+
+
+requestListOfGames
+    Description:
+        This is called to request that anyone in the lobby who is currently offering
+        a public game and looking for participants send the announceNewGame message.
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:lobby",
+            data: {
+                event: "requestListOfGames",
+            },
+        }
+
+
+announceNewGame
+    Description:
+        This is called by a participant who wants to host a public game and is offering to
+        allow others to join it. It includes a description of the game being offered. It
+        is sent when a participant first decides to offer the game and also whenever someone
+        sends requestListOfGames.
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:lobby",
+            data: {
+                event: "announceNewGame",
+                gameData: {
+                    gameCode: <offeredGameCode>,
+                    hostUsername: <username>,
+                    map: <selectedMap>,
+                    rules: <selectedRules>,
+                },
+            },
+        }
+
+
+withdrawNewGame
+    Description:
+        This is called by a participant who HAD been offering to host a public game but now
+        is no longer offering that game (perhaps they changed their mind, perhaps the game
+        filled up).
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:lobby",
+            data: {
+                event: "withdrawNewGame",
+                gameData: {
+                    gameCode: <offeredGameCode>,
+                },
+            },
+        }
+
+
+requestToJoinGame
+    Description:
+        This is called by a participant asking to join a particular game (public OR private).
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:lobby",
+            data: {
+                event: "requestToJoinGame",
+                gameCode: <acceptedGameCode>,
+                playerId: <username>,
+            },
+        }
+
+
+invitedToGame
+    Description:
+        This is called by a participant who is planning to host a game after receiving a
+        requestToJoinGame message to inform the player that their request has been granted
+        and they should now leave the lobby and join the game.
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:lobby",
+            data: {
+                event: "requestToJoinGame",
+                gameCode: <acceptedGameCode>,
+                playerId: <username>,
+            },
+        }
+
+
+=======================================
+===== Game "ant-war:g:<gameCode>" =====
+
+
+<join game>
+    Description:
+        This is called to enter the lobby and begin engaging with other users in
+        the process of selecting who will join a game.
+    Example:
+        {
+            action: "setGame",
+            gameId: "ant-war:g:<gameCode>",
+            playerId: <username>,
+        }
+
+

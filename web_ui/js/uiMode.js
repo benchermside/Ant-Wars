@@ -176,6 +176,7 @@ const commandingAnAnt = {
 
     enterMode: function(uiModeData) {
         const selectedAntNumber = uiModeData.selectedAntNumber;
+        highlightedHex = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber].location;
 
         // Revert the previous action
         const prevAction = playerActionSelections[selectedAntNumber];
@@ -199,6 +200,9 @@ const commandingAnAnt = {
         } else {
             throw Error(`Unexpected type of action: ${prevAction.name}`);
         }
+
+        // (Now that it's reverted) find out where the ant is allowed to move
+        uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // Now put us back to an action of "None".
         playerActionSelections[selectedAntNumber] = {"name": "None"};
