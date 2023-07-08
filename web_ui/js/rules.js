@@ -6,7 +6,7 @@
 // and a colonySelections. It returns the new GameState.
 //
 const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
-const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2} //matches each ant to their movement speed
+const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2, "Larva":1} //matches each ant to their movement speed
 
 
 
