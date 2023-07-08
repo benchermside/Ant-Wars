@@ -86,7 +86,7 @@ requestToJoinGame
         }
 
 
-invitedToGame
+initializeGame
     Description:
         This is called by a participant who is planning to host a game after receiving a
         requestToJoinGame message to inform the player that their request has been granted
@@ -96,9 +96,13 @@ invitedToGame
             action: "sendMessage",
             gameId: "ant-war:lobby",
             data: {
-                event: "requestToJoinGame",
-                gameCode: <acceptedGameCode>,
-                playerId: <username>,
+                event: "initializeGame",
+                gameData: {
+                    gameCode: <gameCode>,
+                    map: <selectedMap>,
+                    rules: <selectedRules>,
+                    playerList: [<username>, <username>],
+                },
             },
         }
 

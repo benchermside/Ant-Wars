@@ -199,6 +199,53 @@ function withdrawNewGame() {
 
 
 /*
+ * Request to join a particular game.
+ */
+function requestToJoinGame() {
+    const gameCode = document.getElementById("game-code-field").value;
+    const username = document.getElementById("username-field").value;
+    const messageBody = {
+        event: "requestToJoinGame",
+        gameData: {
+            gameCode: gameCode,
+            playerId: username,
+        },
+    };
+    const fullMessage = {action: "sendMessage", gameId: "ant-war:lobby", data: messageBody};
+    const messageAsText = JSON.stringify(fullMessage);
+    webSocket.send(messageAsText);
+    console.log("Sending", fullMessage); // Log the message
+
+    socketListener = waitingForInviteSocketListener;
+}
+
+
+/*
+ * This is called to actually kick off the game as a host.
+ */
+function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers) {
+    // --- Tell the other players to join in ---
+    const messageBody = {
+        event: "initializeGame",
+        gameData: {
+            gameCode: gameCode,
+            map: selectedMap,
+            rules: selectedRules,
+            playerList: listOfPlayers,
+        },
+    };
+    const fullMessage = {action: "sendMessage", gameId: "ant-war:lobby", data: messageBody};
+    const messageAsText = JSON.stringify(fullMessage);
+    webSocket.send(messageAsText);
+    console.log("Sending", fullMessage); // Log the message
+
+    // --- Start it ourselves ---
+    console.log(`I am the host now for game ${gameCode}.`);
+    window.location.href = "/index.html";
+}
+
+
+/*
  * This returns a random GameId. Right now, GameIds are 5-digit numbers that do not begin with 0.
  */
 function pickRandomGameId() {
@@ -230,6 +277,30 @@ function displayLobbyGamesSocketListener(messageData) {
 function advertisingHostedGameSocketListener(messageData) {
     if (messageData.event === "requestListOfGames") {
         announceNewGame();
+    }
+    const offeredGameCode = document.getElementById("offered-game-code-field").value;
+    if (messageData.event === "requestToJoinGame" && messageData.gameData.gameCode === offeredGameCode) {
+        const selectedMap = document.getElementById("pick-map-field").value;
+        const selectedRules = document.getElementById("pick-rules-field").value;
+        const myUsername = document.getElementById("username-field").value;
+        const otherUsername = messageData.gameData.playerId;
+        const listOfPlayers = [myUsername, otherUsername]; // NOTE: This line is currently hard-coded for 2-player games
+        beginGameAsHost(offeredGameCode, selectedMap, selectedRules, listOfPlayers);
+    }
+}
+
+function waitingForInviteSocketListener(messageData) {
+    const gameCode = document.getElementById("game-code-field").value;
+    if (messageData.event === "initializeGame" && messageData.gameData.gameCode === gameCode) {
+        const playerList = messageData.gameData.playerList;
+        const username = document.getElementById("username-field").value;
+        for (let playerNum = 0; playerNum < playerList.length; playerNum++) {
+            if (playerList[playerNum] === username) {
+                // We got invited! We can go there now.
+                console.log(`I am player ${playerNum} now for game ${gameCode}.`);
+                window.location.href = "/index.html";
+            }
+        }
     }
 }
 
@@ -319,6 +390,7 @@ window.addEventListener("load", function() {
         "find-game-back-btn": () => {goToScreen("hostOrJoin");},
         "invite-btn": () => {goToScreen("waitForPlayers");},
         "wait-for-players-back-btn": () => {goToScreen("hostGame")},
+        "join-game-btn": () => {requestToJoinGame()},
     };
     for (const btnName in buttonActions) {
         document.getElementById(btnName).onclick = buttonActions[btnName];
