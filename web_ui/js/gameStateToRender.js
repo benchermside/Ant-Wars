@@ -25,6 +25,25 @@ function getAntsAt(ants, coord, beginIndex){
     return antsAt;
 }
 
+/*
+Given an array of antStates, Returns an array of antStates that indicate the
+ants at the specified coord.  If beginIndex is given returns ants from that index to the end of the
+array.  If it is not specified returns all ants at that coord.
+ */
+function getAntStatesAt(ants, coord, beginIndex){
+    if (beginIndex===undefined){
+        beginIndex = 0;
+    }
+
+    const antsAt = [];
+    for (let i = beginIndex; i < ants.length; i++) {
+        if (coordEqual(ants[i].location, coord)){
+            antsAt.push(ants[i]);
+        }
+    }
+    return antsAt;
+}
+
 
 
 /*

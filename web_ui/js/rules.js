@@ -69,7 +69,8 @@ function generateSteps(destination){
 //helper for possibleMoves
 //takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
 function isCast(ants, cast){
-    for(var i=0; i<ants.length; i++){
+    for(let i=0; i<ants.length; i++){
+        console.log("currently in is Cast and printing ants[i] ",ants[i]);
         if(!(ants[i].cast === cast)){
             return false;
         }
@@ -92,9 +93,14 @@ function isColony(ants, colony){
 
 // finds the allowed moves an ant can move to and returns a list of the paths
 // of those moves (I think)
+
 function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
-    const movingAnt = gameState.colonies[colonyNumber].ants[antNumber];
+    const movingAnt = displayedGameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
+    //moves is a list of objects used as hashtables.  Each hashtable is indexed by the coord destination the ant can move to
+    //as a json string and contains an object which has the field coord and prevLocation.  coord represents the
+    //same location as the index (the destination) in a two length array.
+    //The prevLocation represents the previous location in the path to that spot.
     const moves = [];
     moves[0] = {};
     moves[0][JSON.stringify(movingAnt.location)] = {"coord": movingAnt.location, "prevLocation": null};
@@ -111,16 +117,17 @@ function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
                     }
                 }
             }
-            
+
         }
     }
     const toReturn = [];
     for(let index=moves.length; index > -1; index=index-1){
         for(let destination in moves[index]){
-            let playerColony = 0; // which colony (by number) the current player is running
-            const occupents = getAntsAt(displayedGameState.colonies[colonyNumber].ants, moves[index][destination].coord);
-            if(isColony(occupents, colonyNumber, isCast(occupents, movingAnt.cast)))
-            {
+            const occupants = getAntStatesAt(displayedGameState.colonies[colonyNumber].ants, moves[index][destination].coord);
+            if (occupants.length>0){
+                console.log("occupants[0].cast", occupants[0].cast);
+            }
+            if(isCast(occupants, movingAnt.cast)) {
                 const steps = generateSteps(moves[index][destination]);
                 const action = {
                     "name": "Move",
@@ -132,6 +139,8 @@ function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
     }
     return toReturn;
 }
+
+
 
 
 
