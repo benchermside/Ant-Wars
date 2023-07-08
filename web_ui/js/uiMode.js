@@ -224,7 +224,7 @@ const commandingAnAnt = {
 
     exitMode: function(uiModeData) {
         console.log("highlightedHex in existMOde of commanding an ant", highlightedHex);
-        //highlightedHex = null; // deselect it
+        highlightedHex = null; // deselect it
         indicatedHexes.length = 0; // remove all items from the array
     },
 
@@ -386,19 +386,9 @@ const commandingAnAnt = {
             buttons.push({
                 label: "Feed larva worker ant food",
                 action: function() {
-                    //Choose where ant matures
-                    console.log("Layinging an eggggggggggg");
-                    const eggLoc = selectedAntDisplayed.location;
-                    let eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, eggLoc);
-                    if(eggStack === null) {
-                        eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
-                        displayedGameState.colonies[playerColony].eggs.push(eggStack);
-                    } else {
-                        eggStack.numberOfEggs += 1;
-                    }
+                    //HAVE TO WRITE THIS
                     // We decided to lay an egg. Record that.
-                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "LayEgg"};
-
+                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToWorker"};
 
                     // Don't move anywhere
                     selectedAntDisplayed.location = selectedAntStartOfTurn.location;
@@ -413,19 +403,9 @@ const commandingAnAnt = {
             buttons.push({
                 label: "Feed larva warrior ant food",
                 action: function() {
-                    //lay egg here
-                    console.log("Layinging an eggggggggggg");
-                    const eggLoc = selectedAntDisplayed.location;
-                    let eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, eggLoc);
-                    if(eggStack === null) {
-                        eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
-                        displayedGameState.colonies[playerColony].eggs.push(eggStack);
-                    } else {
-                        eggStack.numberOfEggs += 1;
-                    }
+                    //HAVE TO WRITE THIS
                     // We decided to lay an egg. Record that.
-                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "LayEgg"};
-
+                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToSoldier"};
 
                     // Don't move anywhere
                     selectedAntDisplayed.location = selectedAntStartOfTurn.location;
