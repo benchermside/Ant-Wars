@@ -25,6 +25,8 @@ function getAntsAt(ants, coord, beginIndex){
     return antsAt;
 }
 
+
+
 /*
 Given an array of eggStacks, Returns the eggStack at the specified coord.  If beginIndex is given returns egg from that index to the end of the
 array.  If it is not specified returns all eggs at that coord.
@@ -61,13 +63,12 @@ function mergeAnts(ants){
             newAnt.location = copiedLocation;
             newAnt.numberOfAnts = 0;
             antsAt.forEach((antToMergeNumber)=>{
-                merged[antToMergeNumber] = true;
                 const antToMerge = ants[antToMergeNumber];
-                if (antToMerge.cast !== newAnt.cast){
-                    // FIXME: Because it is crashing the program, I'm commenting out the following line for the moment
-                    // throw Error("Error: ant merge not of same cast");
+                if (antToMerge.cast === newAnt.cast){
+                    merged[antToMergeNumber] = true;
+                    newAnt.numberOfAnts = newAnt.numberOfAnts + antToMerge.numberOfAnts;
                 }
-                newAnt.numberOfAnts = newAnt.numberOfAnts + antToMerge.numberOfAnts;
+
             });
             mergedAnts.push(newAnt);
         }

@@ -7,6 +7,8 @@ let hexSize = 120; // starting size
 let startOfTurnGameState = null; // will be populated during initialization
 let displayedGameState = null;  // will be populated during initialization
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
+let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the ant number of last selected ant in that hex
+                                  //during that turn;
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
 let playerColony = 0; // which colony (by number) the current player is running
 let playerActionSelections = null;
@@ -211,6 +213,9 @@ function initializeStartingPosition() {
                 {location: [4, 5], facing: 6, cast: "Queen", numberOfAnts: 2},
                 {location: [5, 6], facing: 1, cast: "Worker", numberOfAnts:2},
                 {location: [2, 8], facing: 5, cast: "Worker", numberOfAnts: 5},
+                {location: [2, 8], facing: 1, cast: "Queen", numberOfAnts: 3},
+                {location: [2, 8], facing: 5, cast: "Larva", numberOfAnts: 2},
+                {location: [2, 8], facing: 3, cast: "Soldier", numberOfAnts: 3},
                 {location: [7,6],  facing: 2, cast: "Larva", numberOfAnts: 3}
             ],
             foodSupply: 20,

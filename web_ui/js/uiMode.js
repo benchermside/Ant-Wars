@@ -100,6 +100,11 @@ const readyToEnterMoves = {
     },
 
     onClickHex: function(coord, uiModeData) {
+        console.log ("at start of onClickHex");
+        console.log ("coord", coord);
+        console.log ("highlightedHex ", highlightedHex);
+        console.log ("lastSelectedAntNum", lastSelectedAntNum);
+
         if (coord === null) { // if we clicked off the map
             if (highlightedHex === null) {
                 // Nothing was selected, and we clicked off the map: nothing at all happens!
@@ -110,28 +115,36 @@ const readyToEnterMoves = {
                 render();
             }
         } else { // if we clicked a hex
-            if (coordEqual(coord, highlightedHex)) {
-                // we clicked on the selected hex; just de-select it.
+            const playerAnts = displayedGameState.colonies[playerColony].ants;
+            let antNums = null;
+
+            //if we have already selected ants at this hex only get ants AFTER the ones we have selected
+            console.log ("highlightedHex ", highlightedHex);
+            console.log ("lastSelectedAntNum", lastSelectedAntNum);
+            if (coordEqual(coord, highlightedHex) && (lastSelectedAntNum !== null)){
+                console.log ("already selected an ant");
+                antNums = getAntsAt(playerAnts, coord, lastSelectedAntNum+1);
+            } else {
+                antNums = getAntsAt(playerAnts, coord);
+            }
+            console.log ("antNums:", antNums);
+
+            if (coordEqual(coord, highlightedHex) && (antNums.length <1))
+            {
+                // we clicked on the selected hex and have cycled through any ants on it ; just de-select it.
                 highlightedHex = null;
+                lastSelectedAntNum = null;
                 render();
             } else {
-                // we selected some hex
-                highlightedHex = null; // de-select the currently selected location (if any)
                 highlightedHex = coord;
-                let selectedAnAnt = false;
-                const playerAnts = displayedGameState.colonies[playerColony].ants;
-                playerAnts.forEach((ant, antNumber) => {
-                    if (!selectedAnAnt) {
-                        if (coordEqual(ant.location, coord)) {
-                            // We just selected a player's ant!
-                            selectedAnAnt = true;
-                            const data = {
-                                selectedAntNumber: antNumber,
-                            };
-                            changeUIMode("commandingAnAnt", data);
-                        }
-                    }
-                });
+                if (antNums.length >0) {
+                    lastSelectedAntNum = antNums[0];
+                    const data = {
+                        selectedAntNumber: lastSelectedAntNum,
+                    };
+                    console.log("commandingAntAnt data:", data);
+                    changeUIMode("commandingAnAnt", data);
+                }
                 render();
             }
         }
@@ -194,6 +207,9 @@ const commandingAnAnt = {
         // Now put us back to an action of "None".
         playerActionSelections[selectedAntNumber] = {"name": "None"};
 
+        // Now find the list of valid move actions. Store it in uiModeData
+        uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
+
         // now make visible the places we can move to
         indicatedHexes.length = 0; // clear out any indicated hexes
         uiModeData.moveActions.forEach(moveAction => {
@@ -207,11 +223,37 @@ const commandingAnAnt = {
     },
 
     exitMode: function(uiModeData) {
+        console.log("highlightedHex in existMOde of commanding an ant", highlightedHex);
         highlightedHex = null; // deselect it
         indicatedHexes.length = 0; // remove all items from the array
     },
 
     onClickHex: function(coord, uiModeData) {
+        console.log ("in onClickHex of commanding an ant");
+        //either deselect space and enter ready to enter move mode or if there
+        //is more than one ant on space enter commanding an ant for that ant
+        console.log ("highlightedHex",highlightedHex);
+
+        if (coordEqual(coord, highlightedHex)){
+            const playerAnts = displayedGameState.colonies[playerColony].ants;
+            //get ants AFTER the ones we have selected
+            antNums = getAntsAt(playerAnts, coord, lastSelectedAntNum+1);
+            console.log ("antNums:", antNums);
+            if (antNums.length >0){
+                lastSelectedAntNum = antNums[0];
+                const data = {
+                    selectedAntNumber: lastSelectedAntNum,
+                };
+                console.log("commandingAntAnt data:", data);
+                changeUIMode("commandingAnAnt", data);
+            } else {
+                changeUIMode("readyToEnterMoves");
+            }
+            render();
+            return;
+        }
+
+
         // --- find out if we clicked a place we can move to ---
         let selectedADestination = false;
         indicatedHexes.forEach(indication => {
@@ -245,6 +287,7 @@ const commandingAnAnt = {
             displayedAnt.location = move.steps[move.steps.length - 1];
 
         } else {
+
             // clicked away; we should exit out of commanding an ant mode
         }
         changeUIMode("readyToEnterMoves");
@@ -274,13 +317,12 @@ const commandingAnAnt = {
             const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
             if (terrain === 5) {
                 const eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, selectedAntDisplayed.location);
-                if(eggStack === null || eggStack.numberOfEggs < 3) {
+                if(eggStack === null || eggStack.numberOfEggs < Rules.MAX_EGGS) {
                     buttons.push({
                         label: "Lay Egg",
                         action: function() {
                             //lay egg here
-                            //need to check for MAX EGG NUMBERS!!!!!!!!!!
-                            console.log("Layinging at eggggggggggg");
+                            console.log("Layinging an eggggggggggg");
                             const eggLoc = selectedAntDisplayed.location;
                             let eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, eggLoc);
                             if(eggStack === null) {
@@ -340,7 +382,46 @@ const commandingAnAnt = {
                 });
             }
         }
-        return buttons;
+        if (selectedAntDisplayed.cast === "Larva") {
+            buttons.push({
+                label: "Feed larva worker ant food",
+                action: function() {
+                    //HAVE TO WRITE THIS
+                    // We decided to lay an egg. Record that.
+                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToWorker"};
+
+                    // Don't move anywhere
+                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+
+                    // Now switch modes
+                    changeUIMode("readyToEnterMoves");
+
+                    // Re-render the screen
+                    render();
+                },
+            });
+            buttons.push({
+                label: "Feed larva warrior ant food",
+                action: function() {
+                    //HAVE TO WRITE THIS
+                    // We decided to lay an egg. Record that.
+                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToSoldier"};
+
+                    // Don't move anywhere
+                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+
+                    // Now switch modes
+                    changeUIMode("readyToEnterMoves");
+
+                    // Re-render the screen
+                    render();
+                },
+            });
+
+        }
+
+
+            return buttons;
     },
 
 };
