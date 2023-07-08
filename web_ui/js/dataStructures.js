@@ -329,4 +329,49 @@
         {colonyNumber: 0, antNumber: 2, numberLost: 2},
         {colonyNumber: 1, antNumber: 1, numberLost: 1},
     ];
+
+    // Player:
+    //
+    // The specification for who will be playing.
+    //
+    // This is an object with the following fields:
+    //  * playerType - this is either "Human" or "AI".
+    //  * username - the username of this participant (whether human or AI).
+    //  * aiType - the type of the AI. This is used ONLY if playerType === "AI". The
+    //       only allowed value is "RandomMover".
+    //
+    // Example:
+    const player1 = {
+        playerType: "Human",
+        username: "Ann",
+    };
+    const player2 = {
+        playerType: "AI",
+        username: "RandomRobot",
+        aiType: "RandomMover",
+    };
+    
+
+    // GameSettings:
+    //
+    // This contains the information needed to start up a game.
+    //
+    // It has the following fields:
+    //  * gameCode - the numeric ID of the game
+    //  * map - the code for the particular map the game will use. "map1" is the only valid value now.
+    //  * rules - the code for the particular rules the game will use. "rules1" is the only valid value now.
+    //  * playerList - an array of Player objects, one for each player. The first one in the list will
+    //        be the one that's the host.
+    //
+    // Example:
+    let gameSettings = {
+        gameCode: "87634",
+        map: "map1",
+        rules: "rules1",
+        playerList: [
+            { playerType: "Human", username: "Ann" },
+            { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },
+        ],
+    };
+
 }

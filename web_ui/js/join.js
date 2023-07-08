@@ -221,18 +221,39 @@ function requestToJoinGame() {
 
 
 /*
+ * This is called to kick off a single-player game against the only AI.
+ */
+function beginSinglePlayerGame() {
+    console.log(`Beginning single-player game.`);
+    const gameSettings = {
+        gameCode: "00000", // special dummy code for single player games
+        map: "map1",
+        rules: "rules1",
+        playerList: [
+            { playerType: "Human", username: "Me" },
+            { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },
+        ],
+    };
+    const playerNum = 0; // in a single-player game we are always the host
+    beginShowingGame(gameSettings, playerNum);
+}
+
+
+/*
  * This is called to actually kick off the game as a host.
  */
 function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers) {
+    const gameSettings = {
+        gameCode: gameCode,
+        map: selectedMap,
+        rules: selectedRules,
+        playerList: listOfPlayers,
+    };
+    const playerNum = 0; // We are the host!
     // --- Tell the other players to join in ---
     const messageBody = {
         event: "initializeGame",
-        gameData: {
-            gameCode: gameCode,
-            map: selectedMap,
-            rules: selectedRules,
-            playerList: listOfPlayers,
-        },
+        gameSettings: gameSettings,
     };
     const fullMessage = {action: "sendMessage", gameId: "ant-war:lobby", data: messageBody};
     const messageAsText = JSON.stringify(fullMessage);
@@ -241,7 +262,26 @@ function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers) {
 
     // --- Start it ourselves ---
     console.log(`I am the host now for game ${gameCode}.`);
-    window.location.href = "/index.html";
+    beginShowingGame(gameSettings, playerNum);
+}
+
+
+/*
+ * This is called to actually kick off the game when someone else is the host.
+ */
+function beginGameAsGuest(gameSettings, playerNum) {
+    console.log(`I am player ${playerNum} now for game ${gameSettings.gameCode}.`);
+    beginShowingGame(gameSettings, playerNum);
+}
+
+
+/*
+ * This switches out of the joining-a-game portion into the actual playing-a-game portion.
+ */
+function beginShowingGame(gameSettings, playerNum) {
+    hideElemById("join-game-div");
+    showElemById("play-game-div");
+    startGame(gameSettings, playerNum);
 }
 
 
@@ -284,21 +324,24 @@ function advertisingHostedGameSocketListener(messageData) {
         const selectedRules = document.getElementById("pick-rules-field").value;
         const myUsername = document.getElementById("username-field").value;
         const otherUsername = messageData.gameData.playerId;
-        const listOfPlayers = [myUsername, otherUsername]; // NOTE: This line is currently hard-coded for 2-player games
+        const listOfPlayers = [
+            { playerType: "Human", username: myUsername },
+            { playerType: "Human", username: otherUsername },
+        ];
         beginGameAsHost(offeredGameCode, selectedMap, selectedRules, listOfPlayers);
     }
 }
 
 function waitingForInviteSocketListener(messageData) {
     const gameCode = document.getElementById("game-code-field").value;
-    if (messageData.event === "initializeGame" && messageData.gameData.gameCode === gameCode) {
-        const playerList = messageData.gameData.playerList;
+    if (messageData.event === "initializeGame" && messageData.gameSettings.gameCode === gameCode) {
+        const playerList = messageData.gameSettings.playerList;
         const username = document.getElementById("username-field").value;
         for (let playerNum = 0; playerNum < playerList.length; playerNum++) {
-            if (playerList[playerNum] === username) {
+            const player = playerList[playerNum];
+            if (player.playerType === "Human" && player.username === username) {
                 // We got invited! We can go there now.
-                console.log(`I am player ${playerNum} now for game ${gameCode}.`);
-                window.location.href = "/index.html";
+                beginGameAsGuest(messageData.gameSettings, playerNum);
             }
         }
     }
@@ -381,7 +424,7 @@ window.addEventListener("load", function() {
 
     // ==== Set up button actions ====
     const buttonActions = {
-        "single-player-btn": () => {window.location.href = "/index.html";},
+        "single-player-btn": () => {beginSinglePlayerGame();},
         "multi-player-btn": () => {goToScreen("hostOrJoin"); registerPlayerInLobby();},
         "host-or-join-back-btn": () => {goToScreen("pickPlayerCount");},
         "host-game-btn": () => {goToScreen("hostGame");},

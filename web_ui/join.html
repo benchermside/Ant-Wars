@@ -12,99 +12,126 @@
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/join.css">
+    <link rel="stylesheet" href="css/ant-wars.css">
+
     <meta name="theme-color" content="#fafafa">
   </head>
 
   <body class="top-level">
 
-    <div id="pick-player-count-panel" class="joining-controls">
-      <h1>Ant-War</h1>
-      <button id="single-player-btn">Single-Player</button>
-      <div id="multi-player-widget">
-        <div class="labeled-field-div">
-          <label for="username-field">Username:</label>
-          <input type="text" id="username-field" required size="15" disabled>
+    <div id="join-game-div">
+
+      <div id="pick-player-count-panel" class="joining-controls">
+        <h1>Ant-War</h1>
+        <button id="single-player-btn">Single-Player</button>
+        <div id="multi-player-widget">
+          <div class="labeled-field-div">
+            <label for="username-field">Username:</label>
+            <input type="text" id="username-field" required size="15" disabled>
+          </div>
+          <button id="multi-player-btn" disabled>Multi-Player</button>
         </div>
-        <button id="multi-player-btn" disabled>Multi-Player</button>
       </div>
+
+      <div id="host-or-join-panel" class="joining-controls hidden">
+        <h1 class="has-back-button">
+          <button id="host-or-join-back-btn" class="back-button">Back</button>
+          <span>Ant-War</span>
+        </h1>
+        <button id="host-game-btn">Host Game</button>
+        <button id="find-game-btn">Find Game</button>
+      </div>
+
+      <div id="host-game-panel" class="joining-controls hidden">
+        <h1 class="has-back-button">
+          <button id="host-game-back-btn" class="back-button">Back</button>
+          <span>Ant-War</span>
+        </h1>
+        <div class="labeled-field-div">
+          <label for="pick-map-field">Map:</label>
+          <select id="pick-map-field">
+            <option value="map1">Default Map</option>
+            <option value="map2">Other Map</option>
+          </select>
+        </div>
+        <div class="labeled-field-div">
+          <label for="pick-rules-field">Rules:</label>
+          <select id="pick-rules-field">
+            <option value="rules1">Default Rules</option>
+            <option value="rules2">Experimental Rules</option>
+          </select>
+        </div>
+        <div>
+          <input type="checkbox" id="is-private-field">
+          <label for="is-private-field">Private Game</label>
+        </div>
+        <button id="invite-btn">Invite</button>
+      </div>
+
+      <div id="wait-for-players-panel" class="joining-controls hidden">
+        <h1 class="has-back-button">
+          <button id="wait-for-players-back-btn" class="back-button">Back</button>
+          <span>Ant-War</span>
+        </h1>
+        <div>Waiting for players.</div>
+        <div class="labeled-field-div">
+          <label for="offered-game-code-field" disabled>Game Code:</label>
+          <input type="text" id="offered-game-code-field" required>
+        </div>
+      </div>
+
+      <div id="find-game-panel" class="joining-controls hidden">
+        <h1 class="has-back-button">
+          <button id="find-game-back-btn" class="back-button">Back</button>
+          <span>Ant-War</span>
+        </h1>
+        <div id="game-chooser">
+          <div id="zero-games-widget" class="hidden">No Games Available</div>
+          <table id="multi-games-widget">
+            <thead>
+              <tr>
+                <th></th>
+                <th>User</th>
+                <th>Map</th>
+                <th>Rules</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="labeled-field-div">
+          <label for="game-code-field">Game Code:</label>
+          <input type="text" id="game-code-field" required>
+        </div>
+        <button id="join-game-btn" disabled>Join Game</button>
+      </div>
+
     </div>
 
-    <div id="host-or-join-panel" class="joining-controls hidden">
-      <h1 class="has-back-button">
-        <button id="host-or-join-back-btn" class="back-button">Back</button>
-        <span>Ant-War</span>
-      </h1>
-      <button id="host-game-btn">Host Game</button>
-      <button id="find-game-btn">Find Game</button>
+    <div id="play-game-div" class="hidden">
+
+      <h1>Ant-War</h1>
+      <div id="game-content">
+        <canvas id="game-canvas"></canvas>
+        <div id="zoom-controls">
+          <button id="zoom-out-btn">-</button>
+          <button id="zoom-in-btn">+</button>
+        </div>
+        <div id="action-controls"></div>
+      </div>
+
     </div>
 
-    <div id="host-game-panel" class="joining-controls hidden">
-      <h1 class="has-back-button">
-        <button id="host-game-back-btn" class="back-button">Back</button>
-        <span>Ant-War</span>
-      </h1>
-      <div class="labeled-field-div">
-        <label for="pick-map-field">Map:</label>
-        <select id="pick-map-field">
-          <option value="map1">Default Map</option>
-          <option value="map2">Other Map</option>
-        </select>
-      </div>
-      <div class="labeled-field-div">
-        <label for="pick-rules-field">Rules:</label>
-        <select id="pick-rules-field">
-          <option value="rules1">Default Rules</option>
-          <option value="rules2">Experimental Rules</option>
-        </select>
-      </div>
-      <div>
-        <input type="checkbox" id="is-private-field">
-        <label for="is-private-field">Private Game</label>
-      </div>
-      <button id="invite-btn">Invite</button>
-    </div>
-
-    <div id="wait-for-players-panel" class="joining-controls hidden">
-      <h1 class="has-back-button">
-        <button id="wait-for-players-back-btn" class="back-button">Back</button>
-        <span>Ant-War</span>
-      </h1>
-      <div>Waiting for players.</div>
-      <div class="labeled-field-div">
-        <label for="offered-game-code-field" disabled>Game Code:</label>
-        <input type="text" id="offered-game-code-field" required>
-      </div>
-    </div>
-
-    <div id="find-game-panel" class="joining-controls hidden">
-      <h1 class="has-back-button">
-        <button id="find-game-back-btn" class="back-button">Back</button>
-        <span>Ant-War</span>
-      </h1>
-      <div id="game-chooser">
-        <div id="zero-games-widget" class="hidden">No Games Available</div>
-        <table id="multi-games-widget">
-          <thead>
-            <tr>
-              <th></th>
-              <th>User</th>
-              <th>Map</th>
-              <th>Rules</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="labeled-field-div">
-        <label for="game-code-field">Game Code:</label>
-        <input type="text" id="game-code-field" required>
-      </div>
-      <button id="join-game-btn" disabled>Join Game</button>
-    </div>
-
-    <script src="js/vendor/modernizr-3.11.2.min.js"></script>
-    <script src="js/plugins.js"></script>
     <script src="js/join.js"></script>
+    <script src="js/util.js"></script>
+    <script src="js/dataStructures.js"></script>
+    <script src="js/gameStateToRender.js"></script>
+    <script src="js/rules.js"></script>
+    <script src="js/display.js"></script>
+    <script src="js/drawAnt.js"></script>
+    <script src="js/uiMode.js"></script>
+    <script src="js/enactSteps.js"></script>
+    <script src="js/main.js"></script>
   </body>
 
 </html>

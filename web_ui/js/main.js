@@ -237,9 +237,18 @@ function initializeStartingPosition() {
 }
 
 
-/* ========= Run Stuff On Load ========= */
-
-window.addEventListener("load", function() {
+/*
+ * Call this to begin the game.
+ *
+ * Arguments:
+ *  * gameSettings - a GameSettings (see dataStructures.js) specifying the conditions
+ *        for this game.
+ *  * playerNum - specifies which colony is being controlled by this particular
+ *        terminal. ALSO, if playerNum === 0 then this is the host; for any other
+ *        value it is not the host.
+ */
+function startGame(gameSettings, playerNum) {
+    // FIXME: It's ignoring its inputs right now
     // ==== Set up button actions ====
     const zoomInBtnElem = document.getElementById("zoom-in-btn");
     zoomInBtnElem.onclick = function() {
@@ -266,4 +275,19 @@ window.addEventListener("load", function() {
     onBoardResize();
     startNewTurn();
     render();
-});
+}
+
+
+function onSinglePlayerLoad() {
+    const gameSettings = {
+        gameCode: "00000", // special dummy code for single player games
+        map: "map1",
+        rules: "rules1",
+        playerList: [
+            { playerType: "Human", username: "Me" },
+            { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },
+        ],
+    };
+    const playerNum = 0; // in a single-player game we are always the host
+    startGame(gameSettings, playerNum);
+}

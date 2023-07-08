@@ -7,7 +7,7 @@ between browsers to implement multi-player behavior.
 
 <join lobby>
     Description:
-        This is called to enter the lobby and begin engaging with other users in
+        This is sent to enter the lobby and begin engaging with other users in
         the process of selecting who will join a game.
     Example:
         {
@@ -19,7 +19,7 @@ between browsers to implement multi-player behavior.
 
 requestListOfGames
     Description:
-        This is called to request that anyone in the lobby who is currently offering
+        This is sent to request that anyone in the lobby who is currently offering
         a public game and looking for participants send the announceNewGame message.
     Example:
         {
@@ -33,7 +33,7 @@ requestListOfGames
 
 announceNewGame
     Description:
-        This is called by a participant who wants to host a public game and is offering to
+        This is sent by a participant who wants to host a public game and is offering to
         allow others to join it. It includes a description of the game being offered. It
         is sent when a participant first decides to offer the game and also whenever someone
         sends requestListOfGames.
@@ -55,7 +55,7 @@ announceNewGame
 
 withdrawNewGame
     Description:
-        This is called by a participant who HAD been offering to host a public game but now
+        This is sent by a participant who HAD been offering to host a public game but now
         is no longer offering that game (perhaps they changed their mind, perhaps the game
         filled up).
     Example:
@@ -73,7 +73,7 @@ withdrawNewGame
 
 requestToJoinGame
     Description:
-        This is called by a participant asking to join a particular game (public OR private).
+        This is sent by a participant asking to join a particular game (public OR private).
     Example:
         {
             action: "sendMessage",
@@ -88,7 +88,7 @@ requestToJoinGame
 
 initializeGame
     Description:
-        This is called by a participant who is planning to host a game after receiving a
+        This is sent by a participant who is planning to host a game after receiving a
         requestToJoinGame message to inform the player that their request has been granted
         and they should now leave the lobby and join the game.
     Example:
@@ -97,11 +97,21 @@ initializeGame
             gameId: "ant-war:lobby",
             data: {
                 event: "initializeGame",
-                gameData: {
+                gameSettings: {
                     gameCode: <gameCode>,
                     map: <selectedMap>,
                     rules: <selectedRules>,
-                    playerList: [<username>, <username>],
+                    playerList: [
+                        {
+                            playerType: "Human",
+                            username: "Ann",
+                        },
+                        {
+                            playerType: "AI",
+                            username: "RandomRobot",
+                            aiType: "RandomMover",
+                        },
+                    ],
                 },
             },
         }
@@ -113,13 +123,48 @@ initializeGame
 
 <join game>
     Description:
-        This is called to enter the lobby and begin engaging with other users in
-        the process of selecting who will join a game.
+        This is sent by all players (including the host) who are beginning a game after
+        they receive (or send) the initializeGame message.
     Example:
         {
             action: "setGame",
             gameId: "ant-war:g:<gameCode>",
             playerId: <username>,
+        }
+
+
+announceColonySelections
+    Description:
+        This message is sent when a player has determined what actions they intend to take
+        and they want to announce that to the host. They ARE permitted to send a new message
+        again later which will override the first one.
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:g:<gameCode>",
+            data: {
+                event: "announceColonySelections",
+                colonyNumber: <colonyNumber>,
+                colonySelections: <ColonySelections>,
+            },
+        }
+
+
+endOfTurn
+    Description:
+        This is sent by the host after all the players' actions have been received. It
+        contains all the information needed to simulate the turn ending and the next
+        turn beginning.
+    Example:
+        {
+            action: "sendMessage",
+            gameId: "ant-war:g:<gameCode>",
+            data: {
+                event: "endOfTurn",
+                colonyNumber: <colonyNumber>,
+                colonySelections: [<ColonySelections>, <ColonySelections>],
+                randomSeed: <randomSeed>,
+            },
         }
 
 
