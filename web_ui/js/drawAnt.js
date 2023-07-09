@@ -696,4 +696,8 @@ function drawItems(drawContext, gameState, hexSize) {
             }
         });
     });
+    if (lastSelectedAntNum !== null){
+       // lastSelectedAnt =
+    }
+
 }

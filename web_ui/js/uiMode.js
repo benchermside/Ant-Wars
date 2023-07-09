@@ -121,9 +121,9 @@ const readyToEnterMoves = {
             console.log ("lastSelectedAntNum", lastSelectedAntNum);
             if (coordEqual(coord, highlightedHex) && (lastSelectedAntNum !== null)){
                 console.log ("already selected an ant");
-                antNums = getAntsAt(playerAnts, coord, lastSelectedAntNum+1);
+                antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum+1);
             } else {
-                antNums = getAntsAt(playerAnts, coord);
+                antNums = getAntNumsAt(playerAnts, coord);
             }
             console.log ("antNums:", antNums);
 
@@ -253,7 +253,7 @@ const commandingAnAnt = {
         if (coordEqual(coord, highlightedHex)){
             const playerAnts = displayedGameState.colonies[playerColony].ants;
             //get ants AFTER the ones we have selected
-            antNums = getAntsAt(playerAnts, coord, lastSelectedAntNum+1);
+            antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum+1);
             console.log ("antNums:", antNums);
             if (antNums.length >0){
                 lastSelectedAntNum = antNums[0];
