@@ -162,18 +162,10 @@ const readyToEnterMoves = {
                         colonySelections[playerColony].isReadyForEndOfTurn = true;
 
                         // --- Do end of turn if everyone is ready ---
-                        if (isEveryoneReadyForEndOfTurn()) {
-                            cleanUpColonySelections(colonySelections);
-
-                            // FIXME: Should inform the other servers in the game
-
-                            // The turn is truly ended, and now we're going to watch the turn happen.
-                            changeUIMode("watchingTurnHappen");
-                        }
-
+                        hostDoEndOfTurnIfEveryoneIsReady();
                     } else {
                         // --- is NOT the host server ---
-                        // FIXME: Should make an API call to inform the host
+                        announceColonySelections(playerActionSelections);
                     }
                 },
             }

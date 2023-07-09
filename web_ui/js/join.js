@@ -202,6 +202,7 @@ function withdrawNewGame() {
  * Request to join a particular game.
  */
 function requestToJoinGame() {
+    // --- Send the request ---
     const gameCode = document.getElementById("game-code-field").value;
     const username = document.getElementById("username-field").value;
     const messageBody = {
@@ -216,6 +217,7 @@ function requestToJoinGame() {
     webSocket.send(messageAsText);
     console.log("Sending", fullMessage); // Log the message
 
+    // --- Start waiting for the host to invite us ---
     socketListener = waitingForInviteSocketListener;
 }
 
@@ -242,7 +244,7 @@ function beginSinglePlayerGame() {
 /*
  * This is called to actually kick off the game as a host.
  */
-function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers) {
+function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers, username) {
     const gameSettings = {
         gameCode: gameCode,
         map: selectedMap,
@@ -261,16 +263,21 @@ function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers) {
     console.log("Sending", fullMessage); // Log the message
 
     // --- Start it ourselves ---
-    console.log(`I am the host now for game ${gameCode}.`);
+    console.log(`I, user ${username}, am the host now for game ${gameCode}.`);
+    registerInNewGame(username, gameCode);
+    socketListener = hostingGameSocketListener;
     beginShowingGame(gameSettings, playerNum);
 }
 
 
 /*
  * This is called to actually kick off the game when someone else is the host.
+ * // FIXME: Doc fields
  */
-function beginGameAsGuest(gameSettings, playerNum) {
-    console.log(`I am player ${playerNum} now for game ${gameSettings.gameCode}.`);
+function beginGameAsGuest(gameSettings, playerNum, username) {
+    console.log(`I, user ${username}, am now player ${playerNum} for game ${gameSettings.gameCode}.`);
+    registerInNewGame(username, gameSettings.gameCode);
+    socketListener = playingGameSocketListener;
     beginShowingGame(gameSettings, playerNum);
 }
 
@@ -328,7 +335,7 @@ function advertisingHostedGameSocketListener(messageData) {
             { playerType: "Human", username: myUsername },
             { playerType: "Human", username: otherUsername },
         ];
-        beginGameAsHost(offeredGameCode, selectedMap, selectedRules, listOfPlayers);
+        beginGameAsHost(offeredGameCode, selectedMap, selectedRules, listOfPlayers, myUsername);
     }
 }
 
@@ -341,7 +348,7 @@ function waitingForInviteSocketListener(messageData) {
             const player = playerList[playerNum];
             if (player.playerType === "Human" && player.username === username) {
                 // We got invited! We can go there now.
-                beginGameAsGuest(messageData.gameSettings, playerNum);
+                beginGameAsGuest(messageData.gameSettings, playerNum, username);
             }
         }
     }

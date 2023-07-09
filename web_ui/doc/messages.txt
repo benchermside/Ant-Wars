@@ -143,9 +143,9 @@ announceColonySelections
             action: "sendMessage",
             gameId: "ant-war:g:<gameCode>",
             data: {
-                event: "announceColonySelections",
+                event: "announceColonySelection",
                 colonyNumber: <colonyNumber>,
-                colonySelections: <ColonySelections>,
+                colonySelection: <ColonySelection>,
             },
         }
 

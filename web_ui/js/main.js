@@ -10,12 +10,12 @@ let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR n
 let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the ant number of last selected ant in that hex
                                   //during that turn;
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
-let players = null; // list of the player (see dataStructures.js) for each colony.
+let gameSettings = null; // the GameSettings (see dataStructures.js) for the active game (or null before there's a game going on)
 let isHostServer = null; // true or false, whether this is the host for the game
 let playerColony = 0; // which colony (by number) the current player is running
 let playerActionSelections = null; // the actions being entered for the current player's colony
 let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
-            // current selected moves and readiness to end turn of each colony.
+                            // current selected moves and readiness to end turn of each colony.
 
 
 let  Rules = {
@@ -117,7 +117,7 @@ function changeUIMode(newUIMode, data) {
 function startNewTurn() {
     // set up the data strutures where we will collect the moves
     colonySelections = startOfTurnGameState.colonies.map((colony, colonyNumber) => {
-        const player = players[colonyNumber];
+        const player = gameSettings.playerList[colonyNumber];
         if (player.playerType === "Human") {
             // Start humans out with "not ready" and all nulls for the actions
             return {
@@ -171,6 +171,17 @@ function isEveryoneReadyForEndOfTurn() {
 
 
 /*
+ * This is passed an actionSelections list and it returns a version which has replaced any
+ * nulls with DoNothing actions.
+ */
+function completeActionSelections(actionSelections) {
+    return actionSelections.map(actionSelection =>
+        actionSelection === null ? {"name": "None"} : actionSelection
+    );
+}
+
+
+/*
  * This modifies the global variable colonySelections by filling in defaults for anything
  * that is needed to perform the end of turn but might not be entered.
  *
@@ -178,10 +189,26 @@ function isEveryoneReadyForEndOfTurn() {
  */
 function cleanUpColonySelections() {
     colonySelections.forEach(colonySelection => {
-        colonySelection.actionSelections = colonySelection.actionSelections.map(actionSelection =>
-            actionSelection === null ? {"name": "None"} : actionSelection
-        );
+        colonySelection.actionSelections = completeActionSelections(colonySelection.actionSelections);
     });
+}
+
+
+/*
+ * This gets called on the host server when we get new colony selections. It check if we've
+ * received ALL of them, and if so then it will jump directly into performing the end of
+ * turn.
+ */
+function hostDoEndOfTurnIfEveryoneIsReady() {
+    console.log("hostDoEndOfTurnIfEveryoneIsReady", JSON.stringify(colonySelections)); // FIXME: Remove
+    if (isEveryoneReadyForEndOfTurn()) {
+        cleanUpColonySelections(colonySelections);
+
+        // FIXME: Should inform the other servers in the game
+
+        // The turn is truly ended, and now we're going to watch the turn happen.
+        changeUIMode("watchingTurnHappen");
+    }
 }
 
 
@@ -284,24 +311,24 @@ function initializeStartingPosition() {
  * Call this to begin the game.
  *
  * Arguments:
- *  * gameSettings - a GameSettings (see dataStructures.js) specifying the conditions
+ *  * newGameSettings - a GameSettings (see dataStructures.js) specifying the conditions
  *        for this game.
  *  * playerNum - specifies which colony is being controlled by this particular
  *        terminal. ALSO, if playerNum === 0 then this is the host; for any other
  *        value it is not the host.
  */
-function startGame(gameSettings, playerNum) {
+function startGame(newGameSettings, playerNum) {
     // ==== Validate inputs ===
     if (playerNum < 0 || playerNum > 1) {
         throw Error(`Invalid playerNum of ${playerNum}`);
     }
-    const myPlayer = gameSettings.playerList[playerNum];
+    const myPlayer = newGameSettings.playerList[playerNum];
     if (myPlayer.playerType !== "Human") {
         throw Error(`This server's player is not a human.`);
     }
 
-    // === Set up the players ===
-    players = gameSettings.playerList;
+    // === Set up the global settings ===
+    gameSettings = newGameSettings;
     playerColony = playerNum;
     isHostServer = playerNum === 0;
 
