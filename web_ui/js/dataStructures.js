@@ -262,15 +262,19 @@
 
 
 
-    // ColonySelections:
+    // ColonySelection:
     //
-    // A ColonySelections stores the information about what a particular colony wants to do on a turn.
+    // A ColonySelection stores the information about what a particular colony wants to do on a turn.
     //
-    // It is an object with a single field, actionSelections which is a lists of Actions that is
-    // exactly the same length as the list of ants in the GameState.
+    // It is an object with the following fields:
+    //  * isReadyForEndOfTurn - a boolean; true means the player is ready for the turn to end.
+    //  * actionSelections - a list of Actions that is exactly the same length as the list
+    //         of ants in the GameState, although some of the entries can be null instead of
+    //         being a valid action (which means that ant didn't specify what to do).
     //
     // Example:
-    const colonySelections = {
+    const colonySelection = {
+        isReadyForEndOfTurn: true,
         actionSelections: [
             {"name": "None"},
             {"name": "Move", "destination": [2, 3]},

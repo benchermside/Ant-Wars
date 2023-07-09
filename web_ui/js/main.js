@@ -10,8 +10,13 @@ let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR n
 let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the ant number of last selected ant in that hex
                                   //during that turn;
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
+let players = null; // list of the player (see dataStructures.js) for each colony.
+let isHostServer = null; // true or false, whether this is the host for the game
 let playerColony = 0; // which colony (by number) the current player is running
-let playerActionSelections = null;
+let playerActionSelections = null; // the actions being entered for the current player's colony
+let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
+            // current selected moves and readiness to end turn of each colony.
+
 
 let  Rules = {
     MAX_EGGS:3,
@@ -110,8 +115,27 @@ function changeUIMode(newUIMode, data) {
  * This sets up to begin a new turn.
  */
 function startNewTurn() {
-    // begin with all ants having "null" for a move
-    playerActionSelections = startOfTurnGameState.colonies[playerColony].ants.map(() => null);
+    // set up the data strutures where we will collect the moves
+    colonySelections = startOfTurnGameState.colonies.map((colony, colonyNumber) => {
+        const player = players[colonyNumber];
+        if (player.playerType === "Human") {
+            // Start humans out with "not ready" and all nulls for the actions
+            return {
+                isReadyForEndOfTurn: false,
+                actionSelections: colony.ants.map(() => null),
+            };
+        } else if (player.playerType === "AI") {
+            // Go ahead and calculate the AI moves now. (If AIs become slow we can change to
+            // do it in a webworker thread instead.)
+            return {
+                isReadyForEndOfTurn: true,
+                actionSelections: decideAIMoves(startOfTurnGameState, colonyNumber),
+            };
+        } else {
+            throw Error(`Invalid playerType, '${player.playerType}'`);
+        }
+    });
+    playerActionSelections = colonySelections[playerColony].actionSelections;
 
     // begin in readyToEnter uiMode.
     changeUIMode("readyToEnterMoves");
@@ -119,30 +143,44 @@ function startNewTurn() {
 
 
 /*
- * This returns the selections (desired actions) for all the colonies. It obtains them from wherever
- * it needs to -- actions entered, AI logic, or things transmitted over the network.
+ * This returns the moves that the AI chooses to make starting from the given gameState
+ * and assuming the AI is playing the given colonyNumber. It returns a list of actions.
  */
-function getColonySelections() {
-    return startOfTurnGameState.colonies.map((colony, colonyNumber) => {
-        if (colonyNumber === playerColony) {
-            // The player entered moves (probably). Replace any null with the do-nothing action, then use it.
-            const actionSelections = playerActionSelections.map(actionSelection =>
-                actionSelection === null ? {"name": "None"} : actionSelection
-            );
-            return {actionSelections: actionSelections};
+function decideAIMoves(gameState, colonyNumber) {
+    // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
+    const actionSelections = gameState.colonies[colonyNumber].ants.map((antState, antNumber) => {
+        const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, colonyNumber, antNumber);
+        if (moveActions.length === 0) {
+            return {name: "None"}; // can't move; so do nothing
         } else {
-            // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
-            const actionSelections = colony.ants.map((antState, antNumber) => {
-                const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, colonyNumber, antNumber);
-                if (moveActions.length === 0) {
-                    return {name: "None"}; // can't move; so do nothing
-                } else {
-                    // return a random move
-                    return moveActions[Math.floor(Math.random() * moveActions.length)];
-                }
-            });
-            return {actionSelections: actionSelections};
+            // return a random move
+            return moveActions[Math.floor(Math.random() * moveActions.length)];
         }
+    });
+    return actionSelections;
+}
+
+
+/*
+ * This returns true if all the players are ready for the end of turn, and false if
+ * at least one is not ready.
+ */
+function isEveryoneReadyForEndOfTurn() {
+    return colonySelections.every(colonySelection => colonySelection.isReadyForEndOfTurn);
+}
+
+
+/*
+ * This modifies the global variable colonySelections by filling in defaults for anything
+ * that is needed to perform the end of turn but might not be entered.
+ *
+ * Right now, that's just changing null's to doNothing actions.
+ */
+function cleanUpColonySelections() {
+    colonySelections.forEach(colonySelection => {
+        colonySelection.actionSelections = colonySelection.actionSelections.map(actionSelection =>
+            actionSelection === null ? {"name": "None"} : actionSelection
+        );
     });
 }
 
@@ -253,7 +291,20 @@ function initializeStartingPosition() {
  *        value it is not the host.
  */
 function startGame(gameSettings, playerNum) {
-    // FIXME: It's ignoring its inputs right now
+    // ==== Validate inputs ===
+    if (playerNum < 0 || playerNum > 1) {
+        throw Error(`Invalid playerNum of ${playerNum}`);
+    }
+    const myPlayer = gameSettings.playerList[playerNum];
+    if (myPlayer.playerType !== "Human") {
+        throw Error(`This server's player is not a human.`);
+    }
+
+    // === Set up the players ===
+    players = gameSettings.playerList;
+    playerColony = playerNum;
+    isHostServer = playerNum === 0;
+
     // ==== Set up button actions ====
     const zoomInBtnElem = document.getElementById("zoom-in-btn");
     zoomInBtnElem.onclick = function() {

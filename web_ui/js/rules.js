@@ -3,7 +3,7 @@
  */
 
 // This updates after a set of moves has been selected. It is passed a GameState (see dataStructures.js)
-// and a colonySelections. It returns the new GameState.
+// and a ColonySelection. It returns the new GameState.
 //
 const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
 const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2, "Larva":0} //matches each ant to their movement speed

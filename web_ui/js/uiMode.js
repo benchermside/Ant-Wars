@@ -40,8 +40,6 @@ const watchingTurnHappen = {
 
         //reduce all turn to hatch eggs by 1; if any reach 0 put an action on the quuee???
 
-
-
         // --- Find the random seed for this turn. ---
         // NOTE: Later we'll need to get this from the host
         // NOTE: Pick a random number that fits into 32 bits
@@ -49,7 +47,7 @@ const watchingTurnHappen = {
 
         // --- Now call the animation function which will run for a few seconds, then exit the mode ---
         const animationState = {
-            colonySelections: getColonySelections(),
+            colonySelections: colonySelections,
             stage: 0,
             substage: "After",
             interactions: [],
@@ -157,8 +155,26 @@ const readyToEnterMoves = {
             {
                 label: enableEndTurn? "End Turn" : "Skip Remaining Ants",
                 action: function() {
-                    // The turn is truly ended and now we're going to watch the turn happen.
-                    changeUIMode("watchingTurnHappen");
+                    if (isHostServer) {
+                        // --- is the host server ---
+                        // --- copy over the actions we've entered & mark ready to end ---
+                        colonySelections[playerColony].actionSelections = structuredClone(playerActionSelections);
+                        colonySelections[playerColony].isReadyForEndOfTurn = true;
+
+                        // --- Do end of turn if everyone is ready ---
+                        if (isEveryoneReadyForEndOfTurn()) {
+                            cleanUpColonySelections(colonySelections);
+
+                            // FIXME: Should inform the other servers in the game
+
+                            // The turn is truly ended, and now we're going to watch the turn happen.
+                            changeUIMode("watchingTurnHappen");
+                        }
+
+                    } else {
+                        // --- is NOT the host server ---
+                        // FIXME: Should make an API call to inform the host
+                    }
                 },
             }
         ]

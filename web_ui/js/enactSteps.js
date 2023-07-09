@@ -251,7 +251,8 @@ function showInteractions(interactions) {
  * This is a key part of watching the turn happen.
  *
  * It gets called with an animationState which is an object containing these fields:
- *  * colonySelections -- the choices of what actions all the ants and colonies want to take
+ *  * colonySelections -- an array of ColonySelection objects (see dataStructures.js) giving
+ *        the choices of what actions all the ants and colonies want to take.
  *  * stage -- set to 0 initially, it will range up to 12 as we step through the steps of the animation
  *  * substage -- set to one of "Before", "Interacting", or "After". Stage 0 will only have "After"; all
  *        the other stages will run through the substages in order.
