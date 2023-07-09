@@ -161,7 +161,6 @@ endOfTurn
             gameId: "ant-war:g:<gameCode>",
             data: {
                 event: "endOfTurn",
-                colonyNumber: <colonyNumber>,
                 colonySelections: [<ColonySelections>, <ColonySelections>],
                 randomSeed: <randomSeed>,
             },

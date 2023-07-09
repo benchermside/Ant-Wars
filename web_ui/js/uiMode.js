@@ -40,18 +40,13 @@ const watchingTurnHappen = {
 
         //reduce all turn to hatch eggs by 1; if any reach 0 put an action on the quuee???
 
-        // --- Find the random seed for this turn. ---
-        // NOTE: Later we'll need to get this from the host
-        // NOTE: Pick a random number that fits into 32 bits
-        const seed = Math.floor(Math.random() * 0xFFFFFFFF);
-
         // --- Now call the animation function which will run for a few seconds, then exit the mode ---
         const animationState = {
             colonySelections: colonySelections,
             stage: 0,
             substage: "After",
             interactions: [],
-            randomNumberSource: newRandomSequence(seed),
+            randomNumberSource: newRandomSequence(uiModeData.randomSeed),
             animateSpeed: 50,
         };
         uiModeData.animationState = animationState;
@@ -150,11 +145,16 @@ const readyToEnterMoves = {
 
     actionButtons: function(uiModeData) {
         // If we've entered moves for ALL ants, enable the end-turn button
-        const enableEndTurn = playerActionSelections.every(action => action !== null);
+        const label = (movesHaveBeenSent
+            ? "Alter Turn"
+            : (playerActionSelections.every(action => action !== null))
+                ? "End Turn"
+                : "Skip Remaining Ants");
         return [
             {
-                label: enableEndTurn? "End Turn" : "Skip Remaining Ants",
+                label: label,
                 action: function() {
+                    let turnHasEnded = false;
                     if (isHostServer) {
                         // --- is the host server ---
                         // --- copy over the actions we've entered & mark ready to end ---
@@ -162,10 +162,15 @@ const readyToEnterMoves = {
                         colonySelections[playerColony].isReadyForEndOfTurn = true;
 
                         // --- Do end of turn if everyone is ready ---
-                        hostDoEndOfTurnIfEveryoneIsReady();
+                        turnHasEnded = hostDoEndOfTurnIfEveryoneIsReady();
                     } else {
                         // --- is NOT the host server ---
                         announceColonySelections(playerActionSelections);
+                    }
+                    movesHaveBeenSent = true;
+                    if (!turnHasEnded) { // if we haven't ended the turn, go ahead and refresh to show the new button
+                        changeUIMode("readyToEnterMoves");
+                        render();
                     }
                 },
             }

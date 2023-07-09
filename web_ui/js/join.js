@@ -237,6 +237,7 @@ function beginSinglePlayerGame() {
         ],
     };
     const playerNum = 0; // in a single-player game we are always the host
+    isNetworkGame = false;
     beginShowingGame(gameSettings, playerNum);
 }
 
@@ -264,20 +265,21 @@ function beginGameAsHost(gameCode, selectedMap, selectedRules, listOfPlayers, us
 
     // --- Start it ourselves ---
     console.log(`I, user ${username}, am the host now for game ${gameCode}.`);
-    registerInNewGame(username, gameCode);
-    socketListener = hostingGameSocketListener;
+    isNetworkGame = true;
+    const isHost = true;
+    registerInNewGame(username, gameCode, isHost);
     beginShowingGame(gameSettings, playerNum);
 }
 
 
 /*
  * This is called to actually kick off the game when someone else is the host.
- * // FIXME: Doc fields
  */
 function beginGameAsGuest(gameSettings, playerNum, username) {
     console.log(`I, user ${username}, am now player ${playerNum} for game ${gameSettings.gameCode}.`);
-    registerInNewGame(username, gameSettings.gameCode);
-    socketListener = playingGameSocketListener;
+    isNetworkGame = true;
+    const isHost = false;
+    registerInNewGame(username, gameSettings.gameCode, isHost);
     beginShowingGame(gameSettings, playerNum);
 }
 

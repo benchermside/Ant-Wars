@@ -11,11 +11,13 @@ let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the a
                                   //during that turn;
 let indicatedHexes = []; // list of indicator objects (see dataStructures.js) to mark on the map
 let gameSettings = null; // the GameSettings (see dataStructures.js) for the active game (or null before there's a game going on)
+let isNetworkGame = false; // network messages will only be sent if this is true
 let isHostServer = null; // true or false, whether this is the host for the game
 let playerColony = 0; // which colony (by number) the current player is running
 let playerActionSelections = null; // the actions being entered for the current player's colony
 let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
                             // current selected moves and readiness to end turn of each colony.
+let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
 
 
 let  Rules = {
@@ -33,6 +35,11 @@ let uiModeData = {}; // an object where the uiMode can store some data fields. A
 /*
  * Call this passing a color to fill the screen with a solid color. It is used briefly
  * during animation to indicate that we're and finishing the animation.
+ *
+ * FIXME: This is fragile right now. It draws the screen but outside of render(). So a
+ *   call to render() afterward will mess up our display. We should probably fix that.
+ *   When we do, fix the "hack" that I'm not calling render() after changing UIMode
+ *   to "watchingTurnHappen".
  */
 function sweepScreen(color) {
     const gameCanvasElem = document.getElementById("game-canvas");
@@ -136,6 +143,7 @@ function startNewTurn() {
         }
     });
     playerActionSelections = colonySelections[playerColony].actionSelections;
+    movesHaveBeenSent = false;
 
     // begin in readyToEnter uiMode.
     changeUIMode("readyToEnterMoves");
@@ -195,19 +203,27 @@ function cleanUpColonySelections() {
 
 
 /*
- * This gets called on the host server when we get new colony selections. It check if we've
+ * This gets called on the host server when we get new colony selections. It checks if we've
  * received ALL of them, and if so then it will jump directly into performing the end of
  * turn.
+ *
+ * It returns true if the turn ended and we're now animating, or false if it DIDN'T end and
+ * we are NOT now animating.
  */
 function hostDoEndOfTurnIfEveryoneIsReady() {
-    console.log("hostDoEndOfTurnIfEveryoneIsReady", JSON.stringify(colonySelections)); // FIXME: Remove
     if (isEveryoneReadyForEndOfTurn()) {
         cleanUpColonySelections(colonySelections);
 
-        // FIXME: Should inform the other servers in the game
+        // NOTE: Pick a random number that fits into 32 bits
+        const randomSeed = Math.floor(Math.random() * 0xFFFFFFFF);
+        sendEndOfTurn(randomSeed);
 
         // The turn is truly ended, and now we're going to watch the turn happen.
-        changeUIMode("watchingTurnHappen");
+        changeUIMode("watchingTurnHappen", {randomSeed});
+
+        return true;
+    } else {
+        return false;
     }
 }
 
