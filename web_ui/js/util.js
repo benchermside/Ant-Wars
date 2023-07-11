@@ -24,6 +24,25 @@ function coordEqual(coord1, coord2) {
 }
 
 /*
+ * Takes in 2 coords, returns true if coords are adjacent or equal, otherwise false.
+ */
+function coordAdjacent(coord1, coord2) {
+    const x1 = coord1[0];
+    const x2 = coord2[0];
+    const y1 = coord1[1];
+    const y2 = coord2[1];
+    if(y1 === y2) {
+        return Math.abs(x1-x2) <= 1;
+    } else if(Math.abs(y2 - y1) === 1) {
+        const furtherLeftX = y1 % 2 === 0 ? x1 : x2;
+        const furtherRightX = y1 % 2 === 0 ? x2 : x1;
+        return furtherLeftX === furtherRightX || furtherLeftX === furtherRightX + 1;
+    } else {
+        return false;
+    }
+}
+
+/*
  * This is passed a terrainGrid (just to find the size of it) and x and y coordinates
  * of a hex. It returns a list of [x,y] pairs of the hexes that are adjacent to the
  * given location.

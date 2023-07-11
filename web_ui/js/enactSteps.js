@@ -209,7 +209,7 @@ function interactionsForStage(displayedGameState, animationState) {
 
             someAnts.forEach((someAnt, someAntNum) => {
                 otherAnts.forEach((otherAnt, otherAntNum) => {
-                    if (coordEqual(someAnt.location, otherAnt.location)) {
+                    if (coordAdjacent(someAnt.location, otherAnt.location)) {
                         // at this point we have 2 ants... let them fight!!
                         const numbersLost = fight(someAnt, otherAnt, animationState.randomNumberSource);
                         result.push( {colonyNumber: someColonyNum, antNumber: someAntNum, numberLost: numbersLost[0]} );
