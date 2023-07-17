@@ -248,6 +248,51 @@ function showInteractions(interactions) {
 
 
 /*
+ * This is passed a GameState, and it modifies that GameState by feeding food to ants.
+ */
+function eatFood(gameState) {
+    gameState.foodItems.forEach(foodItem => {
+        const coord = foodItem.location;
+        let antsThere = getAllAntNumsAt(gameState, coord);
+        if (antsThere.length === 1) { // only eat if there is EXACTLY one ant stack there
+            const colonyNumber = antsThere[0][0];
+            const antNumber = antsThere[0][1];
+            const eatingAnt = gameState.colonies[colonyNumber].ants[antNumber];
+            const maxFoodAnAntCanHold = 2; // FIXME: Might make this vary later
+            const maxFoodStackCanHold = maxFoodAnAntCanHold * eatingAnt.numberOfAnts;
+            const foodEaten = Math.min(foodItem.foodValue, Math.max(maxFoodStackCanHold - eatingAnt.foodHeld, 0));
+            if (foodEaten > 0) {
+                foodItem.foodValue = foodItem.foodValue - foodEaten;
+                eatingAnt.foodHeld = eatingAnt.foodHeld + foodEaten;
+            }
+        }
+    });
+}
+
+
+/*
+ * This is passed a GameState and it modifies that GameState by removing any foodItems that have a zero
+ * foodValue.
+ */
+function clearAwayFood(gameState) {
+    gameState.foodItems = gameState.foodItems.filter(foodItem => foodItem.foodValue > 0);
+}
+
+
+/*
+ * This is passed a GameState, and it modifies that GameState by processing one turn of ants interacting
+ * with the food. Ants that aren't full eat food they are on; ants that are "home" deliver the food
+ * they are carrying; empty food disappears; and new food randomly appears.
+ */
+function processFood(gameState) {
+    eatFood(gameState);
+    // TODO: deliverFood(gameState);
+    clearAwayFood(gameState);
+    // TODO: createNewFood(gameState);
+}
+
+
+/*
  * This is a key part of watching the turn happen.
  *
  * It gets called with an animationState which is an object containing these fields:
@@ -295,6 +340,10 @@ function animate(animationState) {
         } else if (animationState.substage === "After") {
             indicatedHexes.length = 0; // remove interactions
             displayedGameState = gameStateForStage(animationState);
+            if (animationState.stage === 12) {
+                // After stage 12 is when ants process the food
+                processFood(displayedGameState);
+            }
             render();
             animationState.stage += 1;
             animationState.substage = "Before";

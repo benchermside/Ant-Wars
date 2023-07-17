@@ -226,13 +226,15 @@ const inputState = {
                     "cast": "Worker",
                     "facing": 7,
                     "location": [2, 1],
-                    "numberOfAnts": 9
+                    "numberOfAnts": 9,
+                    "foodHeld": 0,
                 },
                 {
                     "cast": "Queen",
                     "facing": 3,
                     "location": [4, 3],
-                    "numberOfAnts": 2
+                    "numberOfAnts": 2,
+                    "foodHeld": 0,
                 }
             ],
             "foodSupply": 20,

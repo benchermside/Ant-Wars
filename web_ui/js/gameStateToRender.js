@@ -1,10 +1,4 @@
-function getGameStateToRender(){
-    return gameStateToRender;
-}
 
-function moveRenderedAnt(){
-    return gameStateToRender()
-}
 
 /*
 Given an array of antStates, Returns an array of indexes into that array that indicate the
@@ -42,6 +36,23 @@ function getAntStatesAt(ants, coord, beginIndex){
         }
     }
     return antsAt;
+}
+
+
+/*
+ * This is given a GameState and a location, and it returns a (possibly empty) array of
+ * [colonyNum, antNum] pairs specifying any ants that are at the given location.
+ */
+function getAllAntNumsAt(gameState, coord) {
+    const result = [];
+    gameState.colonies.forEach((colony, colonyNumber) => {
+        colony.ants.forEach((ant, antNumber) => {
+            if (coordEqual(ant.location, coord)) {
+                result.push( [colonyNumber, antNumber]);
+            }
+        });
+    });
+    return result;
 }
 
 

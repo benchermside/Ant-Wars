@@ -290,14 +290,14 @@ function initializeStartingPosition() {
             ],
 
             ants: [
-                {location: [4, 3], facing: 7, cast: "Soldier", numberOfAnts: 3},
-                {location: [4, 5], facing: 6, cast: "Queen", numberOfAnts: 2},
-                {location: [5, 6], facing: 1, cast: "Worker", numberOfAnts:2},
-                {location: [2, 8], facing: 5, cast: "Worker", numberOfAnts: 5},
-                {location: [2, 8], facing: 1, cast: "Queen", numberOfAnts: 3},
-                {location: [2, 8], facing: 5, cast: "Larva", numberOfAnts: 2},
-                {location: [2, 8], facing: 3, cast: "Soldier", numberOfAnts: 3},
-                {location: [7,6],  facing: 2, cast: "Larva", numberOfAnts: 3}
+                {location: [4, 3], facing: 7, cast: "Soldier", numberOfAnts: 3, "foodHeld": 0},
+                {location: [4, 5], facing: 6, cast: "Queen",   numberOfAnts: 2, "foodHeld": 0},
+                {location: [5, 6], facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
+                {location: [2, 8], facing: 5, cast: "Worker",  numberOfAnts: 5, "foodHeld": 0},
+                {location: [2, 8], facing: 1, cast: "Queen",   numberOfAnts: 3, "foodHeld": 0},
+                {location: [2, 8], facing: 5, cast: "Larva",   numberOfAnts: 2, "foodHeld": 0},
+                {location: [2, 8], facing: 3, cast: "Soldier", numberOfAnts: 3, "foodHeld": 0},
+                {location: [7,6],  facing: 2, cast: "Larva",   numberOfAnts: 3, "foodHeld": 0},
             ],
             foodSupply: 20,
             antColor: "#000000",
@@ -305,19 +305,27 @@ function initializeStartingPosition() {
         {
             eggs: [],
             ants: [
-                {location: [14,7],facing: 1, cast: "Worker", numberOfAnts: 2},
-                {location: [6,6],facing: 1, cast: "Worker", numberOfAnts: 2},
-                {location: [15, 6], facing: 1, cast: "Queen", numberOfAnts: 1},
-                {location: [15, 8], facing: 1, cast: "Soldier",numberOfAnts: 4},
-                {location: [15,7], facing: 0, cast:"Larva", numberOfAnts: 1}
+                {location: [14,7], facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
+                {location: [6,6],  facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
+                {location: [15,6], facing: 1, cast: "Queen",   numberOfAnts: 1, "foodHeld": 0},
+                {location: [15,8], facing: 1, cast: "Soldier", numberOfAnts: 4, "foodHeld": 0},
+                {location: [15,7], facing: 0, cast:"Larva",    numberOfAnts: 1, "foodHeld": 0},
             ],
             foodSupply: 50,
             antColor: "#750D06",
         },
     ];
+    const startingFoodItems = [
+        {
+            "appearance": "BasicParticle",
+            "location": [9,2],
+            "foodValue": 10,
+        },
+    ];
     startOfTurnGameState = {
         terrainGrid: startingTerrainGrid,
         colonies: startingColonies,
+        foodItems: startingFoodItems,
     };
     displayedGameState = structuredClone(startOfTurnGameState);
 }

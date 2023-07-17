@@ -664,6 +664,28 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 }
 
 
+/*
+ * This draws the indicated food item on the screen.
+ *
+ * FIXME: The current version just draws a circle. We should have a more interesting shape and
+ *  the shape should depend on the food item's appearance.
+ */
+function drawFoodItem(drawContext, hexSize, foodItem) {
+    if (foodItem.foodValue > 0) {
+        const coord = hexCenter(foodItem.location[0], foodItem.location[1], hexSize); // center of the hex
+        const radius = Math.sqrt(foodItem.foodValue) * hexSize / 16; // scale the size with the amount of food
+        drawContext.beginPath();
+        drawContext.arc(coord[0], coord[1], radius, 0, 2 * Math.PI);
+        drawContext.closePath();
+        drawContext.lineWidth = hexSize / 30;
+        drawContext.strokeStyle = "#494949";
+        drawContext.stroke();
+        drawContext.fillStyle = "#D19208";
+        drawContext.fill();
+    }
+}
+
+
 function colorText(drawContext, text, x, y, fillColor, fontSize) {
     drawContext.beginPath();
     drawContext.textAlign = "center";
@@ -674,11 +696,18 @@ function colorText(drawContext, text, x, y, fillColor, fontSize) {
     drawContext.fillText(text, x, y);
 }
 
+
 /*
  * Draws the "items" (ants and other mobile sprites) for the indicated gameState onto the
  * drawContext if the hexes are hexSize wide.
  */
 function drawItems(drawContext, gameState, hexSize) {
+    // Draw food items first
+    gameState.foodItems.forEach(foodItem => {
+        drawFoodItem(drawContext, hexSize, foodItem);
+    });
+
+    // Draw colony stuff on top of that
     gameState.colonies.forEach(colony => {
         // render eggs
         const eggsToRender = colony.eggs;

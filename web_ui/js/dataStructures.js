@@ -70,15 +70,16 @@
     // It is an object, with fields:
     //   * cast - this is either "Worker", "Queen", or "Soldier".
     //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
-    //   * location - an [x,y] grid coordinate giving the location of the ant between turns
-    //                and the intended destination of the ant while entering commands.
+    //   * location - an [x,y] grid coordinate giving the location of the ant.
     //   * numberOfAnts - the number of ants in the stack
+    //   * foodHeld - a non-negative integer telling the amount of food held by this ant.
     // Example:
     const antState = {
         "cast": "Worker",
         "facing": 1,
         "location": [2, 3],
-        "numberOfAnts":3,
+        "numberOfAnts": 3,
+        "foodHeld": 0,
     };
 
 
@@ -109,13 +110,15 @@
                 "cast": "Worker",
                 "facing": 7,
                 "location": [2, 1],
-                "numberOfAnts": 3
+                "numberOfAnts": 3,
+                "foodHeld": 0,
             },
             {
                 "cast": "Queen",
                 "facing": 3,
                 "location": [4, 3],
-                numberOfAnts: 1
+                "numberOfAnts": 1,
+                "foodHeld": 0,
             }
         ],
         "foodSupply": 20,
@@ -123,14 +126,33 @@
     };
 
 
+    // FoodItem:
+    //
+    // A FoodItem represents a particular bit of food which can be collected by ants to carry
+    // back to the nest and feed the colony. Different FoodItems have different appearances
+    // and they have a foodValue.
+    //
+    // It is an object with a few fields:
+    //   * appearance: one of the following strings: "BasicParticle", "DeadAnt"
+    //   * location: an [x,y] grid coordinate giving the location of the food item.
+    //   * foodValue: a non-negative integer indicating how much food energy it can provide.
+    //
+    // Example:
+    const foodItem = {
+        "appearance": "BasicParticle",
+        "location": [5,3],
+        "foodValue": 4,
+    };
+
+
     // GameState:
     //
-    // A GameState shows the current state of the game (in between turns, not while actually ENTERING a
-    // turn).
+    // A GameState shows the current state of the game
     //
     // It is an object with a few fields:
     //    terrainGrid: a TerrainGrid
     //    colonies: a list of ColonyState
+    //    foodItems: a list of FoodItem
     //
     // Example:
     const currentGameState = {
@@ -156,58 +178,42 @@
                         "cast": "Worker",
                         "facing": 7,
                         "location": [2, 1],
-                        "numberOfAnts": 9
+                        "numberOfAnts": 9,
+                        "foodHeld": 0,
                     },
                     {
                         "cast": "Queen",
                         "facing": 3,
                         "location": [4, 3],
-                        "numberOfAnts": 2
+                        "numberOfAnts": 2,
+                        "foodHeld": 0,
                     },
                     {
-                        "cast":"Larva",
-                        "location":[4,4],
-                        "numberOfAnts":3
+                        "cast": "Larva",
+                        "facing": 5,
+                        "location": [4,4],
+                        "numberOfAnts": 3,
+                        "foodHeld": 0,
                     }
                 ],
                 "foodSupply": 20,
                 "antColor": "#000000",
+            },
+        ],
+        "foodItems": [
+            {
+                "appearance": "BasicParticle",
+                "location": [3,1],
+                "foodValue": 1,
+            },
+            {
+                "appearance": "DeadAnt",
+                "location": [3,3],
+                "foodValue": 4,
             },
         ],
     };
 
-    //Game State to Render -- this has the same structure as game state and shows
-    // what the board currently looks like, with proposed moves
-    //drawn, ants that have proposed to be moved into the same hex are merged
-    const gameStateToRender = {
-        "terrainGrid": [
-            [3, 3, 3, 3, 3, 3],
-            [2, 1, 1, 1, 2, 1],
-            [2, 2, 1, 1, 1, 1],
-            [2, 2, 1, 1, 1, 2],
-            [0, 0, 0, 0, 0, 0],
-        ],
-        "colonies": [
-            {
-                "ants": [
-                    {
-                        "cast": "Worker",
-                        "facing": 7,
-                        "location": [2, 1],
-                        "numberOfAnts": 9
-                    },
-                    {
-                        "cast": "Queen",
-                        "facing": 3,
-                        "location": [4, 3],
-                        "numberOfAnts": 2
-                    }
-                ],
-                "foodSupply": 20,
-                "antColor": "#000000",
-            },
-        ],
-    };
 
 
     // Action
