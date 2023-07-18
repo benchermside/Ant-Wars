@@ -50,6 +50,15 @@ function sweepScreen(color) {
 
 
 /*
+ * This is called to re-draw all the on-screen controls done in HTML rather than
+ * on the canvas.
+ */
+function updateControls() {
+    document.getElementById("show-foodSupply").value = displayedGameState.colonies[playerColony].foodSupply;
+}
+
+
+/*
  * Call this to re-draw all the game graphics.
  */
 function render() {
@@ -62,6 +71,7 @@ function render() {
     }
     indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
     drawItems(drawContext, displayedGameState, hexSize);
+    updateControls();
 }
 
 
@@ -369,6 +379,16 @@ function startGame(newGameSettings, playerNum) {
         onBoardResize();
         render();
     };
+    const colonyInfoCollapseBtnElem = document.getElementById("colony-info-collapse");
+    colonyInfoCollapseBtnElem.onclick = function() {
+        hideElemById("colony-info-data");
+        showElemById("colony-info-expand");
+    }
+    const colonyInfoExpandBtnElem = document.getElementById("colony-info-expand");
+    colonyInfoExpandBtnElem.onclick = function() {
+        hideElemById("colony-info-expand");
+        showElemById("colony-info-data");
+    }
 
     // === Set up canvas interaction actions ===
     const canvas = document.getElementById("game-canvas");

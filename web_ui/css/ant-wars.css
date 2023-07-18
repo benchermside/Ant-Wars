@@ -53,3 +53,27 @@
 #action-controls > button {
     font-size: 16px;
 }
+
+#colony-info {
+    position: absolute;
+    left: 20px;
+    bottom: 50px;
+}
+
+#colony-info-data {
+    background-color: #cccccc;
+    padding: 2px;
+    width: 4em;
+    display: flex;
+    flex-direction: column;
+}
+
+#colony-info-collapse {
+    align-self: end;
+}
+
+.control-btn {
+    font-size: 12px;
+    background-color: #cccccc;
+    border-radius: 10px;
+}
