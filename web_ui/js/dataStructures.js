@@ -68,7 +68,7 @@
     // Ant stacks have multiple ants in one location.   Ant stacks must be all the same cast of ant
     //
     // It is an object, with fields:
-    //   * cast - this is either "Worker", "Queen", or "Soldier".
+    //   * cast - this is either "Worker", "Queen", "Soldier", or "Larva".
     //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
     //   * location - an [x,y] grid coordinate giving the location of the ant.
     //   * numberOfAnts - the number of ants in the stack

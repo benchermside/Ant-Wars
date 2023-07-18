@@ -107,7 +107,6 @@ function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
         applyMoveAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "LayEgg") {
         applyLayEggAction(gameState, colonyNumber, antNumber, action, stage);
-        // do nothing... laying an egg doesn't work yet. FIXME: Make it work someday!
     } else if (action.name === "Dig") {
         applyDigAction(gameState, colonyNumber, antNumber, action, stage);
     } else {
@@ -271,7 +270,44 @@ function eatFood(gameState) {
 
 
 /*
- * This is passed a GameState and it modifies that GameState by removing any foodItems that have a zero
+ * This is passed a GameState, and it modifies that GameState by "delivering" food from ants that have
+ * carried it "home". For now, the rule is that food is credited to the colony if the ant carrying it
+ * is (1) in a space with a larva of the same colony, or (2) is within 1 step of a queen of the same
+ * colony.
+ */
+function deliverFood(gameState) {
+    gameState.colonies.forEach((colony, colonyNum) => {
+        colony.ants.forEach(ant => {
+            if (ant.foodHeld > 0) {
+                const antLocation = ant.location;
+                let shouldDeliver = false; // by default... let's see if that changes...
+
+                // check for being in a space with a larva
+                const larvaHere = getAntStatesAt(colony.ants, antLocation).filter(ant => ant.cast === "Larva");
+                if (larvaHere.length > 0) {
+                    shouldDeliver = true;
+                }
+
+                // check for being next to a queen
+                colony.ants.filter(ant => ant.cast === "Queen").forEach(queen => {
+                    if (coordAdjacent(queen.location, antLocation)) {
+                        shouldDeliver = true;
+                    }
+                });
+
+                // if we should deliver, then do so
+                if (shouldDeliver) {
+                    colony.foodSupply += ant.foodHeld;
+                    ant.foodHeld = 0;
+                }
+            }
+        });
+    });
+}
+
+
+/*
+ * This is passed a GameState, and it modifies that GameState by removing any foodItems that have a zero
  * foodValue.
  */
 function clearAwayFood(gameState) {
@@ -286,7 +322,7 @@ function clearAwayFood(gameState) {
  */
 function processFood(gameState) {
     eatFood(gameState);
-    // TODO: deliverFood(gameState);
+    deliverFood(gameState);
     clearAwayFood(gameState);
     // TODO: createNewFood(gameState);
 }
