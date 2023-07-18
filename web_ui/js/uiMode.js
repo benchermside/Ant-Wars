@@ -324,6 +324,7 @@ const commandingAnAnt = {
                 render();
             },
         });
+
         if (selectedAntDisplayed.cast === "Queen") {
             // Queens can lay an egg if they're in a chamber
             const coord = selectedAntDisplayed.location;
@@ -361,6 +362,22 @@ const commandingAnAnt = {
                 }
             }
         }
+
+        if (selectedAntDisplayed.cast !== "Larva") {
+            buttons.push({
+                label: "Defend",
+                action: function() {
+                    // We decided to have this ant defend. Record that.
+                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "Defend"};
+                    // Now change the ant's displayed location back to its start location to show it on the screen
+                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+                    // Now switch modes
+                    changeUIMode("readyToEnterMoves");
+                    render();
+                }
+            });
+        }
+
         if (selectedAntDisplayed.cast === "Worker") {
             const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
             if (digTunnelActions.length > 0) {
@@ -395,6 +412,7 @@ const commandingAnAnt = {
                 });
             }
         }
+
         if (selectedAntDisplayed.cast === "Larva") {
             buttons.push({
                 label: "Feed larva worker ant food",
@@ -430,11 +448,9 @@ const commandingAnAnt = {
                     render();
                 },
             });
-
         }
 
-
-            return buttons;
+        return buttons;
     },
 
 };

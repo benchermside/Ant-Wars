@@ -235,6 +235,9 @@
     //           the ant's current location at the start of this turn. The last location
     //           in the list will always be the spot where the ant ends up. And each
     //           pair of adjacent locations in the list will be adjacent hexagons.
+    //   * "Defend":
+    //      * Means that the ant doesn't move and attacks adjacent or overlapping enemy ants.
+    //      * Additional fields: There are no additional fields.
     //   * "LayEgg":
     //      * Means that this ant will lay an egg (only Queens do this).
     //      * Additional fields: There are no additional fields (the egg is laid wherever the Queen is)
@@ -264,6 +267,9 @@
         "name": "Dig",
         "location": [6,4],
         "whatToDig": "Tunnel",
+    };
+    const action5 = {
+        "name": "Defend",
     };
 
 

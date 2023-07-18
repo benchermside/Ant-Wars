@@ -38,8 +38,15 @@ function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
         }
         gameState.colonies[colonyNumber].ants[antNumber].facing = facing;
         gameState.colonies[colonyNumber].ants[antNumber].location = action.steps[indexOfStep];
-
     }
+}
+
+/*
+ * This performs applyActionStage in the case where the action is a Defend action. See
+ * that function for the requirements. The ant stack will attack all enemy adjacent or
+ * overlapping ant stacks each stage.
+ */
+function applyDefendAction(gameState, colonyNumber, antNumber, action, stage) {
 }
 
 function applyLayEggAction(gameState, colonyNumber, antNumber, action, stage) {
@@ -105,6 +112,8 @@ function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
         // nothing to do for an action of "None".
     } else if (action.name === "Move") {
         applyMoveAction(gameState, colonyNumber, antNumber, action, stage);
+    } else if (action.name === "Defend") {
+        applyDefendAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "LayEgg") {
         applyLayEggAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "Dig") {
@@ -208,11 +217,18 @@ function interactionsForStage(displayedGameState, animationState) {
 
             someAnts.forEach((someAnt, someAntNum) => {
                 otherAnts.forEach((otherAnt, otherAntNum) => {
+                    // we reach this line once for each pair of enemy ants
                     if (coordAdjacent(someAnt.location, otherAnt.location)) {
-                        // at this point we have 2 ants... let them fight!!
-                        const numbersLost = fight(someAnt, otherAnt, animationState.randomNumberSource);
-                        result.push( {colonyNumber: someColonyNum, antNumber: someAntNum, numberLost: numbersLost[0]} );
-                        result.push( {colonyNumber: otherColonyNum, antNumber: otherAntNum, numberLost: numbersLost[1]} );
+                        const someAntAction = animationState.colonySelections[someColonyNum].actionSelections[someAntNum];
+                        const otherAntAction = animationState.colonySelections[otherColonyNum].actionSelections[otherAntNum];
+                        const someAntAggressive = someAntAction.name === "Defend";
+                        const otherAntAggressive = otherAntAction.name === "Defend";
+                        if (someAntAggressive || otherAntAggressive) {
+                            // at this point we have 2 ants... let them fight!!
+                            const numbersLost = fight(someAnt, otherAnt, animationState.randomNumberSource);
+                            result.push( {colonyNumber: someColonyNum, antNumber: someAntNum, numberLost: numbersLost[0]} );
+                            result.push( {colonyNumber: otherColonyNum, antNumber: otherAntNum, numberLost: numbersLost[1]} );
+                        }
                     }
                 });
             });
