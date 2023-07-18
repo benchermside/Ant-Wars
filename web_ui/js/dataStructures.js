@@ -152,7 +152,7 @@
     // It is an object with a few fields:
     //    terrainGrid: a TerrainGrid
     //    colonies: a list of ColonyState
-    //    foodItems: a list of FoodItem
+    //    foodItems: a list of FoodItem. We ensure that at most 1 food item will be in any given location
     //
     // Example:
     const currentGameState = {

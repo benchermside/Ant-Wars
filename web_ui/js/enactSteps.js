@@ -257,7 +257,7 @@ function eatFood(gameState) {
             const colonyNumber = antsThere[0][0];
             const antNumber = antsThere[0][1];
             const eatingAnt = gameState.colonies[colonyNumber].ants[antNumber];
-            const maxFoodAnAntCanHold = 2; // FIXME: Might make this vary later
+            const maxFoodAnAntCanHold = 2; // DESIGN NOTE: Later we might make this vary.
             const maxFoodStackCanHold = maxFoodAnAntCanHold * eatingAnt.numberOfAnts;
             const foodEaten = Math.min(foodItem.foodValue, Math.max(maxFoodStackCanHold - eatingAnt.foodHeld, 0));
             if (foodEaten > 0) {
@@ -316,15 +316,77 @@ function clearAwayFood(gameState) {
 
 
 /*
- * This is passed a GameState, and it modifies that GameState by processing one turn of ants interacting
- * with the food. Ants that aren't full eat food they are on; ants that are "home" deliver the food
- * they are carrying; empty food disappears; and new food randomly appears.
+ * This constant is used with distributionOfFood to determine the chance each turn of creating
+ * food in each eligible location. This is an overall multiplier that is multiplied by the
+ * values in distributionOfFood to produce the actual outcome.
  */
-function processFood(gameState) {
+const chanceToFindFood = 0.001;
+
+/*
+ * This constant is an array of the same length as valid TerrainIds (see dataStructures.js).
+ * For each TerrainId, it contains an array giving the relative probabilities that a FoodItem of
+ * various sizes will be created. The sizes are one more than the position in the array, so an
+ * array of [3, 3, 0, 3] means that for each cell of the terrain type there are 3 chances to
+ *
+ */
+const distributionOfFood = [
+    [],                    //   0: Bedrock
+    [2, 1, 1],             //   1: Dirt
+    [],                    //   2: Stone
+    [],                    //   3: Sky
+    [2, 1, 0],             //   4: Dirt with Tunnel
+    [],                    //   5: Dirt with Chamber
+    [3, 3, 3, 1, 0, 0, 1], //   6: Surface
+];
+
+
+/*
+ * This is passed a GameState and a RandomNumberSource, and it modifies that GameState by randomly
+ * creating new food particles in some locations. Note that this has to enforce the rule that
+ * there is no more than one food item in any given location.
+ */
+function createNewFood(gameState, randomNumberSource) {
+    gameState.terrainGrid.forEach((terrainRow, y) => {
+        terrainRow.forEach((terrainId, x) => {
+            // For each (x,y) location:
+            const coord = [x,y];
+            const distributionArray = distributionOfFood[terrainId];
+            if (distributionArray !== undefined && distributionArray.length > 0) {
+                // OK, there might be a chance of creating a FoodItem here
+                if (gameState.foodItems.every(foodItem => !coordEqual(foodItem.location, coord))) { // if there's no food here
+                    if (getAllAntNumsAt(gameState, coord).length === 0) { // only if there are no ants present
+                        // try each food size (we'll quit if we create one)
+                        for (let foodValue=1; foodValue <= distributionArray.length; foodValue++) {
+                            const prob = distributionArray[foodValue - 1] * chanceToFindFood;
+                            if (randomNumberSource() < prob) {
+                                // Yes! We should create this food item!
+                                const newFoodItem = {
+                                    appearance: "BasicParticle",
+                                    location: coord,
+                                    foodValue: foodValue,
+                                };
+                                gameState.foodItems.push(newFoodItem);
+                                break; // quit looping through food sizes
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+}
+
+
+/*
+ * This is passed a GameState and a RandomNumberSource, and it modifies that GameState by processing
+ * one turn of ants interacting with the food. Ants that aren't full eat food they are on; ants that
+ * are "home" deliver the food they are carrying; empty food disappears; and new food randomly appears.
+ */
+function processFood(gameState, randomNumberSource) {
     eatFood(gameState);
     deliverFood(gameState);
     clearAwayFood(gameState);
-    // TODO: createNewFood(gameState);
+    createNewFood(gameState, randomNumberSource);
 }
 
 
@@ -378,7 +440,7 @@ function animate(animationState) {
             displayedGameState = gameStateForStage(animationState);
             if (animationState.stage === 12) {
                 // After stage 12 is when ants process the food
-                processFood(displayedGameState);
+                processFood(displayedGameState, animationState.randomNumberSource);
             }
             render();
             animationState.stage += 1;
