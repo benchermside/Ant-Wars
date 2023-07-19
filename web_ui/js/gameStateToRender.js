@@ -76,31 +76,40 @@ function getEggAt(eggs, coord, beginIndex){
 }
 
 /*
-Given an array of antStates some of which may be at the same location, returns a new array of new antStates
-in which the ants at the same location are merged into one ant stack (antState)
+ * Given an array of antStates some of which may be at the same location, returns a new array of new antStates
+ * in which the ants at the same location are merged into one ant stack (antState). Also removes ant stacks
+ * with zero ants in them.
  */
 function mergeAnts(ants){
     const mergedAnts = [];
-    const merged = ants.map(ant=>false);
+    const merged = ants.map(ant=>false); // track any ants that have already been merged in
 
     ants.forEach((ant, antNumber) => {
         if (!merged[antNumber]){
-            const antsAt = getAntNumsAt(ants, ant.location, antNumber);
-            let newAnt = structuredClone(ant);
+            // Make a copy of the existing ant
+            const newAnt = {};
+            newAnt.cast = ant.cast;
+            newAnt.facing = ant.facing;
+            newAnt.location = [ant.location[0], ant.location[1]]; // clone the location
+            newAnt.numberOfAnts = ant.numberOfAnts;
+            newAnt.foodHeld = ant.foodHeld;
 
-            //const obj4 = structuredClone(obj3);
-            let copiedLocation = [ant.location[0], ant.location[1]];
-            newAnt.location = copiedLocation;
-            newAnt.numberOfAnts = 0;
-            antsAt.forEach((antToMergeNumber)=>{
-                const antToMerge = ants[antToMergeNumber];
-                if (antToMerge.cast === newAnt.cast){
-                    merged[antToMergeNumber] = true;
-                    newAnt.numberOfAnts = newAnt.numberOfAnts + antToMerge.numberOfAnts;
+            // Now merge in any OTHER (higher numbered) ants that are of the same cast and location
+            const antNumsAt = getAntNumsAt(ants, ant.location, antNumber + 1);
+            antNumsAt.forEach(otherAntNumber => {
+                const otherAnt = ants[otherAntNumber];
+                if (otherAnt.cast === ant.cast) {
+                    merged[otherAntNumber] = true; // mark it as merged; we will skip it when we get to it
+                    newAnt.numberOfAnts = newAnt.numberOfAnts + otherAnt.numberOfAnts;
+                    newAnt.foodHeld = newAnt.foodHeld + otherAnt.foodHeld;
+                    console.log("AAA Merged in ant ", JSON.stringify(otherAnt), " giving ", JSON.stringify(newAnt)); // FIXME: Remove
                 }
-
             });
-            mergedAnts.push(newAnt);
+
+            // As long as it isn't 0 ants, push it onto the new list
+            if (newAnt.numberOfAnts > 0) {
+                mergedAnts.push(newAnt);
+            }
         }
     });
     return mergedAnts;

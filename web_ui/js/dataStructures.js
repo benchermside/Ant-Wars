@@ -64,8 +64,8 @@
 
     // AntState:
     //
-    // An AntState tells the current state of a stack of ants BETWEEN turns.
-    // Ant stacks have multiple ants in one location.   Ant stacks must be all the same cast of ant
+    // An AntState tells the current state of a stack of ants. An AntState may have multiple ants of the
+    // same cast that are in the same location.
     //
     // It is an object, with fields:
     //   * cast - this is either "Worker", "Queen", "Soldier", or "Larva".
@@ -74,7 +74,7 @@
     //   * numberOfAnts - the number of ants in the stack
     //   * foodHeld - a non-negative integer telling the amount of food held by this ant.
     // Example:
-    const antState = {
+    const antStack = {
         "cast": "Worker",
         "facing": 1,
         "location": [2, 3],
