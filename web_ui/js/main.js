@@ -32,6 +32,12 @@ const rules = {
             Soldier: 2,
             Queen: 3,
             Larva: 0,
+        },
+        hatchCost: {
+            Worker: 4,
+            Soldier: 6,
+            Queen: 12,
+            Larva: 0
         }
     },
 };

@@ -62,13 +62,22 @@
     const location = [2,3];
 
 
+    // Cast:
+    //
+    // A Cast is a string which indicates what type an ant is.
+    //
+    // It can take on the values "Worker", "Queen", "Soldier", or "Larva".
+    //
+    const cast = "Queen";
+
+
     // AntState:
     //
     // An AntState tells the current state of a stack of ants. An AntState may have multiple ants of the
     // same cast that are in the same location.
     //
     // It is an object, with fields:
-    //   * cast - this is either "Worker", "Queen", "Soldier", or "Larva".
+    //   * cast - this is a string of type Cast.
     //   * facing - a number 0..11 showing which way the ant is facing. 0 is straight down.
     //   * location - an [x,y] grid coordinate giving the location of the ant.
     //   * numberOfAnts - the number of ants in the stack
@@ -247,6 +256,10 @@
     //         * "location" a field of type Location, telling which space gets dug.
     //         * "whatToDig" is a field containing a WhatToDig telling what will result after
     //            the dig.
+    //   * "Mature":
+    //      * Means that this larva will mature into an ant.
+    //      * Additional fields:
+    //         * "cast": the Cast that the larva will mature into.
     //
     // Examples:
     const action1 = {
@@ -271,6 +284,10 @@
     const action5 = {
         "name": "Defend",
     };
+    const action6 = {
+        "name": "Mature",
+        "cast": "Worker",
+    }
 
 
 

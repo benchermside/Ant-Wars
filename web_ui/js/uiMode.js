@@ -378,12 +378,9 @@ const commandingAnAnt = {
             buttons.push({
                 label: "Feed larva worker ant food",
                 action: function() {
-                    //HAVE TO WRITE THIS
-                    // We decided to lay an egg. Record that.
-                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToWorker"};
-
-                    // Don't move anywhere
-                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+                    const action = {name: "Mature", cast: "Worker"};
+                    playerActionSelections[uiModeData.selectedAntNumber] = action;
+                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                     // Now switch modes
                     changeUIMode("readyToEnterMoves");
@@ -395,12 +392,9 @@ const commandingAnAnt = {
             buttons.push({
                 label: "Feed larva warrior ant food",
                 action: function() {
-                    //HAVE TO WRITE THIS
-                    // We decided to lay an egg. Record that.
-                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "MatureToSoldier"};
-
-                    // Don't move anywhere
-                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+                    const action = {name: "Mature", cast: "Soldier"};
+                    playerActionSelections[uiModeData.selectedAntNumber] = action;
+                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                     // Now switch modes
                     changeUIMode("readyToEnterMoves");

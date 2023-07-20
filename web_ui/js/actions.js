@@ -138,6 +138,60 @@ function revertDigAction(gameState, startOfTurnGameState, colonyNumber, antNumbe
 
 
 
+/* Applies a Mature action. */
+function applyMatureAction(gameState, colonyNumber, antNumber, action, stage) {
+    if (stage === 12) {
+        // --- create the extra ant ---
+        const colony = gameState.colonies[colonyNumber];
+        const larvaAnt = colony.ants[antNumber];
+        const newAnt = {
+            "cast": action.cast,
+            "facing": 1, // the default way everything faces
+            "location": larvaAnt.location,
+            "numberOfAnts": larvaAnt.numberOfAnts,
+            "foodHeld": 0,
+        };
+        colony.ants.push(newAnt);
+
+        // --- charge a cost ---
+        const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
+        gameState.colonies[colonyNumber].foodSupply -= cost;
+
+        // --- remove the larva ---
+        larvaAnt.numberOfAnts = 0; // shrink the number of larva ants to 0
+    }
+}
+
+/* Reverts a Mature action. */
+function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
+    // --- put back the larva ---
+    const colony = gameState.colonies[colonyNumber];
+    const larvaAnt = colony.ants[antNumber];
+    const origLarvaAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    larvaAnt.numberOfAnts = origLarvaAnt.numberOfAnts; // grow the number of larva ants
+
+    // --- remove the extra ant ---
+    const numberOfOriginalAnts = startOfTurnGameState.colonies[colonyNumber].ants.length;
+    const extraAnts = colony.ants.filter((ant, antNumber) => antNumber >= numberOfOriginalAnts);
+    const extraAntsInLocation = extraAnts.filter(ant => coordEqual(ant.location, larvaAnt.location));
+    if (extraAntsInLocation.length === 0) {
+        throw Error("Tried to revert creating an extra ant but couldn't find it.");
+    } else if (extraAntsInLocation.length > 1) {
+        throw Error("Found multiple extra ants in the same location."); // this code can't handle that
+    } else {
+        // We've found the one and only newly created ant to get rid of
+        const antToRemove = extraAntsInLocation[0];
+        const indexToRemove = colony.ants.indexOf(antToRemove); // find it
+        colony.ants.splice(indexToRemove, 1); // remove it
+    }
+
+    // --- refund the cost ---
+    const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
+    gameState.colonies[colonyNumber].foodSupply += cost;
+}
+
+
+
 /*
  * This modifies the gameState it is given to enact a certain stage of a certain ant's action.
  *
@@ -170,6 +224,8 @@ function applyAction(gameState, colonyNumber, antNumber, action, stage) {
         applyLayEggAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "Dig") {
         applyDigAction(gameState, colonyNumber, antNumber, action, stage);
+    } else if (action.name === "Mature") {
+        applyMatureAction(gameState, colonyNumber, antNumber, action, stage);
     } else {
         throw Error(`Unsupported action type, '${action.name}'`);
     }
@@ -201,6 +257,8 @@ function revertAction(gameState, startOfTurnGameState, colonyNumber, antNumber, 
         revertLayEggAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Dig") {
         revertDigAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
+    } else if (action.name === "Mature") {
+        revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else {
         throw Error(`Unsupported action type, '${action.name}'`);
     }

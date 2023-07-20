@@ -105,9 +105,11 @@ function interactionsForStage(displayedGameState, animationState) {
     for (let someColonyNum = 0; someColonyNum < colonies.length; someColonyNum++) {
         const someColony = colonies[someColonyNum];
         const someAnts = someColony.ants;
+        const someActionSelections = animationState.colonySelections[someColonyNum].actionSelections;
         for (let otherColonyNum = someColonyNum + 1; otherColonyNum < colonies.length; otherColonyNum++) {
             const otherColony = colonies[otherColonyNum];
             const otherAnts = otherColony.ants;
+            const otherActionSelections = animationState.colonySelections[otherColonyNum].actionSelections;
             // at this point we have two different colonies, each with a list of ants
 
             someAnts.forEach((someAnt, someAntNum) => {
@@ -116,8 +118,15 @@ function interactionsForStage(displayedGameState, animationState) {
                     const nonEmpty = someAnt.numberOfAnts > 0 && otherAnt.numberOfAnts > 0;
                     const adjacent = coordAdjacent(someAnt.location, otherAnt.location);
                     if (nonEmpty && adjacent) {
-                        const someAntAction = animationState.colonySelections[someColonyNum].actionSelections[someAntNum];
-                        const otherAntAction = animationState.colonySelections[otherColonyNum].actionSelections[otherAntNum];
+                        // Note: we could have newly created ants (newly deleted ants will still be around with
+                        //   numberOfAnts of 0). We know it's newly created if there are more ants than
+                        //   actionSelections. For these newly created ones, their action is "None".
+                        const someAntAction = someAntNum >= someActionSelections.length
+                            ? {name: "None"}
+                            : someActionSelections[someAntNum];
+                        const otherAntAction = otherAntNum >= otherActionSelections.length
+                            ? {name: "None"}
+                            : otherActionSelections[otherAntNum];
                         const someAntAggressive = someAntAction.name === "Defend";
                         const otherAntAggressive = otherAntAction.name === "Defend";
                         if (someAntAggressive || otherAntAggressive) {
