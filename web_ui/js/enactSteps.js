@@ -218,7 +218,9 @@ function interactionsForStage(displayedGameState, animationState) {
             someAnts.forEach((someAnt, someAntNum) => {
                 otherAnts.forEach((otherAnt, otherAntNum) => {
                     // we reach this line once for each pair of enemy ants
-                    if (coordAdjacent(someAnt.location, otherAnt.location)) {
+                    const nonEmpty = someAnt.numberOfAnts > 0 && otherAnt.numberOfAnts > 0;
+                    const adjacent = coordAdjacent(someAnt.location, otherAnt.location);
+                    if (nonEmpty && adjacent) {
                         const someAntAction = animationState.colonySelections[someColonyNum].actionSelections[someAntNum];
                         const otherAntAction = animationState.colonySelections[otherColonyNum].actionSelections[otherAntNum];
                         const someAntAggressive = someAntAction.name === "Defend";
