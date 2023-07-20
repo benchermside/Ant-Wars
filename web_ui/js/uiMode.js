@@ -193,26 +193,7 @@ const commandingAnAnt = {
 
         // Revert the previous action
         const prevAction = playerActionSelections[selectedAntNumber];
-        if (prevAction === null || prevAction.name === "None") {
-            // nothing to put back
-        } else if (prevAction.name === "Move") {
-            // put the ant back where it started from
-            const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
-            const startOfTurnAnt = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber];
-            displayedAnt.location = startOfTurnAnt.location;
-        } else if (prevAction.name === "Dig") {
-            // put the ant back where it started from
-            const displayedAnt = displayedGameState.colonies[playerColony].ants[selectedAntNumber];
-            const startOfTurnAnt = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber];
-            displayedAnt.location = startOfTurnAnt.location;
-            // put the terrainGrid back as it was
-            const loc = prevAction.location;
-            displayedGameState.terrainGrid[loc[1]][loc[0]] = startOfTurnGameState.terrainGrid[loc[1]][loc[0]];
-        } else if (prevAction.name === "LayEgg") {
-            // nothing to put back for now
-        } else {
-            throw Error(`Unexpected type of action: ${prevAction.name}`);
-        }
+        revertAction(displayedGameState, startOfTurnGameState, playerColony, selectedAntNumber, prevAction);
 
         // (Now that it's reverted) find out where the ant is allowed to move
         uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
@@ -287,18 +268,12 @@ const commandingAnAnt = {
             if (movesEndingWhereWeSelected.length !== 1) {
                 throw Error(`Did NOT have exactly one move ending in the location, had ${movesEndingWhereWeSelected}`);
             }
-            const move = movesEndingWhereWeSelected[0];
+            const moveAction = movesEndingWhereWeSelected[0];
 
             // Make the move
-            playerActionSelections[uiModeData.selectedAntNumber] = move;
+            playerActionSelections[uiModeData.selectedAntNumber] = moveAction;
 
-            // Now change the ant's displayed location to show it on the screen
-            const displayedAnt = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
-            if (move.steps.length >1){
-                displayedAnt.facing = getNewFacing(move.steps[move.steps.length - 2],move.steps[move.steps.length - 1] );
-            }
-            displayedAnt.location = move.steps[move.steps.length - 1];
-
+            applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, moveAction);
         } else {
 
             // clicked away; we should exit out of commanding an ant mode
@@ -331,26 +306,14 @@ const commandingAnAnt = {
             const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
             if (terrain === 5) {
                 const eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, selectedAntDisplayed.location);
-                if(eggStack === null || eggStack.numberOfEggs < Rules.MAX_EGGS) {
+                if(eggStack === null || eggStack.numberOfEggs < rules.MAX_EGGS) {
                     buttons.push({
                         label: "Lay Egg",
                         action: function() {
-                            //lay egg here
-                            console.log("Layinging an eggggggggggg");
-                            const eggLoc = selectedAntDisplayed.location;
-                            let eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, eggLoc);
-                            if(eggStack === null) {
-                                eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
-                                displayedGameState.colonies[playerColony].eggs.push(eggStack);
-                            } else {
-                                eggStack.numberOfEggs += 1;
-                            }
                             // We decided to lay an egg. Record that.
-                            playerActionSelections[uiModeData.selectedAntNumber] = {name: "LayEgg"};
-
-
-                            // Don't move anywhere
-                            selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+                            const action = {name: "LayEgg"};
+                            playerActionSelections[uiModeData.selectedAntNumber] = action;
+                            applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                             // Now switch modes
                             changeUIMode("readyToEnterMoves");
@@ -368,9 +331,9 @@ const commandingAnAnt = {
                 label: "Defend",
                 action: function() {
                     // We decided to have this ant defend. Record that.
-                    playerActionSelections[uiModeData.selectedAntNumber] = {name: "Defend"};
-                    // Now change the ant's displayed location back to its start location to show it on the screen
-                    selectedAntDisplayed.location = selectedAntStartOfTurn.location;
+                    const action = {name: "Defend"};
+                    playerActionSelections[uiModeData.selectedAntNumber] = action;
+                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
                     // Now switch modes
                     changeUIMode("readyToEnterMoves");
                     render();
@@ -402,9 +365,7 @@ const commandingAnAnt = {
                     action: function() {
                         // Record the action
                         playerActionSelections[uiModeData.selectedAntNumber] = digAction;
-                        // Display that it will be dug
-                        const loc = digAction.location;
-                        displayedGameState.terrainGrid[loc[1]][loc[0]] = 5;
+                        applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
                         // Return to entering commands
                         changeUIMode("readyToEnterMoves");
                         render();
@@ -492,10 +453,7 @@ const selectingDigTunnelLocation = {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
                 playerActionSelections[uiModeData.selectedAntNumber] = digAction;
-                // Now change the ant's displayed location to show it on the screen
-                displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].location = coord;
-                // Now show the tunnel as having been dug!
-                displayedGameState.terrainGrid[coord[1]][coord[0]] = 4;
+                applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
             }
         });
 

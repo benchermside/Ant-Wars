@@ -20,9 +20,20 @@ let colonySelections = null; // an array of ColonySelection (see dataStructures.
 let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
 
 
-let  Rules = {
+const rules = {
     MAX_EGGS:3,
-    TURNS_TO_HATCH:3
+    TURNS_TO_HATCH:3,
+    costs: {
+        digTunnelCost: 5,
+        digChamberCost: 10,
+        layEggCost: 10,
+        upkeepCost: {
+            Worker: 1,
+            Soldier: 2,
+            Queen: 3,
+            Larva: 0,
+        }
+    },
 };
 
 /* ========= Variables Private to This File ========= */
@@ -309,7 +320,7 @@ function initializeStartingPosition() {
                 {location: [2, 8], facing: 3, cast: "Soldier", numberOfAnts: 3, "foodHeld": 0},
                 {location: [7, 6], facing: 2, cast: "Larva",   numberOfAnts: 3, "foodHeld": 0},
             ],
-            foodSupply: 20,
+            foodSupply: 200,
             antColor: "#000000",
         },
         {
@@ -321,7 +332,7 @@ function initializeStartingPosition() {
                 {location: [15, 8], facing: 1, cast: "Soldier", numberOfAnts: 4, "foodHeld": 0},
                 {location: [15, 7], facing: 0, cast:"Larva",    numberOfAnts: 1, "foodHeld": 0},
             ],
-            foodSupply: 50,
+            foodSupply: 500,
             antColor: "#750D06",
         },
     ];

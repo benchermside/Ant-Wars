@@ -97,18 +97,14 @@ function getNewFacing (oldLocation, newLocation){
         facing = (facing + 3*(newLocation[0]-oldLocation[0]))%12;
     } else {
         facing = 15 + (2*(newLocation[1]-oldLocation[1]));
-        console.log("facing " +facing);
 
         if (newLocation[1]%2 === 0 && newLocation[0]===oldLocation[0]||
             (newLocation[1]%2 === 1 && newLocation[0]!=oldLocation[0])){
-            console.log ("in here");
             facing = facing -2*(oldLocation[1]-newLocation[1]);
         }
         facing = facing%12;
-        console.log("facing " +facing);
 
     }
-    console.log("facing " +facing);
 
     return facing;
 }

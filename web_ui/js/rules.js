@@ -173,7 +173,8 @@ function possibleDigChamberActions(gameState, colonyNumber, antNumber) {
     const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
     // Chambers can only be dug on an existing tunnel and only in the current location
     const eligibleTerrain = 4;
-    if (gameState.terrainGrid[antLocation[1]][antLocation[0]] === eligibleTerrain) {
+    const existingTerrain = gameState.terrainGrid[antLocation[1]][antLocation[0]];
+    if (existingTerrain === eligibleTerrain) {
         return [{name: "Dig", location: antLocation, whatToDig: "Chamber"}];
     } else {
         return [];

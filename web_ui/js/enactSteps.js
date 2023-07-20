@@ -20,111 +20,6 @@
 
 
 /*
- * This performs applyActionStage in the case where the action is a Move action. See
- * that function for the requirements.
- *
- * Design Note: That formula for indexOfStep looks simple, but it took me some time
- * to confirm that it behaves as desired: always returns the last slot in the steps
- * array when steps is 0, spreads it out nicely otherwise.
- */
-function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
-    const indexOfStep = Math.ceil(action.steps.length * (stage / 12)) - 1; // spread the steps out over our 12-step timeline
-    if (indexOfStep !== 0) { // if index === 0 then we don't need to do any update anyway
-        let facing;
-        if (indexOfStep ===0) {
-            facing = getNewFacing(gameState.colonies[colonyNumber].ants[antNumber].location, action.steps[indexOfStep]);
-        } else {
-            facing = getNewFacing(action.steps[indexOfStep-1], action.steps[indexOfStep]);
-        }
-        gameState.colonies[colonyNumber].ants[antNumber].facing = facing;
-        gameState.colonies[colonyNumber].ants[antNumber].location = action.steps[indexOfStep];
-    }
-}
-
-/*
- * This performs applyActionStage in the case where the action is a Defend action. See
- * that function for the requirements. The ant stack will attack all enemy adjacent or
- * overlapping ant stacks each stage.
- */
-function applyDefendAction(gameState, colonyNumber, antNumber, action, stage) {
-}
-
-function applyLayEggAction(gameState, colonyNumber, antNumber, action, stage) {
-    if (stage >= 11){
-        let eggStack = getEggAt(gameState.colonies[colonyNumber].eggs, gameState.colonies[colonyNumber].ants[antNumber].location);
-        if (eggStack === null){
-            const eggLoc = gameState.colonies[colonyNumber].ants[antNumber].location;
-            eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": Rules.TURNS_TO_HATCH};
-            gameState.colonies[playerColony].eggs.push(eggStack);
-        } else {
-            if (eggStack.numberOfEggs <= Rules.MAX_EGGS){
-                eggStack.numberOfEggs += 1;
-            }
-        }
-    }
-}
-
-/*
- * This performs applyActionStage in the case where the action is a Dig action. See
- * that function for the requirements.
- *
- * Dug things appear in stage 11.
- */
-function applyDigAction(gameState, colonyNumber, antNumber, action, stage) {
-    const coord = action.location;
-    // --- Move the ant if we're past stage 3 ---
-    if (stage > 3) {
-        gameState.colonies[colonyNumber].ants[antNumber].location = coord; // move the ant
-    }
-    // --- Update the tile if at stage 11 or more  ---
-    if (stage >= 11) {
-        let newTerrainType;
-        if (action.whatToDig === "Tunnel") {
-            newTerrainType = 4;
-        } else if (action.whatToDig === "Chamber") {
-            newTerrainType = 5;
-        } else {
-            throw Error(`Invalid value for whatToDig: ${action.whatToDig}`);
-        }
-        gameState.terrainGrid[coord[1]][coord[0]] = newTerrainType; // change the terrain
-    }
-}
-
-
-
-/*
- * This modifies the gameState it is given to enact a certain stage of a certain ant's action.
- *
- * The gameState variable contains a gameState which should be modified (if necessary). The
- * colonyNumber and antNumber specify which ant is being moved. The action parameter tells
- * what action that ant is taking and the stage parameter (always a number 1 through 12) tells
- * what stage of the process should be drawn.
- *
- * Nothing much is guaranteed about the gameState, but we ARE guaranteed that the ant in
- * question is in its initial position (before performing any of the action). So all we need
- * to do is to apply stage/12 of the desired action.
- *
- * For movement actions, we divide it by 12 and apply the appropriate fraction of the movement.
- * For many other actions we don't show the results until stage 12.
- */
-function applyActionStage(gameState, colonyNumber, antNumber, action, stage) {
-    if (action.name === "None") {
-        // nothing to do for an action of "None".
-    } else if (action.name === "Move") {
-        applyMoveAction(gameState, colonyNumber, antNumber, action, stage);
-    } else if (action.name === "Defend") {
-        applyDefendAction(gameState, colonyNumber, antNumber, action, stage);
-    } else if (action.name === "LayEgg") {
-        applyLayEggAction(gameState, colonyNumber, antNumber, action, stage);
-    } else if (action.name === "Dig") {
-        applyDigAction(gameState, colonyNumber, antNumber, action, stage);
-    } else {
-        throw Error(`Invalid action: ${action.name}`);
-    }
-}
-
-
-/*
  * This function is passed an animationState.
  *
  * It returns a new GameState which is a copy of the startOfTurnGameState that has been modified
@@ -141,7 +36,7 @@ function gameStateForStage(animationState) {
     // --- Move the pieces ---
     animationState.colonySelections.forEach((colonySelection, colonyNumber) => {
         colonySelection.actionSelections.forEach((action, antNumber) => {
-            applyActionStage(newGameState, colonyNumber, antNumber, action, animationState.stage)
+            applyAction(newGameState, colonyNumber, antNumber, action, animationState.stage)
         })
     });
 
@@ -409,6 +304,23 @@ function processFood(gameState, randomNumberSource) {
 
 
 /*
+ * This is passed a GameState, and it modifies that GameState by charging the upkeep costs for the
+ * ants we have. If there isn't enough food to afford the upkeep costs, it starves some of the ants.
+ *
+ * FIXME: For now it doesn't actually do the starving thing.
+ */
+function chargeUpkeepCosts(gameState) {
+    gameState.colonies.forEach(colony => {
+        let upkeepCost = 0;
+        colony.ants.forEach(ant => {
+            upkeepCost += ant.numberOfAnts * rules.costs.upkeepCost[ant.cast];
+        });
+        colony.foodSupply -= upkeepCost;
+    });
+}
+
+
+/*
  * This is a key part of watching the turn happen.
  *
  * It gets called with an animationState which is an object containing these fields:
@@ -456,9 +368,12 @@ function animate(animationState) {
         } else if (animationState.substage === "After") {
             indicatedHexes.length = 0; // remove interactions
             displayedGameState = gameStateForStage(animationState);
-            if (animationState.stage === 12) {
+            if (animationState.stage === 12) { // Some things that happen specially at the end of the turn
                 // After stage 12 is when ants process the food
                 processFood(displayedGameState, animationState.randomNumberSource);
+
+                // After the food we have to pay upkeep for the ants
+                chargeUpkeepCosts(displayedGameState);
             }
             render();
             animationState.stage += 1;
