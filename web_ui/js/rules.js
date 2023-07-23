@@ -94,7 +94,7 @@ function isColony(ants, colony){
 // finds the allowed moves an ant can move to and returns a list of the paths
 // of those moves (I think)
 
-function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
+function getStepsList(gameState, displayedGameState, colonyNumber, antNumber){
     const movingAnt = displayedGameState.colonies[colonyNumber].ants[antNumber];
     const movementSpeed = castMovementSpeeds[movingAnt.cast];
     //moves is a list of objects used as hashtables.  Each hashtable is indexed by the coord destination the ant can move to
@@ -129,21 +129,30 @@ function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber){
             }
             if(isCast(occupants, movingAnt.cast)) {
                 const steps = generateSteps(moves[index][destination]);
-                const action = {
-                    "name": "Move",
-                    "steps": steps,
-                };
-                toReturn.push(action);
+                toReturn.push(steps);
             }
         }
     }
     return toReturn;
 }
 
+function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber) {
+    return getStepsList(gameState, displayedGameState, colonyNumber, antNumber).map(steps => {
+        return {
+            "name": "Move",
+            "steps": steps,
+        };
+    });
+}
 
-
-
-
+function possibleAttackActions(gameState, displayedGameState, colonyNumber, antNumber) {
+    return getStepsList(gameState, displayedGameState, colonyNumber, antNumber).map(steps => {
+        return {
+            "name": "Attack",
+            "steps": steps,
+        };
+    });
+}
 
 /*
  * This finds the list of allowed dig actions with whatToDig = "Tunnel" for a specific ant (there might

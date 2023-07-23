@@ -15,14 +15,14 @@ function revertNoneAction(gameState, startOfTurnGameState, colonyNumber, antNumb
 
 
 /*
- * Applies a Move action.
+ * Applies a Movelike action(currently move or attack).
  *
  * Design Note: That formula for indexOfStep looks simple, but it took me some time
  * to confirm that it behaves as desired: returns -1 if we have stage of 0, always
  * returns the last slot in the steps array when steps is 12, spreads it out nicely
  * over the steps array for anything in between.
  */
-function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
+function applyMovelikeAction(gameState, colonyNumber, antNumber, action, stage) {
     if (stage > 0) {
         const indexOfStep = Math.ceil(action.steps.length * (stage / 12)) - 1; // spread the steps out over our 12-step timeline
         const displayedAnt = gameState.colonies[colonyNumber].ants[antNumber]; // the one we'll change
@@ -45,6 +45,31 @@ function revertMoveAction(gameState, startOfTurnGameState, colonyNumber, antNumb
     antToModify.facing = startOfTurnAnt.facing;
 }
 
+/*
+ * Applies a Move action.
+ *
+ */
+function applyMoveAction(gameState, colonyNumber, antNumber, action, stage) {
+    return applyMovelikeAction(gameState, colonyNumber, antNumber, action, stage);
+}
+
+/*
+ * apply attack action
+ */
+function applyAttackAction(gameState, colonyNumber, antNumber, action, stage) {
+    return applyMovelikeAction(gameState, colonyNumber, antNumber, action, stage);
+}
+
+/*
+ * reverts attack action
+ */
+function revertAttackAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
+    // put the ant back where it started from
+    const antToModify = gameState.colonies[colonyNumber].ants[antNumber];
+    const startOfTurnAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    antToModify.location = startOfTurnAnt.location;
+    antToModify.facing = startOfTurnAnt.facing;
+}
 
 /* Applies a Defend action. */
 function applyDefendAction(gameState, colonyNumber, antNumber, action, stage) {
@@ -218,6 +243,8 @@ function applyAction(gameState, colonyNumber, antNumber, action, stage) {
         applyNoneAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "Move") {
         applyMoveAction(gameState, colonyNumber, antNumber, action, stage);
+    } else if(action.name === "Attack") {
+        applyAttackAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "Defend") {
         applyDefendAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "LayEgg") {
@@ -251,6 +278,8 @@ function revertAction(gameState, startOfTurnGameState, colonyNumber, antNumber, 
         revertNoneAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Move") {
         revertMoveAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
+    } else if (action.name === "Attack") {
+        revertAttackAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Defend") {
         revertDefendAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "LayEgg") {

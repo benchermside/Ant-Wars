@@ -327,6 +327,24 @@ const commandingAnAnt = {
         }
 
         if (selectedAntDisplayed.cast !== "Larva") {
+            const attackActions = possibleAttackActions(startOfTurnGameState, displayedGameState, playerColony, uiModeData.selectedAntNumber);
+            console.log("the attack actions are: ", attackActions); ///fixme, remove
+            if (attackActions.length > 0) {
+                buttons.push({
+                    label: "Attack",
+                    action: function () {
+                        const data = {
+                            selectedAntNumber: uiModeData.selectedAntNumber,
+                            attackActions: attackActions,
+                        };
+                        changeUIMode("selectingAttackDestination", data);
+                        render();
+                    }
+                });
+            }
+        }
+
+        if (selectedAntDisplayed.cast !== "Larva") {
             buttons.push({
                 label: "Defend",
                 action: function() {
@@ -346,7 +364,7 @@ const commandingAnAnt = {
             if (digTunnelActions.length > 0) {
                 buttons.push({
                     label: "Dig Tunnel",
-                    action: function() {
+                    action: function () {
                         const data = {
                             selectedAntNumber: uiModeData.selectedAntNumber,
                             digTunnelActions: digTunnelActions,
@@ -356,7 +374,9 @@ const commandingAnAnt = {
                     }
                 });
             }
+        }
 
+        if (selectedAntDisplayed.cast === "Worker") {
             const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
             if (digChamberActions.length > 0) {
                 const digAction = digChamberActions[0]; // there will only be one, and this is it
@@ -412,10 +432,62 @@ const commandingAnAnt = {
 
 
 /*
+ * This is a uiMode which is used when a player has selected an ant and told it to attack and is
+ * giving it instructions on where to go. In the uiModeData, there is a field, "selectedAntNumber"
+ * which will always be set to the number of the ant that is being commanded. there is another fild named attackActions
+ * that is a list of possible attack actions (see dataStructures.js).
+ */
+const selectingAttackDestination = {
+
+    enterMode: function(uiModeData) {
+        // Highlight the attacking ant
+        highlightedHex = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].location;
+
+        // indicate the hexes that it could go to
+        uiModeData.attackActions.forEach(attackAction => {
+            const indication = {
+                location: attackAction.steps[attackAction.steps.length - 1],
+                color: "#FFFF0066",
+            };
+            indicatedHexes.push(indication);
+        });
+    },
+
+    exitMode: function(uiModeData) {
+        highlightedHex = null; // deselect it
+        indicatedHexes.length = 0; // remove all items from the array
+    },
+
+    onClickHex: function(coord, uiModeData) {
+        // In case we clicked wrong, default to setting the action to "None":
+        playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+
+        // See if we clicked on one of the attackable locations...
+        uiModeData.attackActions.forEach(attackAction => {
+            if (coordEqual(attackAction.steps[attackAction.steps.length - 1], coord)) {
+                // We DID click on an attackable location, so set an actual attack action (instead of the "None")!
+                playerActionSelections[uiModeData.selectedAntNumber] = attackAction;
+                applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, attackAction);
+            }
+        });
+
+        // Either way, we're exiting this short-term mode
+        changeUIMode("readyToEnterMoves");
+        render();
+    },
+
+    actionButtons: function(uiModeData) {
+        return [];
+    },
+};
+
+
+
+/*
  * This is a uiMode which is used when a player has selected an ant and told it to dig and is
  * giving it instructions on where to dig. In the uiModeData, there is a field, "selectedAntNumber"
- * which will always be set to the number of the ant that is being commanded. There is also a field
- * named "whatToDig" which is a WhatToDig (see dataStructures.js).
+ * which will always be set to the number of the ant that is being commanded. here is another fild named digTunnelActions
+ * that is a list of possible digTunnel actions  (see dataStructures.js).
  */
 const selectingDigTunnelLocation = {
 
@@ -467,5 +539,6 @@ uiModes = {
     watchingTurnHappen,
     readyToEnterMoves,
     commandingAnAnt,
+    selectingAttackDestination,
     selectingDigTunnelLocation,
 }

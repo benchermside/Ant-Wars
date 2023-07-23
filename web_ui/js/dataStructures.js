@@ -244,6 +244,15 @@
     //           the ant's current location at the start of this turn. The last location
     //           in the list will always be the spot where the ant ends up. And each
     //           pair of adjacent locations in the list will be adjacent hexagons.
+    //   * "Attack":
+    //      * This means that this ant moves to a new location (through a series of steps.) while picking fights
+    //          with adjacent and overlapping enemy ants.
+    //      * Additional fields:
+    //         * "steps" is a list of type Location. The locations tell where the ant
+    //           travels during this turn. The first location in the list will always be
+    //           the ant's current location at the start of this turn. The last location
+    //           in the list will always be the spot where the ant ends up. And each
+    //           pair of adjacent locations in the list will be adjacent hexagons.
     //   * "Defend":
     //      * Means that the ant doesn't move and attacks adjacent or overlapping enemy ants.
     //      * Additional fields: There are no additional fields.
@@ -282,9 +291,16 @@
         "whatToDig": "Tunnel",
     };
     const action5 = {
+        "name": "Attack",
+        "steps": [
+            [5, 6],
+            [5, 7]
+        ]
+    }
+    const action6 = {
         "name": "Defend",
     };
-    const action6 = {
+    const action7 = {
         "name": "Mature",
         "cast": "Worker",
     }

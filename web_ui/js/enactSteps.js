@@ -127,8 +127,8 @@ function interactionsForStage(displayedGameState, animationState) {
                         const otherAntAction = otherAntNum >= otherActionSelections.length
                             ? {name: "None"}
                             : otherActionSelections[otherAntNum];
-                        const someAntAggressive = someAntAction.name === "Defend";
-                        const otherAntAggressive = otherAntAction.name === "Defend";
+                        const someAntAggressive = someAntAction.name === "Defend" || someAntAction.name === "Attack";
+                        const otherAntAggressive = otherAntAction.name === "Defend" || otherAntAction.name === "Attack";
                         if (someAntAggressive || otherAntAggressive) {
                             // at this point we have 2 ants... let them fight!!
                             const numbersLost = fight(someAnt, otherAnt, animationState.randomNumberSource);
