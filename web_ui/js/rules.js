@@ -6,46 +6,15 @@
 // and a ColonySelection. It returns the new GameState.
 //
 const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT move through
-const castMovementSpeeds = {"Worker":2, "Queen":1, "Soldier":2, "Larva":0} //matches each ant to their movement speed
 
 
 
-// This finds the list of allowed locations an ant can move to. It is passed a GameState (see
-// dataStructures.js), an integer specifying which colony we want the moves for, and an integer
-// specifying which ant in that colony we want the moves of. It returns a MoveLocations.
-function oldPossibleMoves(gameState, colonyNumber, antNumber) {
-    const notMovable = new Set([0, 1, 2, 3])   //list of all hex types that you CANNOT move through
-    const possibleMoves = [];
-    const numSteps = 1;
-    const gridHeight = gameState.terrainGrid.length;
-    const gridLength = gameState.terrainGrid[0].length;
-    const antStartX = gameState.colonies[colonyNumber].ants[antNumber].location[0];
-    const antStartY = gameState.colonies[colonyNumber].ants[antNumber].location[1];
-    possibleMoves.push([antStartX-1 + (antStartY%2), antStartY+1]);
-    possibleMoves.push([antStartX + (antStartY%2), antStartY+1]);
-    possibleMoves.push([antStartX-1, antStartY]);
-    possibleMoves.push([antStartX, antStartY]);
-    possibleMoves.push([antStartX+1, antStartY]);
-    possibleMoves.push([antStartX-1 + (antStartY%2), antStartY-1]);
-    possibleMoves.push([antStartX + (antStartY%2), antStartY-1]);
-    const validMoves = possibleMoves.filter(move => {
-        if(move[0] >= 0 && move[0] < gridLength && move[1] >= 0 && move[1] < gridHeight){
-            var currPos = gameState.terrainGrid[move[1]][move[0]];
-            if(!notMovable.has(currPos)){ //if the space type is NOT a type you cannot move through
-                return true;
-            }
-        }
-        return false;
-    });
-    return validMoves;
-}
 
-
-//helper function for new possable moves
+//helper function for new possible moves
 //returns true if the location in moves
-function spaceReached(moves, location){
-    for(let movesIndex=0; movesIndex<moves.length; movesIndex++){
-        if(!(moves[movesIndex][JSON.stringify(location)] === undefined)){
+function spaceReached(moves, location) {
+    for(let movesIndex=0; movesIndex<moves.length; movesIndex++) {
+        if(!(moves[movesIndex][JSON.stringify(location)] === undefined)) {
             return true;
         }
     }
@@ -55,7 +24,7 @@ function spaceReached(moves, location){
 
 //helper for possable moves
 //takes in a place and gives the list of moves to get there
-function generateSteps(destination){
+function generateSteps(destination) {
     if(destination === null){
         return [];
     }
@@ -68,21 +37,9 @@ function generateSteps(destination){
 
 //helper for possibleMoves
 //takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
-function isCast(ants, cast){
-    for(let i=0; i<ants.length; i++){
-        console.log("currently in is Cast and printing ants[i] ",ants[i]);
-        if(!(ants[i].cast === cast)){
-            return false;
-        }
-    }
-    return true;
-}
-
-//helper for possibleMoves
-//takes a list of ant stacks and checks if all ant stacks are in the same colony, if so returns true. otherwise returns false
-function isColony(ants, colony){
-    for(var i=0; i<ants.length; i++){
-        if(!(ants[i].colony === colony)){
+function isCast(ants, cast) {
+    for(let i=0; i<ants.length; i++) {
+        if(!(ants[i].cast === cast)) {
             return false;
         }
     }
@@ -94,9 +51,9 @@ function isColony(ants, colony){
 // finds the allowed moves an ant can move to and returns a list of the paths
 // of those moves (I think)
 
-function getStepsList(gameState, displayedGameState, colonyNumber, antNumber){
+function getStepsList(gameState, displayedGameState, colonyNumber, antNumber) {
     const movingAnt = displayedGameState.colonies[colonyNumber].ants[antNumber];
-    const movementSpeed = castMovementSpeeds[movingAnt.cast];
+    const movementSpeed = rules.movementSpeed[movingAnt.cast];
     //moves is a list of objects used as hashtables.  Each hashtable is indexed by the coord destination the ant can move to
     //as a json string and contains an object which has the field coord and prevLocation.  coord represents the
     //same location as the index (the destination) in a two length array.
@@ -104,29 +61,25 @@ function getStepsList(gameState, displayedGameState, colonyNumber, antNumber){
     const moves = [];
     moves[0] = {};
     moves[0][JSON.stringify(movingAnt.location)] = {"coord": movingAnt.location, "prevLocation": null};
-    for(let moveNumber = 1; moveNumber <= movementSpeed; moveNumber++){
+    for(let moveNumber = 1; moveNumber <= movementSpeed; moveNumber++) {
         moves[moveNumber] = {};
-        for(let space in moves[moveNumber-1]){
+        for(let space in moves[moveNumber-1]) {
             const prevLocation = JSON.parse(space);
             const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
-            for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++){
+            for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++) {
                 const currNeighbor = neighbors[neighborIndex];
-                if (!notMovable.has(gameState.terrainGrid[currNeighbor[1]][currNeighbor[0]])){
-                    if (!spaceReached(moves, currNeighbor)){
+                if (!notMovable.has(gameState.terrainGrid[currNeighbor[1]][currNeighbor[0]])) {
+                    if (!spaceReached(moves, currNeighbor)) {
                         moves[moveNumber][JSON.stringify(currNeighbor)] = {"coord": currNeighbor, "prevLocation": moves[moveNumber-1][space]};
                     }
                 }
             }
-
         }
     }
     const toReturn = [];
-    for(let index=moves.length; index > -1; index=index-1){
-        for(let destination in moves[index]){
+    for(let index=moves.length; index > -1; index=index-1) {
+        for(let destination in moves[index]) {
             const occupants = getAntStatesAt(displayedGameState.colonies[colonyNumber].ants, moves[index][destination].coord);
-            if (occupants.length>0){
-                console.log("occupants[0].cast", occupants[0].cast);
-            }
             if(isCast(occupants, movingAnt.cast)) {
                 const steps = generateSteps(moves[index][destination]);
                 toReturn.push(steps);
@@ -218,7 +171,6 @@ if (TESTING) {
             },
         ],
     };
-    console.log(oldPossibleMoves(currentGameState, 0, 0));
 }
 //for testing delete later
 const inputState = {

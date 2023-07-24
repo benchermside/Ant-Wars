@@ -25,7 +25,7 @@ ants at the specified coord.  If beginIndex is given returns ants from that inde
 array.  If it is not specified returns all ants at that coord.
  */
 function getAntStatesAt(ants, coord, beginIndex){
-    if (beginIndex===undefined){
+    if (beginIndex === undefined){
         beginIndex = 0;
     }
 
@@ -62,7 +62,7 @@ Given an array of eggStacks, Returns the eggStack at the specified coord.  If be
 array.  If it is not specified returns all eggs at that coord.
  */
 function getEggAt(eggs, coord, beginIndex){
-    if (beginIndex===undefined){
+    if (beginIndex === undefined){
         beginIndex = 0;
     }
 
@@ -82,7 +82,7 @@ function getEggAt(eggs, coord, beginIndex){
  */
 function mergeAnts(ants){
     const mergedAnts = [];
-    const merged = ants.map(ant=>false); // track any ants that have already been merged in
+    const merged = ants.map(ant => false); // track any ants that have already been merged in
 
     ants.forEach((ant, antNumber) => {
         if (!merged[antNumber]){
@@ -102,7 +102,6 @@ function mergeAnts(ants){
                     merged[otherAntNumber] = true; // mark it as merged; we will skip it when we get to it
                     newAnt.numberOfAnts = newAnt.numberOfAnts + otherAnt.numberOfAnts;
                     newAnt.foodHeld = newAnt.foodHeld + otherAnt.foodHeld;
-                    console.log("AAA Merged in ant ", JSON.stringify(otherAnt), " giving ", JSON.stringify(newAnt)); // FIXME: Remove
                 }
             });
 

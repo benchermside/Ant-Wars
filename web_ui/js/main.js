@@ -21,8 +21,8 @@ let movesHaveBeenSent = false; // tells whether this player has submitted moves 
 
 
 const rules = {
-    MAX_EGGS:3,
-    TURNS_TO_HATCH:3,
+    MAX_EGGS: 3,
+    TURNS_TO_HATCH: 3,
     costs: {
         digTunnelCost: 5,
         digChamberCost: 10,
@@ -38,9 +38,16 @@ const rules = {
             Soldier: 6,
             Queen: 12,
             Larva: 0
-        }
+        },
+    },
+    movementSpeed: {
+        Worker: 2,
+        Soldier: 2,
+        Queen: 1,
+        Larva: 0,
     },
 };
+
 
 /* ========= Variables Private to This File ========= */
 let uiMode = null; // ONLY set this by calling changeUIMode()

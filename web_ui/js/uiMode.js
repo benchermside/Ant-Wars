@@ -93,11 +93,6 @@ const readyToEnterMoves = {
     },
 
     onClickHex: function(coord, uiModeData) {
-        console.log ("at start of onClickHex");
-        console.log ("coord", coord);
-        console.log ("highlightedHex ", highlightedHex);
-        console.log ("lastSelectedAntNum", lastSelectedAntNum);
-
         if (coord === null) { // if we clicked off the map
             if (highlightedHex === null) {
                 // Nothing was selected, and we clicked off the map: nothing at all happens!
@@ -112,15 +107,12 @@ const readyToEnterMoves = {
             let antNums = null;
 
             //if we have already selected ants at this hex only get ants AFTER the ones we have selected
-            console.log ("highlightedHex ", highlightedHex);
-            console.log ("lastSelectedAntNum", lastSelectedAntNum);
             if (coordEqual(coord, highlightedHex) && (lastSelectedAntNum !== null)){
                 console.log ("already selected an ant");
                 antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum+1);
             } else {
                 antNums = getAntNumsAt(playerAnts, coord);
             }
-            console.log ("antNums:", antNums);
 
             if (coordEqual(coord, highlightedHex) && (antNums.length <1))
             {
@@ -135,7 +127,6 @@ const readyToEnterMoves = {
                     const data = {
                         selectedAntNumber: lastSelectedAntNum,
                     };
-                    console.log("commandingAntAnt data:", data);
                     changeUIMode("commandingAnAnt", data);
                 }
                 render();
@@ -217,28 +208,23 @@ const commandingAnAnt = {
     },
 
     exitMode: function(uiModeData) {
-        console.log("highlightedHex in existMOde of commanding an ant", highlightedHex);
         highlightedHex = null; // deselect it
         indicatedHexes.length = 0; // remove all items from the array
     },
 
     onClickHex: function(coord, uiModeData) {
-        console.log ("in onClickHex of commanding an ant");
         //either deselect space and enter ready to enter move mode or if there
         //is more than one ant on space enter commanding an ant for that ant
-        console.log ("highlightedHex",highlightedHex);
 
-        if (coordEqual(coord, highlightedHex)){
+        if (coordEqual(coord, highlightedHex)) {
             const playerAnts = displayedGameState.colonies[playerColony].ants;
             //get ants AFTER the ones we have selected
             antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum+1);
-            console.log ("antNums:", antNums);
             if (antNums.length >0){
                 lastSelectedAntNum = antNums[0];
                 const data = {
                     selectedAntNumber: lastSelectedAntNum,
                 };
-                console.log("commandingAntAnt data:", data);
                 changeUIMode("commandingAnAnt", data);
             } else {
                 changeUIMode("readyToEnterMoves");
@@ -328,7 +314,6 @@ const commandingAnAnt = {
 
         if (selectedAntDisplayed.cast !== "Larva") {
             const attackActions = possibleAttackActions(startOfTurnGameState, displayedGameState, playerColony, uiModeData.selectedAntNumber);
-            console.log("the attack actions are: ", attackActions); ///fixme, remove
             if (attackActions.length > 0) {
                 buttons.push({
                     label: "Attack",

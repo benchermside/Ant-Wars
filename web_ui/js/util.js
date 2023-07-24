@@ -60,8 +60,9 @@ function findNeighbors(terrainGrid, x, y) {
     possibleNeighbors.push([x + (y%2), y-1]);
     const neighbors = [];
     for (let i = 0; i < possibleNeighbors.length; i++) {
-        if(possibleNeighbors[i][0] >= 0 && possibleNeighbors[i][0] < gridLength && possibleNeighbors[i][1] >= 0 && possibleNeighbors[i][1] < gridHeight){
-            neighbors.push(possibleNeighbors[i]);
+        let neighbor = possibleNeighbors[i];
+        if(neighbor[0] >= 0 && neighbor[0] < gridLength && neighbor[1] >= 0 && neighbor[1] < gridHeight) {
+            neighbors.push(neighbor);
        }
     }
     return neighbors;
@@ -92,19 +93,17 @@ location on the hex grid -- old location and new location are an array of length
 value represents x and the second represents why
  */
 function getNewFacing (oldLocation, newLocation){
-    let facing =12;
+    let facing = 12;
     if (oldLocation[1] === newLocation[1]){
         facing = (facing + 3*(newLocation[0]-oldLocation[0]))%12;
     } else {
         facing = 15 + (2*(newLocation[1]-oldLocation[1]));
 
-        if (newLocation[1]%2 === 0 && newLocation[0]===oldLocation[0]||
-            (newLocation[1]%2 === 1 && newLocation[0]!=oldLocation[0])){
+        if (newLocation[1]%2 === 0 && newLocation[0] === oldLocation[0] ||
+            (newLocation[1]%2 === 1 && newLocation[0] !== oldLocation[0])) {
             facing = facing -2*(oldLocation[1]-newLocation[1]);
         }
         facing = facing%12;
-
     }
-
     return facing;
 }
