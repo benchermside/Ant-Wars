@@ -407,16 +407,16 @@
     //
     // It has the following fields:
     //  * gameCode - the numeric ID of the game
-    //  * map - the code for the particular map the game will use. "map1" is the only valid value now.
-    //  * rules - the code for the particular rules the game will use. "rules1" is the only valid value now.
+    //  * map - the code for the particular map the game will use. "standard" is one valid value.
+    //  * rules - the code for the particular rules the game will use. "standard" is one valid value.
     //  * playerList - an array of Player objects, one for each player. The first one in the list will
     //        be the one that's the host.
     //
     // Example:
     let gameSettings = {
         gameCode: "87634",
-        map: "map1",
-        rules: "rules1",
+        map: "standard",
+        rules: "standard",
         playerList: [
             { playerType: "Human", username: "Ann" },
             { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },

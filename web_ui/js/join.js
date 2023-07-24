@@ -229,8 +229,8 @@ function beginSinglePlayerGame() {
     console.log(`Beginning single-player game.`);
     const gameSettings = {
         gameCode: "00000", // special dummy code for single player games
-        map: "map1",
-        rules: "rules1",
+        map: "standard",
+        rules: "standard",
         playerList: [
             { playerType: "Human", username: "Me" },
             { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },

@@ -1,0 +1,27 @@
+{
+  "MAX_EGGS": 3,
+  "TURNS_TO_HATCH": 3,
+  "costs": {
+    "digTunnelCost": 5,
+    "digChamberCost": 10,
+    "layEggCost": 10,
+    "upkeepCost": {
+      "Worker": 1,
+      "Soldier": 2,
+      "Queen": 3,
+      "Larva": 0
+    },
+    "hatchCost": {
+      "Worker": 4,
+      "Soldier": 6,
+      "Queen": 12,
+      "Larva": 0
+    }
+  },
+  "movementSpeed": {
+    "Worker": 2,
+    "Soldier": 2,
+    "Queen": 1,
+    "Larva": 0
+  }
+}

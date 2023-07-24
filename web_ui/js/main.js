@@ -3,9 +3,10 @@
  */
 
 /* ========= Global Variables ========= */
-let hexSize = 120; // starting size
+let rules = null;
 let startOfTurnGameState = null; // will be populated during initialization
 let displayedGameState = null;  // will be populated during initialization
+let hexSize = 120; // starting size
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the ant number of last selected ant in that hex
                                   //during that turn;
@@ -19,34 +20,6 @@ let colonySelections = null; // an array of ColonySelection (see dataStructures.
                             // current selected moves and readiness to end turn of each colony.
 let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
 
-
-const rules = {
-    MAX_EGGS: 3,
-    TURNS_TO_HATCH: 3,
-    costs: {
-        digTunnelCost: 5,
-        digChamberCost: 10,
-        layEggCost: 10,
-        upkeepCost: {
-            Worker: 1,
-            Soldier: 2,
-            Queen: 3,
-            Larva: 0,
-        },
-        hatchCost: {
-            Worker: 4,
-            Soldier: 6,
-            Queen: 12,
-            Larva: 0
-        },
-    },
-    movementSpeed: {
-        Worker: 2,
-        Soldier: 2,
-        Queen: 1,
-        Larva: 0,
-    },
-};
 
 
 /* ========= Variables Private to This File ========= */
@@ -297,73 +270,6 @@ function onCanvasClick(pixelCoord) {
 }
 
 
-/*
- * This is called before we begin to set up the initial game position. It modifies the global
- * gameState.
- */
-function initializeStartingPosition() {
-    const startingTerrainGrid = [
-        [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
-          [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 6, 6, 6, 6, 6, 6, 6, 6],
-        [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 1, 1, 1, 1, 4, 1, 2],
-          [2, 1, 1, 1, 4, 1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 4, 1, 2],
-        [2, 1, 1, 2, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 2],
-          [2, 1, 1, 4, 4, 1, 5, 1, 1, 1, 1, 1, 1, 1, 4, 2, 4, 2],
-        [2, 1, 4, 4, 4, 4, 5, 5, 1, 1, 2, 2, 1, 1, 2, 4, 4, 2],
-          [2, 4, 5, 4, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 4, 5, 1, 2],
-        [2, 2, 4, 4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1, 2],
-          [2, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 5, 4, 2, 2],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ];
-    const startingColonies = [
-        {  eggs:[
-                {"numberOfEggs": 1, "location": [2, 7], "daysToHatch": 3},
-                {"numberOfEggs": 2, "location": [6, 5], "daysToHatch": 3},
-                {"numberOfEggs": 3, "location": [6, 6], "daysToHatch": 3},
-
-            ],
-
-            ants: [
-                {location: [4, 3], facing: 7, cast: "Soldier", numberOfAnts: 3, "foodHeld": 0},
-                {location: [4, 5], facing: 6, cast: "Queen",   numberOfAnts: 2, "foodHeld": 0},
-                {location: [5, 6], facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
-                {location: [2, 8], facing: 5, cast: "Worker",  numberOfAnts: 5, "foodHeld": 0},
-                {location: [2, 8], facing: 1, cast: "Queen",   numberOfAnts: 3, "foodHeld": 0},
-                {location: [2, 8], facing: 5, cast: "Larva",   numberOfAnts: 2, "foodHeld": 0},
-                {location: [2, 8], facing: 3, cast: "Soldier", numberOfAnts: 3, "foodHeld": 0},
-                {location: [7, 6], facing: 2, cast: "Larva",   numberOfAnts: 3, "foodHeld": 0},
-            ],
-            foodSupply: 200,
-            antColor: "#000000",
-        },
-        {
-            eggs: [],
-            ants: [
-                {location: [14, 7], facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
-                {location: [ 6, 6], facing: 1, cast: "Worker",  numberOfAnts: 2, "foodHeld": 0},
-                {location: [15, 6], facing: 1, cast: "Queen",   numberOfAnts: 1, "foodHeld": 0},
-                {location: [15, 8], facing: 1, cast: "Soldier", numberOfAnts: 4, "foodHeld": 0},
-                {location: [15, 7], facing: 0, cast:"Larva",    numberOfAnts: 1, "foodHeld": 0},
-            ],
-            foodSupply: 500,
-            antColor: "#750D06",
-        },
-    ];
-    const startingFoodItems = [
-        {
-            "appearance": "BasicParticle",
-            "location": [9,2],
-            "foodValue": 10,
-        },
-    ];
-    startOfTurnGameState = {
-        terrainGrid: startingTerrainGrid,
-        colonies: startingColonies,
-        foodItems: startingFoodItems,
-    };
-    displayedGameState = structuredClone(startOfTurnGameState);
-}
-
 
 /*
  * Call this to begin the game.
@@ -390,55 +296,53 @@ function startGame(newGameSettings, playerNum) {
     playerColony = playerNum;
     isHostServer = playerNum === 0;
 
-    // ==== Set up button actions ====
-    const zoomInBtnElem = document.getElementById("zoom-in-btn");
-    zoomInBtnElem.onclick = function() {
-        hexSize = hexSize * 1.2;
-        onBoardResize();
-        render();
-    };
-    const zoomOutBtnElem = document.getElementById("zoom-out-btn");
-    zoomOutBtnElem.onclick = function() {
-        hexSize = hexSize / 1.2;
-        onBoardResize();
-        render();
-    };
-    const colonyInfoCollapseBtnElem = document.getElementById("colony-info-collapse");
-    colonyInfoCollapseBtnElem.onclick = function() {
-        hideElemById("colony-info-data");
-        showElemById("colony-info-expand");
-    }
-    const colonyInfoExpandBtnElem = document.getElementById("colony-info-expand");
-    colonyInfoExpandBtnElem.onclick = function() {
-        hideElemById("colony-info-expand");
-        showElemById("colony-info-data");
-    }
+    // === Load Map and Rules ===
+    Promise.all([
+        fetch(`/config/maps/${gameSettings.map}.json`).then(res => res.json()),
+        fetch(`/config/rules/${gameSettings.rules}.json`).then(res => res.json()),
+    ]).then(results => {
+        // ==== Use the Map and Rules we Loaded ====
+        startOfTurnGameState = results[0];
+        displayedGameState = structuredClone(startOfTurnGameState);
+        rules = results[1];
 
-    // === Set up canvas interaction actions ===
-    const canvas = document.getElementById("game-canvas");
-    canvas.addEventListener("click", function(event) {
-        const pixelCoord = [event.offsetX, event.offsetY];
-        onCanvasClick(pixelCoord);
+        // ==== Set up button actions ====
+        const zoomInBtnElem = document.getElementById("zoom-in-btn");
+        zoomInBtnElem.onclick = function() {
+            hexSize = hexSize * 1.2;
+            onBoardResize();
+            render();
+        };
+        const zoomOutBtnElem = document.getElementById("zoom-out-btn");
+        zoomOutBtnElem.onclick = function() {
+            hexSize = hexSize / 1.2;
+            onBoardResize();
+            render();
+        };
+        const colonyInfoCollapseBtnElem = document.getElementById("colony-info-collapse");
+        colonyInfoCollapseBtnElem.onclick = function() {
+            hideElemById("colony-info-data");
+            showElemById("colony-info-expand");
+        }
+        const colonyInfoExpandBtnElem = document.getElementById("colony-info-expand");
+        colonyInfoExpandBtnElem.onclick = function() {
+            hideElemById("colony-info-expand");
+            showElemById("colony-info-data");
+        }
+
+        // === Set up canvas interaction actions ===
+        const canvas = document.getElementById("game-canvas");
+        canvas.addEventListener("click", function(event) {
+            const pixelCoord = [event.offsetX, event.offsetY];
+            onCanvasClick(pixelCoord);
+        });
+
+        // ==== Prepare Game Start ====
+        onBoardResize();
+        startNewTurn();
+        render();
+
+    }).catch(err => {
+        throw err;
     });
-
-    // ==== Prepare Game Start ====
-    initializeStartingPosition();
-    onBoardResize();
-    startNewTurn();
-    render();
-}
-
-
-function onSinglePlayerLoad() {
-    const gameSettings = {
-        gameCode: "00000", // special dummy code for single player games
-        map: "map1",
-        rules: "rules1",
-        playerList: [
-            { playerType: "Human", username: "Me" },
-            { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },
-        ],
-    };
-    const playerNum = 0; // in a single-player game we are always the host
-    startGame(gameSettings, playerNum);
 }
