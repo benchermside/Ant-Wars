@@ -455,11 +455,11 @@ function drawLabel(drawContext, hexSize, scaleFactor, antState) {
     const center = twistPoint({x: 12, y: -13}, hexSize * scaleFactor, antState.facing);
     const shiftedCenter = {x: center.x + coord[0], y: center.y + coord[1]};
     const radius = 6 * scaleFactor * hexSize;
-
+    const backgroundColor = antState.foodHeld > 0 ? "#D19208" : "white";
 
     drawContext.arc(shiftedCenter.x, shiftedCenter.y, radius, 0, 2 * Math.PI);
     drawContext.stroke();
-    drawContext.fillStyle = "white";
+    drawContext.fillStyle = backgroundColor;
     drawContext.fill();
     const fontSize = Math.round(10 * scaleFactor * hexSize);
     colorText(drawContext, antState.numberOfAnts, shiftedCenter.x, shiftedCenter.y, "black", fontSize);
