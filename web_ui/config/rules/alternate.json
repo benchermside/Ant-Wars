@@ -18,6 +18,7 @@
       "Larva": 0
     }
   },
+  "foodMultiplier": 4,
   "movementSpeed": {
     "Worker": 2,
     "Soldier": 2,

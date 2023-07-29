@@ -52,6 +52,11 @@ function sweepScreen(color) {
  */
 function updateControls() {
     document.getElementById("show-foodSupply").value = displayedGameState.colonies[playerColony].foodSupply;
+    const upkeep = displayedGameState.colonies[playerColony].ants.reduce(
+        (sum, ant) => sum + ant.numberOfAnts * rules.costs.upkeepCost[ant.cast],
+        0
+    );
+    document.getElementById("show-upkeep").value = upkeep;
 }
 
 

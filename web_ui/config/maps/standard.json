@@ -21,15 +21,15 @@
       ],
       "ants": [
         {"location": [4, 3], "facing": 7, "cast": "Soldier", "numberOfAnts": 3, "foodHeld": 0},
-        {"location": [4, 5], "facing": 6, "cast": "Queen",   "numberOfAnts": 2, "foodHeld": 0},
+        {"location": [4, 5], "facing": 6, "cast": "Queen",   "numberOfAnts": 1, "foodHeld": 0},
         {"location": [5, 6], "facing": 1, "cast": "Worker",  "numberOfAnts": 2, "foodHeld": 0},
         {"location": [2, 8], "facing": 5, "cast": "Worker",  "numberOfAnts": 5, "foodHeld": 0},
-        {"location": [2, 8], "facing": 1, "cast": "Queen",   "numberOfAnts": 3, "foodHeld": 0},
+        {"location": [2, 8], "facing": 1, "cast": "Queen",   "numberOfAnts": 1, "foodHeld": 0},
         {"location": [2, 8], "facing": 5, "cast": "Larva",   "numberOfAnts": 2, "foodHeld": 0},
         {"location": [2, 8], "facing": 3, "cast": "Soldier", "numberOfAnts": 3, "foodHeld": 0},
         {"location": [7, 6], "facing": 2, "cast": "Larva",   "numberOfAnts": 3, "foodHeld": 0}
       ],
-      "foodSupply": 200,
+      "foodSupply": 800,
       "antColor": "#000000"
     },
     {

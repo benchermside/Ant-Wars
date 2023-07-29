@@ -219,7 +219,7 @@ function deliverFood(gameState) {
 
                 // if we should deliver, then do so
                 if (shouldDeliver) {
-                    colony.foodSupply += ant.foodHeld;
+                    colony.foodSupply += ant.foodHeld * rules.foodMultiplier;
                     ant.foodHeld = 0;
                 }
             }
@@ -313,6 +313,35 @@ function processFood(gameState, randomNumberSource) {
 
 
 /*
+ * This is called with a colony which it will modify. It reduces the count of ants in some ant stacks
+ * (possibly all the way to zero) until enough ants have starved to make up for the food deficit.
+ */
+function starveColony(colony) {
+    let foodDeficit = colony.foodSupply;
+    if (foodDeficit >= 0) {
+        throw Error("starveColony() called with no food deficit.");
+    }
+    colony.foodSupply = 0; // it will be by the time we're done starving!
+
+    const castsInOrderOfStarvation = ["Soldier", "Worker", "Larva", "Queen"];
+    castsInOrderOfStarvation.forEach(castToStarve => {
+        // starve ants of this cast, starting from the oldest, until we have positive food
+        const paybackForStarving = Math.max(1, rules.costs.upkeepCost[castToStarve] * 4);
+        colony.ants.forEach(ant => {
+            if (foodDeficit < 0 && ant.cast === castToStarve) {
+                while(foodDeficit < 0 && ant.numberOfAnts > 0) {
+                    ant.numberOfAnts -= 1;
+                    foodDeficit += paybackForStarving;
+                }
+            }
+        });
+    });
+
+    // if we get here, the entire colony has starved to death
+}
+
+
+/*
  * This is passed a GameState, and it modifies that GameState by charging the upkeep costs for the
  * ants we have. If there isn't enough food to afford the upkeep costs, it starves some of the ants.
  *
@@ -325,6 +354,11 @@ function chargeUpkeepCosts(gameState) {
             upkeepCost += ant.numberOfAnts * rules.costs.upkeepCost[ant.cast];
         });
         colony.foodSupply -= upkeepCost;
+
+        if (colony.foodSupply < 0) {
+            // oops... we are starving
+            starveColony(colony);
+        }
     });
 }
 
