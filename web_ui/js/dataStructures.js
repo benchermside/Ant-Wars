@@ -142,7 +142,7 @@
     // and they have a foodValue.
     //
     // It is an object with a few fields:
-    //   * appearance: one of the following strings: "BasicParticle", "DeadAnt"
+    //   * appearance: one of the following strings: "BasicParticle", "FunkyParticle", "DeadAnt" (NOTE: DeadAnt not supported yet)
     //   * location: an [x,y] grid coordinate giving the location of the food item.
     //   * foodValue: a non-negative integer indicating how much food energy it can provide.
     //   * facing: a number, 0..11 which shows how the food is facing. (This is visual only, and has no effect.)

@@ -258,7 +258,7 @@ const distributionOfFood = [
     [],                    //   3: Sky
     [2, 1, 0],             //   4: Dirt with Tunnel
     [],                    //   5: Dirt with Chamber
-    [3, 3, 3, 1, 0, 0, 1], //   6: Surface
+    [3, 4, 4, 2, 0, 0, 3], //   6: Surface
 ];
 
 
@@ -282,9 +282,10 @@ function createNewFood(gameState, randomNumberSource) {
                             const prob = distributionArray[foodValue - 1] * chanceToFindFood;
                             if (randomNumberSource() < prob) {
                                 // Yes! We should create this food item!
+                                const randomAppearance = ["BasicParticle", "FunkyParticle"][Math.floor(randomNumberSource() * 2)];
                                 const randomFacing = Math.floor(randomNumberSource() * 12);
                                 const newFoodItem = {
-                                    appearance: "BasicParticle",
+                                    appearance: randomAppearance,
                                     location: coord,
                                     foodValue: foodValue,
                                     facing: randomFacing,

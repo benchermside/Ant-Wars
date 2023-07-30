@@ -46,11 +46,6 @@
     }
   ],
   "foodItems": [
-    {
-      "appearance": "BasicParticle",
-      "location": [9,2],
-      "foodValue": 10,
-      "facing": 2
-    }
+    {"appearance": "FunkyParticle", "location": [9,2], "foodValue": 10, "facing": 0}
   ]
 }

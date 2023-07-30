@@ -55,11 +55,27 @@
 //           "cp1y": the y-value of the starting "control point" for the Bezier curve
 //           "cp2x": the x-value of the ending "control point" for the Bezier curve
 //           "cp2y": the y-value of the ending "control point" for the Bezier curve
+//   "SmoothBezierCurveTo":
+//       This uses Bezier curves to draw a smooth path. It will start from the current
+//       point and go to a new point specified with the fields (x,y). It will connect
+//       these with a Bezier curve. The control point for the end point will be given
+//       relative to the end point -- so d2x and d2y are provided and the end control
+//       point is at (x + d2x, y + d2y). If the previous curve in the path was also
+//       a SmoothBezierCurveTo, or was a BezierCurveTo, then the control point for the
+//       start point will be a symmetric reflection of the control point for the
+//       previous segment; otherwise the control point for the start will be the same
+//       as the current point. This is designed to work like the "s" command for cubic
+//       Bezier curves in SVGs.
+//       Fields:
+//           "x": the x-value to move to
+//           "y": the y-value to move to
+//           "d2x": the offset of the x-value of the ending "control point" for the Bezier curve
+//           "d2y": the offset of the y-value of the ending "control point" for the Bezier curve
 
 
 // Shape
 //
-// A thing we can draw. There are two kinds right now: a solid shape with bezier
+// A thing we can draw. There are two kinds right now: a solid shape with Bezier
 // curves or a straight line.
 //
 // It has a field named "type" which is either "BezierShape", "Line", or "Path". And it has
@@ -173,7 +189,7 @@ function twistPathCommands(commands, scale, clockAngle) {
     const sinAngle = Math.sin(-clockAngle * Math.PI / 6);
     return commands.map(cmd => {
         let newCmd;
-        if (cmd.type === "MoveTo" || cmd.type === "LineTo" || cmd.type === "BezierCurveTo") {
+        if (["MoveTo", "LineTo", "BezierCurveTo", "SmoothBezierCurveTo"].includes(cmd.type)) {
             newCmd = {
                 type: cmd.type,
                 x: scale * (cmd.x * cosAngle - cmd.y * sinAngle),
@@ -187,6 +203,10 @@ function twistPathCommands(commands, scale, clockAngle) {
             newCmd["cp1y"] = scale * (cmd.cp1x * sinAngle + cmd.cp1y * cosAngle);
             newCmd["cp2x"] = scale * (cmd.cp2x * cosAngle - cmd.cp2y * sinAngle);
             newCmd["cp2y"] = scale * (cmd.cp2x * sinAngle + cmd.cp2y * cosAngle);
+        }
+        if (cmd.type === "SmoothBezierCurveTo") {
+            newCmd["d2x"] = scale * (cmd.d2x * cosAngle - cmd.d2y * sinAngle);
+            newCmd["d2y"] = scale * (cmd.d2x * sinAngle + cmd.d2y * cosAngle);
         }
         return newCmd;
     });
@@ -424,9 +444,25 @@ function drawPathShape(drawContext, pathShape, coord, color, strokeWidth, stroke
             drawContext.lineTo(x0 + cmd.x, y0 - cmd.y);
         } else if (cmd.type === "BezierCurveTo") {
             drawContext.bezierCurveTo(
-                x0 + cmd.cp1x,   y0 - cmd.cp1y,
-                x0 + cmd.cp2x,   y0 - cmd.cp2y,
-                x0 + cmd.x,      y0 - cmd.y,
+                x0 + cmd.cp1x, y0 - cmd.cp1y,
+                x0 + cmd.cp2x, y0 - cmd.cp2y,
+                x0 + cmd.x,    y0 - cmd.y,
+            );
+        } else if (cmd.type === "SmoothBezierCurveTo") {
+            // second control point is specified in a relative fashion
+            const cp2x = cmd.x + cmd.d2x;
+            const cp2y = cmd.y + cmd.d2y;
+            // the first control point is (prevCmd.x, prevCmd.y) unless prevCmd was a Bezier curve,
+            // if it WAS then the first control point is the reflection of the previous control point
+            // so it will look smooth.
+            const prevWasSmooth = prevCmd.type === "SmoothBezierCurveTo";
+            const prevWasBezier = prevCmd.type === "BezierCurveTo";
+            const cp1x = prevWasSmooth ? prevCmd.x - prevCmd.d2x : (prevWasBezier ? -prevCmd.cp2x : prevCmd.x);
+            const cp1y = prevWasSmooth ? prevCmd.y - prevCmd.d2y : (prevWasBezier ? -prevCmd.cp2y : prevCmd.y);
+            drawContext.bezierCurveTo(
+                x0 + cp1x,  y0 - cp1y,
+                x0 + cp2x,  y0 - cp2y,
+                x0 + cmd.x, y0 - cmd.y,
             );
         } else {
             throw Error(`Invalid PathCommand of ${cmd.type}`);
@@ -803,25 +839,52 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
 
 /*
+ * Used as a map, the keys are the "appearance" field of a FoodItem (see dataStructures.js), and the values
+ * are the basic shape (a Shape object) for the food item. The shape should not be modified.
+ */
+const foodItemShapes = {
+    "BasicParticle": {
+        type: "Path",
+        commands: [
+            {type: "MoveTo", x:-2, y:2},
+            {type: "LineTo", x:-1, y:2},
+            {type: "BezierCurveTo", x:1, y:2, cp1x:-1, cp1y:1, cp2x:1, cp2y:1},
+            {type: "LineTo", x:2, y:2},
+            {type: "LineTo", x:2, y:1},
+            {type: "BezierCurveTo", x:2, y:-1, cp1x:1, cp1y:1, cp2x:1, cp2y:-1},
+            {type: "LineTo", x:2, y:-2},
+            {type: "LineTo", x:1, y:-2},
+            {type: "BezierCurveTo", x:-1, y:-2, cp1x:1, cp1y:-0.5, cp2x:-1, cp2y:-0.5},
+            {type: "LineTo", x:-2, y:-2},
+            {type: "LineTo", x:-2, y:-1},
+            {type: "LineTo", x:-1, y:0},
+            {type: "LineTo", x:-2, y:1},
+        ]
+    },
+    "FunkyParticle": {
+        type: "Path",
+        commands: [
+            {type: "MoveTo", x:-2,  y:1.5},
+            {type: "LineTo", x:1, y:1.5},
+            {type: "BezierCurveTo", x:2, y:1, cp1x: 1, cp1y: 0.5, cp2x: 2, cp2y: 1},
+            {type: "LineTo", x:2, y:-0.5},
+            {type: "LineTo", x:-2, y:-2},
+            {type: "LineTo", x:-2, y:-1.25},
+            {type: "BezierCurveTo", x:-2, y:1, cp1x: 0, cp1y: -1.25, cp2x: -1, cp2y: 1},
+        ]
+    },
+};
+
+
+/*
  * This draws the indicated food item on the screen.
  */
 function drawFoodItem(drawContext, hexSize, foodItem) {
     if (foodItem.foodValue > 0) {
         const coord = hexCenter(foodItem.location[0], foodItem.location[1], hexSize); // center of the hex
-        const radius = Math.sqrt(foodItem.foodValue) * hexSize / 25; // scale the size with the amount of food
-
-        const foodItemShape = {
-            type: "Path",
-            commands: [
-                {type: "MoveTo", x:-2,  y:1.5},
-                {type: "LineTo", x:1, y:1.5},
-                {type: "BezierCurveTo", x:2, y:1, cp1x: 1, cp1y: 0.5, cp2x: 2, cp2y: 1},
-                {type: "LineTo", x:2, y:-0.5},
-                {type: "LineTo", x:-2, y:-2},
-                {type: "LineTo", x:-2, y:-1.25},
-                {type: "BezierCurveTo", x:-2, y:1, cp1x: 0, cp1y: -1.25, cp2x: -1, cp2y: 1},
-            ]
-        };
+        const scaleFactor = 25; // chosen arbitrarily to make things the desired size
+        const radius = Math.sqrt(foodItem.foodValue) * hexSize / scaleFactor; // scale the size with the amount of food
+        const foodItemShape = foodItemShapes[foodItem.appearance];
         const foodDiagram = twistDiagram([foodItemShape], radius, foodItem.facing);
         drawDiagram(drawContext, foodDiagram, coord, "#D19208", (radius/10), "#494949");
     }
@@ -829,7 +892,6 @@ function drawFoodItem(drawContext, hexSize, foodItem) {
 
 
 function colorText(drawContext, text, x, y, fillColor, fontSize) {
-    drawContext.beginPath();
     drawContext.textAlign = "center";
     drawContext.textBaseline = "middle";
     drawContext.fillStyle = fillColor;
