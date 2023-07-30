@@ -46,7 +46,7 @@
 //           "y": the y-value to move to
 //   "BezierCurveTo":
 //       This draws a curve beginning at the current point and going to the specified point
-//       but curved so it starts on a tangent toward the point (cp1x,cp1y) and ends on a
+//       but curved so it starts on a tangent toward the point (cp1x, cp1y) and ends on a
 //       tangent from (cp2x, cp2y).
 //       Fields:
 //           "x": the x-value to move to
@@ -163,10 +163,14 @@ function twistLinePoints(points, scale, clockAngle) {
 /*
  * This is given a list of PathCommand objects which make up a shape and it resizes and
  * rotates them according to scale and clockAngle.
+ *
+ * NOTE: we apply the negative of the clock angle because we're trying to draw it
+ *   "upside down" (with positive y going upward) for the convenience of people
+ *   drawing shapes.
  */
 function twistPathCommands(commands, scale, clockAngle) {
-    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
-    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    const cosAngle = Math.cos(-clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(-clockAngle * Math.PI / 6);
     return commands.map(cmd => {
         let newCmd;
         if (cmd.type === "MoveTo" || cmd.type === "LineTo" || cmd.type === "BezierCurveTo") {
@@ -387,6 +391,10 @@ function drawLine(drawContext, shape, coord, color) {
 /*
  * On context drawContext, this draws the shape "shape" which is always a Path, at the location
  * coord with the given fillColor, strokeWidth, and strokeColor.
+ *
+ * NOTE: we apply the negative of what you'd expect to the y component because we're
+ *   trying to draw it "upside down" (with positive y going upward) for the convenience
+ *   of people drawing shapes.
  */
 function drawPathShape(drawContext, pathShape, coord, color, strokeWidth, strokeColor) {
     // --- First, do some validation ---
@@ -411,14 +419,14 @@ function drawPathShape(drawContext, pathShape, coord, color, strokeWidth, stroke
     let prevCmd = null;
     commands.forEach(cmd => {
         if (cmd.type === "MoveTo") {
-            drawContext.moveTo(x0 + cmd.x, y0 + cmd.y);
+            drawContext.moveTo(x0 + cmd.x, y0 - cmd.y);
         } else if (cmd.type === "LineTo") {
-            drawContext.lineTo(x0 + cmd.x, y0 + cmd.y);
+            drawContext.lineTo(x0 + cmd.x, y0 - cmd.y);
         } else if (cmd.type === "BezierCurveTo") {
             drawContext.bezierCurveTo(
-                x0 + cmd.cp1x,   y0 + cmd.cp1y,
-                x0 + cmd.cp2x,   y0 + cmd.cp2y,
-                x0 + cmd.x,      y0 + cmd.y,
+                x0 + cmd.cp1x,   y0 - cmd.cp1y,
+                x0 + cmd.cp2x,   y0 - cmd.cp2y,
+                x0 + cmd.x,      y0 - cmd.y,
             );
         } else {
             throw Error(`Invalid PathCommand of ${cmd.type}`);
