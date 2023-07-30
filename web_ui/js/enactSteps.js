@@ -282,10 +282,12 @@ function createNewFood(gameState, randomNumberSource) {
                             const prob = distributionArray[foodValue - 1] * chanceToFindFood;
                             if (randomNumberSource() < prob) {
                                 // Yes! We should create this food item!
+                                const randomFacing = Math.floor(randomNumberSource() * 12);
                                 const newFoodItem = {
                                     appearance: "BasicParticle",
                                     location: coord,
                                     foodValue: foodValue,
+                                    facing: randomFacing,
                                 };
                                 gameState.foodItems.push(newFoodItem);
                                 break; // quit looping through food sizes

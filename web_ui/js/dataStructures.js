@@ -145,12 +145,14 @@
     //   * appearance: one of the following strings: "BasicParticle", "DeadAnt"
     //   * location: an [x,y] grid coordinate giving the location of the food item.
     //   * foodValue: a non-negative integer indicating how much food energy it can provide.
+    //   * facing: a number, 0..11 which shows how the food is facing. (This is visual only, and has no effect.)
     //
     // Example:
     const foodItem = {
         "appearance": "BasicParticle",
         "location": [5,3],
         "foodValue": 4,
+        "facing": 3,
     };
 
 
@@ -214,11 +216,13 @@
                 "appearance": "BasicParticle",
                 "location": [3,1],
                 "foodValue": 1,
+                "facing": 4,
             },
             {
                 "appearance": "DeadAnt",
                 "location": [3,3],
                 "foodValue": 4,
+                "facing": 7,
             },
         ],
     };

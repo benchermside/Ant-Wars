@@ -19,7 +19,7 @@
 
 // LinePoint
 //
-// A LinePoint is one point along a lnie which is drawn using straight segments.
+// A LinePoint is one point along a line which is drawn using straight segments.
 //
 // It is an object with two fields, "x" and "y".
 //
@@ -27,12 +27,42 @@
 //   const p = {x: 3, y:6}
 
 
+// PathCommand
+//
+// A PathCommand is an object specifying a single step in the definition of a path.
+//
+// It has a field named "type" which specifies the kind of step, and other fields which
+// depend on the "type" field. Allowed values of "type" are:
+//
+//   "MoveTo":
+//       This always begins a path. It represents moving to a specific point.
+//       Fields:
+//           "x": the x-value to move to
+//           "y": the y-value to move to
+//   "LineTo":
+//       This proceeds with a straight line to a specific point.
+//       Fields:
+//           "x": the x-value to move to
+//           "y": the y-value to move to
+//   "BezierCurveTo":
+//       This draws a curve beginning at the current point and going to the specified point
+//       but curved so it starts on a tangent toward the point (cp1x,cp1y) and ends on a
+//       tangent from (cp2x, cp2y).
+//       Fields:
+//           "x": the x-value to move to
+//           "y": the y-value to move to
+//           "cp1x": the x-value of the starting "control point" for the Bezier curve
+//           "cp1y": the y-value of the starting "control point" for the Bezier curve
+//           "cp2x": the x-value of the ending "control point" for the Bezier curve
+//           "cp2y": the y-value of the ending "control point" for the Bezier curve
+
+
 // Shape
 //
 // A thing we can draw. There are two kinds right now: a solid shape with bezier
 // curves or a straight line.
 //
-// It has a field named "type" which is either "BezierShape" or "Line". And it has
+// It has a field named "type" which is either "BezierShape", "Line", or "Path". And it has
 // other fields depending on the value of that:
 //   BezierShape:
 //     "points": a list of BezierShapePoint. The first and last point should be identical.
@@ -40,6 +70,9 @@
 //   Line:
 //     "points": A list of LinePoint.
 //     "width": the width of the line
+//
+//   Path:
+//     "commands": A list of PathCommand.
 //
 // Example:
 //   const shape = {
@@ -51,6 +84,7 @@
 //           {x:0,  y:13,  angle:3, flat:2},
 //       ]
 //   };
+
 
 
 // Diagram
@@ -125,6 +159,36 @@ function twistLinePoints(points, scale, clockAngle) {
     });
 }
 
+
+/*
+ * This is given a list of PathCommand objects which make up a shape and it resizes and
+ * rotates them according to scale and clockAngle.
+ */
+function twistPathCommands(commands, scale, clockAngle) {
+    const cosAngle = Math.cos(clockAngle * Math.PI / 6);
+    const sinAngle = Math.sin(clockAngle * Math.PI / 6);
+    return commands.map(cmd => {
+        let newCmd;
+        if (cmd.type === "MoveTo" || cmd.type === "LineTo" || cmd.type === "BezierCurveTo") {
+            newCmd = {
+                type: cmd.type,
+                x: scale * (cmd.x * cosAngle - cmd.y * sinAngle),
+                y: scale * (cmd.x * sinAngle + cmd.y * cosAngle),
+            };
+        } else {
+            throw Error(`Unsupportd type for PathCommand: '${cmd.type}'`);
+        }
+        if (cmd.type === "BezierCurveTo") {
+            newCmd["cp1x"] = scale * (cmd.cp1x * cosAngle - cmd.cp1y * sinAngle);
+            newCmd["cp1y"] = scale * (cmd.cp1x * sinAngle + cmd.cp1y * cosAngle);
+            newCmd["cp2x"] = scale * (cmd.cp2x * cosAngle - cmd.cp2y * sinAngle);
+            newCmd["cp2y"] = scale * (cmd.cp2x * sinAngle + cmd.cp2y * cosAngle);
+        }
+        return newCmd;
+    });
+}
+
+
 function twistPoint (point, scale, clockAngle){
     const cosAngle = Math.cos(clockAngle * Math.PI / 6);
     const sinAngle = Math.sin(clockAngle * Math.PI / 6);
@@ -151,6 +215,14 @@ function twistShape(shape, scale, clockAngle) {
             points: twistLinePoints(shape.points, scale, clockAngle),
             width: scale * shape.width,
         };
+    } else if (shape.type === "Path") {
+        return {
+            type: "Path",
+            commands: twistPathCommands(shape.commands, scale, clockAngle),
+        };
+    } else if (Array.isArray(shape)) {
+        // allow diagrams within diagrams
+        return twistDiagram(shape, scale, clockAngle);
     } else {
         throw Error("Invalid type for shape");
     }
@@ -312,11 +384,69 @@ function drawLine(drawContext, shape, coord, color) {
 }
 
 
+/*
+ * On context drawContext, this draws the shape "shape" which is always a Path, at the location
+ * coord with the given fillColor, strokeWidth, and strokeColor.
+ */
+function drawPathShape(drawContext, pathShape, coord, color, strokeWidth, strokeColor) {
+    // --- First, do some validation ---
+    if (pathShape.type !== "Path") {
+        throw Error(`Invalid shape passed.`);
+    }
+    const commands = pathShape.commands;
+    if (commands.length < 2) {
+        throw Error(`Path shapes must have at least 2 commands.`);
+    }
+    if (commands[0].type !== "MoveTo") {
+        throw Error(`Path shapes must begin with MoveTo; this began with ${commands[0].type}`);
+    }
+    if (commands.filter((cmd,i) => i !== 0).some(cmd => cmd.type === "MoveTo")) {
+        throw Error(`Path shapes may not have MoveTo anywhere but the first item.`);
+    }
+
+    // --- Create the path ---
+    const x0 = coord[0];
+    const y0 = coord[1];
+    drawContext.beginPath();
+    let prevCmd = null;
+    commands.forEach(cmd => {
+        if (cmd.type === "MoveTo") {
+            drawContext.moveTo(x0 + cmd.x, y0 + cmd.y);
+        } else if (cmd.type === "LineTo") {
+            drawContext.lineTo(x0 + cmd.x, y0 + cmd.y);
+        } else if (cmd.type === "BezierCurveTo") {
+            drawContext.bezierCurveTo(
+                x0 + cmd.cp1x,   y0 + cmd.cp1y,
+                x0 + cmd.cp2x,   y0 + cmd.cp2y,
+                x0 + cmd.x,      y0 + cmd.y,
+            );
+        } else {
+            throw Error(`Invalid PathCommand of ${cmd.type}`);
+        }
+        prevCmd = cmd;
+    });
+    drawContext.closePath();
+
+    // --- Fill in shape ---
+    drawContext.fillStyle = color;
+    drawContext.fill();
+
+    // --- Draw the border ---
+    if (strokeWidth !== undefined && strokeColor !== undefined) {
+        drawContext.lineWidth = strokeWidth;
+        drawContext.strokeStyle = strokeColor;
+        drawContext.stroke();
+    }
+}
+
+
 function drawShape(drawContext, shape, coord, color, strokeWidth, strokeColor) {
     if (shape.type === "BezierShape") {
         return drawBezierShapePoints(drawContext, shape.points, coord, color, strokeWidth, strokeColor);
     } else if (shape.type === "Line") {
         return drawLine(drawContext, shape, coord, color);
+    } else if (shape.type === "Path") {
+        return drawPathShape(drawContext, shape, coord, color, strokeWidth, strokeColor);
     } else {
         throw Error("Invalid type for shape");
     }
@@ -666,22 +796,26 @@ function drawAnt(drawContext, hexSize, colony, antState) {
 
 /*
  * This draws the indicated food item on the screen.
- *
- * FIXME: The current version just draws a circle. We should have a more interesting shape and
- *  the shape should depend on the food item's appearance.
  */
 function drawFoodItem(drawContext, hexSize, foodItem) {
     if (foodItem.foodValue > 0) {
         const coord = hexCenter(foodItem.location[0], foodItem.location[1], hexSize); // center of the hex
-        const radius = Math.sqrt(foodItem.foodValue) * hexSize / 16; // scale the size with the amount of food
-        drawContext.beginPath();
-        drawContext.arc(coord[0], coord[1], radius, 0, 2 * Math.PI);
-        drawContext.closePath();
-        drawContext.lineWidth = hexSize / 30;
-        drawContext.strokeStyle = "#494949";
-        drawContext.stroke();
-        drawContext.fillStyle = "#D19208";
-        drawContext.fill();
+        const radius = Math.sqrt(foodItem.foodValue) * hexSize / 25; // scale the size with the amount of food
+
+        const foodItemShape = {
+            type: "Path",
+            commands: [
+                {type: "MoveTo", x:-2,  y:1.5},
+                {type: "LineTo", x:1, y:1.5},
+                {type: "BezierCurveTo", x:2, y:1, cp1x: 1, cp1y: 0.5, cp2x: 2, cp2y: 1},
+                {type: "LineTo", x:2, y:-0.5},
+                {type: "LineTo", x:-2, y:-2},
+                {type: "LineTo", x:-2, y:-1.25},
+                {type: "BezierCurveTo", x:-2, y:1, cp1x: 0, cp1y: -1.25, cp2x: -1, cp2y: 1},
+            ]
+        };
+        const foodDiagram = twistDiagram([foodItemShape], radius, foodItem.facing);
+        drawDiagram(drawContext, foodDiagram, coord, "#D19208", (radius/10), "#494949");
     }
 }
 
