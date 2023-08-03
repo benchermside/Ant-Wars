@@ -29,6 +29,11 @@
 // to get the list of buttons to display for the user actions. Each button is an object that
 // matches the specifications documented in the function "setActionButtons".
 //
+// Every UIMode has a field named "uiControls". This must be a function that will be invoked to
+// find what temporary UI controls should be rendered over the canvas while in this mode. It
+// will return a UIControls object (as defined in dataStructures.js). The most common use of
+// this is to contain a field "actionButtons" listing the buttons to display.
+//
 // Some UI modes need to track additional information. This will be stored in the uiModeData
 // global variable which is cleared out and re-created each time we change modes.
 
@@ -66,6 +71,10 @@ const watchingTurnHappen = {
     actionButtons: function(uiModeData) {
         return [];
     },
+
+    uiControls: function(uiModeData) {
+        return {};
+    }
 };
 
 /*
@@ -166,9 +175,204 @@ const readyToEnterMoves = {
                 },
             }
         ]
-    }
+    },
+
+    uiControls: function(uiModeData) {
+        const label = (movesHaveBeenSent
+            ? "Alter Turn"
+            : (playerActionSelections.every(action => action !== null))
+                ? "End Turn"
+                : "Skip Remaining Ants");
+        return {
+            actionButtons: [{
+                label: label,
+                action: function() {
+                    let turnHasEnded = false;
+                    if (isHostServer) {
+                        // --- is the host server ---
+                        // --- copy over the actions we've entered & mark ready to end ---
+                        colonySelections[playerColony].actionSelections = structuredClone(playerActionSelections);
+                        colonySelections[playerColony].isReadyForEndOfTurn = true;
+
+                        // --- Do end of turn if everyone is ready ---
+                        turnHasEnded = hostDoEndOfTurnIfEveryoneIsReady();
+                    } else {
+                        // --- is NOT the host server ---
+                        announceColonySelections(playerActionSelections);
+                    }
+                    movesHaveBeenSent = true;
+                    if (!turnHasEnded) { // if we haven't ended the turn, go ahead and refresh to show the new button
+                        changeUIMode("readyToEnterMoves");
+                        render();
+                    }
+                },
+            }]
+        };
+    },
+
 };
 
+
+
+/*
+ * A function that just returns the list of action buttons (including their action code) for an
+ * ant. Used within the commandingAnAnt mode.
+ */
+function commandingAnAntActionButtons(uiModeData) {
+    const buttons = [];
+    const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+    const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+
+    buttons.push({
+        label: "Do Nothing",
+        action: function() {
+            // We decided to do nothing. Record that.
+            playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+            // Now switch modes
+            changeUIMode("readyToEnterMoves");
+            render();
+        },
+    });
+
+    if (selectedAntDisplayed.cast !== "Larva" && selectedAntDisplayed.numberOfAnts >= 2) {
+        buttons.push({
+            label: "Split Up",
+            action: function() {
+                // Until it changes, record the ant as doing nothing.
+                playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+                // Now switch modes
+                changeUIMode("splittingAntStack", {selectedAntNumber: uiModeData.selectedAntNumber});
+                render();
+            }
+        });
+    }
+
+    if (selectedAntDisplayed.cast === "Queen") {
+        // Queens can lay an egg if they're in a chamber
+        const coord = selectedAntDisplayed.location;
+        const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
+        if (terrain === 5) {
+            const eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, selectedAntDisplayed.location);
+            if(eggStack === null || eggStack.numberOfEggs < rules.MAX_EGGS) {
+                buttons.push({
+                    label: "Lay Egg",
+                    action: function() {
+                        // We decided to lay an egg. Record that.
+                        const action = {name: "LayEgg"};
+                        playerActionSelections[uiModeData.selectedAntNumber] = action;
+                        applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
+
+                        // Now switch modes
+                        changeUIMode("readyToEnterMoves");
+
+                        // Re-render the screen
+                        render();
+                    },
+                });
+            }
+        }
+    }
+
+    if (selectedAntDisplayed.cast !== "Larva") {
+        const attackActions = possibleAttackActions(startOfTurnGameState, displayedGameState, playerColony, uiModeData.selectedAntNumber);
+        if (attackActions.length > 0) {
+            buttons.push({
+                label: "Attack",
+                action: function () {
+                    const data = {
+                        selectedAntNumber: uiModeData.selectedAntNumber,
+                        attackActions: attackActions,
+                    };
+                    changeUIMode("selectingAttackDestination", data);
+                    render();
+                }
+            });
+        }
+    }
+
+    if (selectedAntDisplayed.cast !== "Larva") {
+        buttons.push({
+            label: "Defend",
+            action: function() {
+                // We decided to have this ant defend. Record that.
+                const action = {name: "Defend"};
+                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
+                // Now switch modes
+                changeUIMode("readyToEnterMoves");
+                render();
+            }
+        });
+    }
+
+    if (selectedAntDisplayed.cast === "Worker") {
+        const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
+        if (digTunnelActions.length > 0) {
+            buttons.push({
+                label: "Dig Tunnel",
+                action: function () {
+                    const data = {
+                        selectedAntNumber: uiModeData.selectedAntNumber,
+                        digTunnelActions: digTunnelActions,
+                    };
+                    changeUIMode("selectingDigTunnelLocation", data);
+                    render();
+                }
+            });
+        }
+    }
+
+    if (selectedAntDisplayed.cast === "Worker") {
+        const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
+        if (digChamberActions.length > 0) {
+            const digAction = digChamberActions[0]; // there will only be one, and this is it
+            buttons.push({
+                label: "Dig Chamber",
+                action: function() {
+                    // Record the action
+                    playerActionSelections[uiModeData.selectedAntNumber] = digAction;
+                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
+                    // Return to entering commands
+                    changeUIMode("readyToEnterMoves");
+                    render();
+                }
+            });
+        }
+    }
+
+    if (selectedAntDisplayed.cast === "Larva") {
+        buttons.push({
+            label: "Feed larva worker ant food",
+            action: function() {
+                const action = {name: "Mature", cast: "Worker"};
+                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
+
+                // Now switch modes
+                changeUIMode("readyToEnterMoves");
+
+                // Re-render the screen
+                render();
+            },
+        });
+        buttons.push({
+            label: "Feed larva warrior ant food",
+            action: function() {
+                const action = {name: "Mature", cast: "Soldier"};
+                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
+
+                // Now switch modes
+                changeUIMode("readyToEnterMoves");
+
+                // Re-render the screen
+                render();
+            },
+        });
+    }
+
+    return buttons;
+}
 
 /*
  * This is a uiMode which is used when the player has selected an ant and is giving instructions on
@@ -268,149 +472,12 @@ const commandingAnAnt = {
         render();
     },
 
-    actionButtons: function(uiModeData) {
-        const buttons = [];
-        const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
-        const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+    actionButtons: commandingAnAntActionButtons,
 
-        buttons.push({
-            label: "Do Nothing",
-            action: function() {
-                // We decided to move this ant someplace. Record that.
-                playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
-                // Now change the ant's displayed location back to its start location to show it on the screen
-                selectedAntDisplayed.location = selectedAntStartOfTurn.location;
-                // Now switch modes
-                changeUIMode("readyToEnterMoves");
-                render();
-            },
-        });
-
-        if (selectedAntDisplayed.cast === "Queen") {
-            // Queens can lay an egg if they're in a chamber
-            const coord = selectedAntDisplayed.location;
-            const terrain = startOfTurnGameState.terrainGrid[coord[1]][coord[0]];
-            if (terrain === 5) {
-                const eggStack = getEggAt(displayedGameState.colonies[playerColony].eggs, selectedAntDisplayed.location);
-                if(eggStack === null || eggStack.numberOfEggs < rules.MAX_EGGS) {
-                    buttons.push({
-                        label: "Lay Egg",
-                        action: function() {
-                            // We decided to lay an egg. Record that.
-                            const action = {name: "LayEgg"};
-                            playerActionSelections[uiModeData.selectedAntNumber] = action;
-                            applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
-
-                            // Now switch modes
-                            changeUIMode("readyToEnterMoves");
-
-                            // Re-render the screen
-                            render();
-                        },
-                    });
-                }
-            }
-        }
-
-        if (selectedAntDisplayed.cast !== "Larva") {
-            const attackActions = possibleAttackActions(startOfTurnGameState, displayedGameState, playerColony, uiModeData.selectedAntNumber);
-            if (attackActions.length > 0) {
-                buttons.push({
-                    label: "Attack",
-                    action: function () {
-                        const data = {
-                            selectedAntNumber: uiModeData.selectedAntNumber,
-                            attackActions: attackActions,
-                        };
-                        changeUIMode("selectingAttackDestination", data);
-                        render();
-                    }
-                });
-            }
-        }
-
-        if (selectedAntDisplayed.cast !== "Larva") {
-            buttons.push({
-                label: "Defend",
-                action: function() {
-                    // We decided to have this ant defend. Record that.
-                    const action = {name: "Defend"};
-                    playerActionSelections[uiModeData.selectedAntNumber] = action;
-                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
-                    // Now switch modes
-                    changeUIMode("readyToEnterMoves");
-                    render();
-                }
-            });
-        }
-
-        if (selectedAntDisplayed.cast === "Worker") {
-            const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
-            if (digTunnelActions.length > 0) {
-                buttons.push({
-                    label: "Dig Tunnel",
-                    action: function () {
-                        const data = {
-                            selectedAntNumber: uiModeData.selectedAntNumber,
-                            digTunnelActions: digTunnelActions,
-                        };
-                        changeUIMode("selectingDigTunnelLocation", data);
-                        render();
-                    }
-                });
-            }
-        }
-
-        if (selectedAntDisplayed.cast === "Worker") {
-            const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
-            if (digChamberActions.length > 0) {
-                const digAction = digChamberActions[0]; // there will only be one, and this is it
-                buttons.push({
-                    label: "Dig Chamber",
-                    action: function() {
-                        // Record the action
-                        playerActionSelections[uiModeData.selectedAntNumber] = digAction;
-                        applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
-                        // Return to entering commands
-                        changeUIMode("readyToEnterMoves");
-                        render();
-                    }
-                });
-            }
-        }
-
-        if (selectedAntDisplayed.cast === "Larva") {
-            buttons.push({
-                label: "Feed larva worker ant food",
-                action: function() {
-                    const action = {name: "Mature", cast: "Worker"};
-                    playerActionSelections[uiModeData.selectedAntNumber] = action;
-                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
-
-                    // Now switch modes
-                    changeUIMode("readyToEnterMoves");
-
-                    // Re-render the screen
-                    render();
-                },
-            });
-            buttons.push({
-                label: "Feed larva warrior ant food",
-                action: function() {
-                    const action = {name: "Mature", cast: "Soldier"};
-                    playerActionSelections[uiModeData.selectedAntNumber] = action;
-                    applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
-
-                    // Now switch modes
-                    changeUIMode("readyToEnterMoves");
-
-                    // Re-render the screen
-                    render();
-                },
-            });
-        }
-
-        return buttons;
+    uiControls: function(uiModeData) {
+        return {
+            actionButtons: commandingAnAntActionButtons(uiModeData)
+        };
     },
 
 };
@@ -464,6 +531,10 @@ const selectingAttackDestination = {
     actionButtons: function(uiModeData) {
         return [];
     },
+
+    uiControls: function(uiModeData) {
+        return {};
+    },
 };
 
 
@@ -471,8 +542,8 @@ const selectingAttackDestination = {
 /*
  * This is a uiMode which is used when a player has selected an ant and told it to dig and is
  * giving it instructions on where to dig. In the uiModeData, there is a field, "selectedAntNumber"
- * which will always be set to the number of the ant that is being commanded. here is another fild named digTunnelActions
- * that is a list of possible digTunnel actions  (see dataStructures.js).
+ * which will always be set to the number of the ant that is being commanded. There is another
+ * field named digTunnelActions that is a list of possible digTunnel actions  (see dataStructures.js).
  */
 const selectingDigTunnelLocation = {
 
@@ -516,6 +587,45 @@ const selectingDigTunnelLocation = {
     actionButtons: function(uiModeData) {
         return [];
     },
+
+    uiControls: function(uiModeData) {
+        return {};
+    },
+};
+
+
+/*
+ * This is an uiMode which is used when a player has selected an ant and decided to split it into
+ * some number of smaller stacks. In the uiModeData there is a field "selectedAntNumber" which
+ * will always be set to the number of the ant being split.
+ */
+const splittingAntStack = {
+
+    enterMode: function(uiModeData) {
+        // Highlight the splitting ant
+        highlightedHex = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].location;
+    },
+
+    exitMode: function(uiModeData) {
+        highlightedHex = null; // deselect it
+    },
+
+    onClickHex: function(coord, uiModeData) {
+        // For ANY click on the game board, we will exit this short-term mode
+        changeUIMode("readyToEnterMoves");
+        render();
+    },
+
+    actionButtons: function(uiModeData) {
+        return [];
+    },
+
+    uiControls: function(uiModeData) {
+        const numberOfAnts = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].numberOfAnts;
+        return {
+            splitter: {numberOfAnts}
+        };
+    },
 };
 
 
@@ -526,4 +636,5 @@ uiModes = {
     commandingAnAnt,
     selectingAttackDestination,
     selectingDigTunnelLocation,
+    splittingAntStack,
 }

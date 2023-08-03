@@ -440,6 +440,7 @@ function animate(animationState) {
                 startOfTurnGameState.colonies.forEach(colony => {
                     colony.ants = mergeAnts(colony.ants);
                 });
+                newAntOrigins.length = 0;
 
                 // --- base the new displayedGameState on the updated startOfTurnGameState ---
                 displayedGameState = structuredClone(startOfTurnGameState);

@@ -20,7 +20,7 @@
         {"numberOfEggs": 3, "location": [6, 6], "daysToHatch": 3}
       ],
       "ants": [
-        {"location": [4, 3], "facing": 7, "cast": "Soldier", "numberOfAnts": 3, "foodHeld": 0},
+        {"location": [4, 3], "facing": 7, "cast": "Soldier", "numberOfAnts": 8, "foodHeld": 0},
         {"location": [4, 5], "facing": 6, "cast": "Queen",   "numberOfAnts": 1, "foodHeld": 0},
         {"location": [5, 6], "facing": 1, "cast": "Worker",  "numberOfAnts": 2, "foodHeld": 0},
         {"location": [2, 8], "facing": 5, "cast": "Worker",  "numberOfAnts": 5, "foodHeld": 0},

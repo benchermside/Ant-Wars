@@ -229,6 +229,42 @@
 
 
 
+    // NewAntOrigin
+    //
+    // When the displayedGameState has additional ants that aren't found in the startOfTurnGameState, we may
+    // need to know how they came to be. This data structure specifies the origin of a single new ant, and
+    // we will keep an array of them in the same order as the new ants.
+    //
+    // Each NewAntOrigin is an object that has a "source" field, and based on the "source" field it may have
+    // additional fields.
+    //
+    // The allowed values for "source" are:
+    //   * "Matured":
+    //       * Means that a larva matured to create this.
+    //       * Additional fields:
+    //           * "antNumber": the ant number of the larva stack that matured
+    //   * "Hatched": - NOT ACTUALLY SUPPORTED YET
+    //       * Means that an egg hatched to create this.
+    //   * "Split":
+    //       * Means that a stack split to create this. The original stack remains the list of existing ants.
+    //       * Additional fields:
+    //           * "antNumber": The ant number of the ant stack that was split
+    //           * "order": the position in the list of pieces this stack split into. Will be >= 1 (because
+    //             the 0th is the original stack).
+    //
+    // Examples:
+    const newAntOrigin1 = {
+        "source": "Matured",
+        "antNumber": 3,
+    };
+    const newAntOrigin2 = {
+        "source": "Split",
+        "antNumber": 4,
+        "order": 1,
+    }
+
+
+
     // Action
     //
     // An Action is one of the kinds of action that an ant can take.
@@ -268,11 +304,20 @@
     //      * Additional fields:
     //         * "location" a field of type Location, telling which space gets dug.
     //         * "whatToDig" is a field containing a WhatToDig telling what will result after
-    //            the dig.
+    //           the dig.
     //   * "Mature":
     //      * Means that this larva will mature into an ant.
     //      * Additional fields:
     //         * "cast": the Cast that the larva will mature into.
+    //   * "Split":
+    //      * Means that this stack will split into 2 sub-stacks. Also contains the action each sub-stack will take.
+    //      * Additional fields:
+    //         * "stackCounts": an array of length 2 or more, describing how this stack splits into new stacks. The
+    //           array contains a list of numbers, each of which must be >= 1 and represents the size of one stack.
+    //           The sum of the list must be the number of ants in the stack.
+    //         * "actions": An array telling what each split stack does. The array will be the same length as
+    //           stackCounts. Each item in the array will be an Action other than Split, or null if this split stack
+    //           hasn't been given an instruction.
     //
     // Examples:
     const action1 = {
@@ -307,6 +352,23 @@
     const action7 = {
         "name": "Mature",
         "cast": "Worker",
+    }
+    const action8 = {
+        "name": "Split",
+        "newStackCounts": [3, 2],
+        "actions": [
+            {
+                "name": "Move",
+                "steps": [
+                    [5, 6],
+                    [4, 5],
+                    [4, 4],
+                ],
+            },
+            {
+                "name": "Defend",
+            },
+        ]
     }
 
 
@@ -417,7 +479,7 @@
     //        be the one that's the host.
     //
     // Example:
-    let gameSettings = {
+    const gameSettings = {
         gameCode: "87634",
         map: "standard",
         rules: "standard",
@@ -426,5 +488,37 @@
             { playerType: "AI", username: "RandomRobot", aiType: "RandomMover" },
         ],
     };
+
+
+    // UIControls
+    //
+    // This data structure tells the UI what temporary or modal controls to display.
+    //
+    // It is an object containing the following fields:
+    //   * "actionButtons" - an optional field. If absent or null, then no action buttons are
+    //     shown. If present and non-null, it must be an array of objects each of which has fields
+    //     "label" (a string giving the text to display), and "action" (a function to call when
+    //     the button is clicked).
+    //   * "splitter" - an optional field. If absent or null then the splitter is not shown.
+    //     if present and non-null then it is an object with the field "numberOfAnts". It
+    //     tells how many ants are in the stack being split.
+    //
+    // Note: This CANNOT be reduced to JSON because it (potentially, if there are any buttons)
+    // contains a function.
+    //
+    // Example:
+    const uiControls = {
+        "actionButtons": [
+            {
+                "label": "Do Nothing",
+                "action": function() {
+                    playerActionSelections[0] = {name: "None"};
+                }
+            },
+        ],
+        "splitter": {
+            "numberOfAnts": 3,
+        },
+    }
 
 }

@@ -16,6 +16,7 @@ let isNetworkGame = false; // network messages will only be sent if this is true
 let isHostServer = null; // true or false, whether this is the host for the game
 let playerColony = 0; // which colony (by number) the current player is running
 let playerActionSelections = null; // the actions being entered for the current player's colony
+let newAntOrigins = []; // when displayedGameState has more ants than startOfTurnGameState for playerColony this tells why
 let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
                             // current selected moves and readiness to end turn of each colony.
 let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
@@ -46,19 +47,6 @@ function sweepScreen(color) {
 }
 
 
-/*
- * This is called to re-draw all the on-screen controls done in HTML rather than
- * on the canvas.
- */
-function updateControls() {
-    document.getElementById("show-foodSupply").value = displayedGameState.colonies[playerColony].foodSupply;
-    const upkeep = displayedGameState.colonies[playerColony].ants.reduce(
-        (sum, ant) => sum + ant.numberOfAnts * rules.costs.upkeepCost[ant.cast],
-        0
-    );
-    document.getElementById("show-upkeep").value = upkeep;
-}
-
 
 /*
  * Call this to re-draw all the game graphics.
@@ -74,59 +62,6 @@ function render() {
     indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
     drawItems(drawContext, displayedGameState, hexSize);
     updateControls();
-}
-
-
-/*
- * This is called with a list of "action buttons" and it displays them.
- *
- * Each button should be an object with fields "label" (a string giving the
- * text to display), and "action" (a function to call when the button is clicked).
- */
-function setActionButtons(buttons) {
-    const buttonsDivElem = document.getElementById("action-controls");
-
-    // --- Remove existing buttons ---
-    while (buttonsDivElem.firstChild) {
-        buttonsDivElem.removeChild(buttonsDivElem.lastChild);
-    }
-
-    // --- Add new buttons ---
-    buttons.forEach(button => {
-        const buttonElem = document.createElement("button");
-        buttonElem.innerText = button.label;
-        buttonElem.addEventListener('click', button.action);
-        buttonsDivElem.appendChild(buttonElem);
-    });
-}
-
-
-/*
- * This is called to change the UIMode. It is the only place that is allowed to change the global
- * variable uiMode. The first parameter must be a sting which is a field in uiModes identifying
- * the mode to enter. The second parameter is optional -- if provided it should be an object
- * which will be used as the uiModeData.
- */
-function changeUIMode(newUIMode, data) {
-    // Exit the existing mode
-    if (uiMode !== null) {
-        uiMode.exitMode(uiModeData);
-    }
-
-    // Reset the data
-    uiModeData = data === undefined ? {} : data;
-
-    // Assign to the global variable uiMode
-    uiMode = uiModes[newUIMode];
-    if (uiMode === undefined) {
-        throw new Error(`changeUIMode() called with invalid mode ${newUIMode}.`);
-    }
-
-    // Enter the new mode
-    uiMode.enterMode(uiModeData);
-
-    // Reset the list of action buttons
-    setActionButtons(uiMode.actionButtons(uiModeData));
 }
 
 

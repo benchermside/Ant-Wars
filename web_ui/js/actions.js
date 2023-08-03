@@ -177,6 +177,11 @@ function applyMatureAction(gameState, colonyNumber, antNumber, action, stage) {
             "foodHeld": 0,
         };
         colony.ants.push(newAnt);
+        const newAntOrigin = {
+            "source": "Matured",
+            "antNumber": antNumber,
+        };
+        newAntOrigins.push(newAntOrigin);
 
         // --- charge a cost ---
         const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
@@ -195,20 +200,18 @@ function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNu
     const origLarvaAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
     larvaAnt.numberOfAnts = origLarvaAnt.numberOfAnts; // grow the number of larva ants
 
-    // --- remove the extra ant ---
-    const numberOfOriginalAnts = startOfTurnGameState.colonies[colonyNumber].ants.length;
-    const extraAnts = colony.ants.filter((ant, antNumber) => antNumber >= numberOfOriginalAnts);
-    const extraAntsInLocation = extraAnts.filter(ant => coordEqual(ant.location, larvaAnt.location));
-    if (extraAntsInLocation.length === 0) {
-        throw Error("Tried to revert creating an extra ant but couldn't find it.");
-    } else if (extraAntsInLocation.length > 1) {
-        throw Error("Found multiple extra ants in the same location."); // this code can't handle that
-    } else {
-        // We've found the one and only newly created ant to get rid of
-        const antToRemove = extraAntsInLocation[0];
-        const indexToRemove = colony.ants.indexOf(antToRemove); // find it
-        colony.ants.splice(indexToRemove, 1); // remove it
+    // --- locate the newAntOrigin ---
+    const newAntOriginIdx = newAntOrigins.findIndex(
+        newAntSource => newAntSource.source === "Matured" && newAntSource.antNumber === antNumber
+    );
+    if (newAntOriginIdx === -1) {
+        throw Error(`Reverting a MatureAction but there is no corresponding newAntSource.`);
     }
+
+    // --- remove the newAntOrigin and also the new ant ---
+    newAntOrigins.splice(newAntOriginIdx, 1);
+    const startOfTurnAntCount = startOfTurnGameState.colonies[colonyNumber].ants.length;
+    colony.ants.splice(startOfTurnAntCount + newAntOriginIdx, 1);
 
     // --- refund the cost ---
     const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
@@ -232,6 +235,11 @@ function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNu
  *
  * For movement actions, we divide it by 12 and apply the appropriate fraction of the movement.
  * For many other actions we don't show the results until some late stage like 11 or 12.
+ *
+ * Special detail: it ALSO may modify newAntOrigins (it does if any new ant is created). That's desired
+ * when we're inputting moves, and it's probably not *technically* breaking anything when we're enacting
+ * moves, but it is definitely a minor design flaw. What would be better? Should newAntOrigins be part
+ * of the GameState or something? Or passed in to this?
  */
 function applyAction(gameState, colonyNumber, antNumber, action, stage) {
     if (stage === undefined) {
