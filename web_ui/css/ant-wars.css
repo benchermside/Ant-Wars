@@ -116,3 +116,8 @@
     height: fit-content;
     padding: 0;
 }
+
+#splitter .row-of-stacks #new-stack {
+    height: fit-content;
+    padding: 0;
+}

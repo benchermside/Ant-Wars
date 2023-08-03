@@ -32,6 +32,7 @@ function setActionButtons(buttons) {
  * Add a new stack to the end of the row-of-stacks.
  */
 function addStack(rowOfStacks) {
+    clearNewStackButton();
     const newStack = document.createElement("div");
     newStack.classList.add("stack");
     rowOfStacks.appendChild(newStack);
@@ -45,6 +46,7 @@ function addStack(rowOfStacks) {
  */
 function splitterArrowFunc(rowOfStacks, comesAfter, isTopArrow) {
     const stacks = rowOfStacks.getElementsByClassName("stack");
+    const lastStack = stacks.item(stacks.length - 1);
     let source;
     let dest;
     if (isTopArrow) {
@@ -57,6 +59,28 @@ function splitterArrowFunc(rowOfStacks, comesAfter, isTopArrow) {
     if (source.children.length > 1) { // arrows disabled if there isn't one we can move
         removeItemFromStack(source);
         addItemToStack(dest);
+
+        // update the new stack button if needed
+        if (source === lastStack && source.children.length < 2) {
+            clearNewStackButton();
+        }
+        if (dest === lastStack && dest.children.length === 2) {
+            placeNewStackButton(rowOfStacks);
+        }
+    } else if (stacks.length > 2 && source === lastStack && source.children.length === 1) {
+        // special case: we can move it, but that will eliminate the last stack
+        // --- move it ---
+        removeItemFromStack(source);
+        addItemToStack(dest);
+
+        // --- remove stuff ---
+        rowOfStacks.removeChild(rowOfStacks.lastChild); // remove last stack
+        rowOfStacks.removeChild(rowOfStacks.lastChild); // remove last betweenStackControls
+
+        // --- add newStack button (we're clearly eligible) ---
+        placeNewStackButton(rowOfStacks);
+    } else {
+        // in all other cases, we just aren't allowed to move it, so we do nothing
     }
 }
 
@@ -69,17 +93,44 @@ function addBetweenStackControls(rowOfStacks, comesAfter) {
     newControls.classList.add("between-stack-controls");
     const topArrow = document.createElement("button");
     topArrow.classList.add("control");
-    const topText = document.createTextNode(String.fromCodePoint(0x21C0));
-    topArrow.appendChild(topText);
+    topArrow.appendChild(document.createTextNode(String.fromCodePoint(0x21C0)));
+    topArrow.onclick = () => splitterArrowFunc(rowOfStacks, comesAfter, true);
     newControls.appendChild(topArrow);
     const bottomArrow = document.createElement("button");
     bottomArrow.classList.add("control");
-    const bottomText = document.createTextNode(String.fromCodePoint(0x21BD));
-    topArrow.onclick = () => splitterArrowFunc(rowOfStacks, comesAfter, true);
+    bottomArrow.appendChild(document.createTextNode(String.fromCodePoint(0x21BD)));
     bottomArrow.onclick = () => splitterArrowFunc(rowOfStacks, comesAfter, false);
-    bottomArrow.appendChild(bottomText);
     newControls.appendChild(bottomArrow);
     rowOfStacks.appendChild(newControls);
+}
+
+/*
+ * This adds the button for creating a new stack.
+ */
+function placeNewStackButton(rowOfStacks) {
+    const newStackArrow = document.createElement("button");
+    newStackArrow.classList.add("control");
+    newStackArrow.setAttribute("id", "new-stack");
+    newStackArrow.appendChild(document.createTextNode(String.fromCodePoint(0x21C0)));
+    newStackArrow.onclick = () => {
+        clearNewStackButton();
+        const stacks = rowOfStacks.getElementsByClassName("stack");
+        const comesAfter = stacks.length - 1;
+        addBetweenStackControls(rowOfStacks, comesAfter);
+        addStack(rowOfStacks);
+        splitterArrowFunc(rowOfStacks, comesAfter, true); // move one item
+    };
+    rowOfStacks.appendChild(newStackArrow);
+}
+
+/*
+ * This removes the new stack button if it exists.
+ */
+function clearNewStackButton() {
+    const newStack = document.getElementById("new-stack");
+    if (newStack) {
+        newStack.remove();
+    }
 }
 
 
@@ -107,11 +158,11 @@ function removeItemFromStack(stack) {
 /*
  * Display a splitter for the given number of ants.
  *
- * // FIXME: It also needs an arrow for creating new stacks.
  * // FIXME: It will also need an action to take after entering data!
  */
 function showSplitter(numberOfAnts) {
-    const splits = [numberOfAnts - 1, 1]; // Initial split: all but one in first stack; 1 in second stack
+    const firstStack = Math.ceil(numberOfAnts / 2)
+    const splits = [firstStack, numberOfAnts - firstStack]; // Initial split: close-to-even in 2 stacks
 
     const splitter = document.getElementById("splitter");
     const rowOfStacks = splitter.getElementsByClassName("row-of-stacks").item(0);
@@ -125,17 +176,21 @@ function showSplitter(numberOfAnts) {
         rowOfStacks.removeChild(rowOfStacks.lastChild);
     }
 
-    // --- create the first 2 stacks ---
-    addStack(rowOfStacks);
-    addBetweenStackControls(rowOfStacks, 0);
-    addStack(rowOfStacks);
-
-    // --- put in some ants ---
+    // --- create the initial layout of stacks ---
     splits.forEach((numItems, stackNum) => {
+        if (stackNum !== 0) {
+            addBetweenStackControls(rowOfStacks, stackNum - 1);
+        }
+        addStack(rowOfStacks);
         for (let i = 0; i < numItems; i++) {
             addItemToStack(stacks.item(stackNum));
         }
     });
+
+    // --- add the new-stack button ---
+    if (splits[splits.length - 1] >= 2) {
+        placeNewStackButton(rowOfStacks);
+    }
 }
 
 function hideSplitter() {
@@ -199,7 +254,6 @@ function changeUIMode(newUIMode, data) {
     // Enter the new mode
     uiMode.enterMode(uiModeData);
 
-    // FIXME: Replace this
     // Reset the list of action buttons
     setActionButtons(uiMode.actionButtons(uiModeData));
     setUIControls(uiMode.uiControls(uiModeData));
