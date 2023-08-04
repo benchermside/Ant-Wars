@@ -21,6 +21,7 @@ function getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber) {
             throw Error(`Unsupported value for newAntOrigin.source: '${newAntOrigin.source}'`);
         }
     } else {
+        // CASE 2: Deal with a normal ant that was there at start of turn
         return startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
     }
 }

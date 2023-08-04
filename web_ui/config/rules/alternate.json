@@ -20,9 +20,9 @@
   },
   "foodMultiplier": 4,
   "movementSpeed": {
-    "Worker": 2,
-    "Soldier": 2,
-    "Queen": 1,
+    "Worker": 3,
+    "Soldier": 3,
+    "Queen": 2,
     "Larva": 0
   }
 }
