@@ -6,7 +6,7 @@
 let rules = null;
 let startOfTurnGameState = null; // will be populated during initialization
 let displayedGameState = null;  // will be populated during initialization
-let hexSize = 120; // starting size
+let hexSize = 120; // starting size, given as the width of a hex measured in canvas units
 let highlightedHex = null; // will always be the [x,y] coordinate of a cell OR null
 let lastSelectedAntNum = null;  // if there is more than one ant in a hex, the ant number of last selected ant in that hex
                                   //during that turn;

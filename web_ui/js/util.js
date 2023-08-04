@@ -54,7 +54,6 @@ function findNeighbors(terrainGrid, x, y) {
     possibleNeighbors.push([x-1 + (y%2), y+1]);
     possibleNeighbors.push([x + (y%2), y+1]);
     possibleNeighbors.push([x-1, y]);
-    possibleNeighbors.push([x, y]);
     possibleNeighbors.push([x+1, y]);
     possibleNeighbors.push([x-1 + (y%2), y-1]);
     possibleNeighbors.push([x + (y%2), y-1]);

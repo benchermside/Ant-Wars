@@ -9,14 +9,18 @@
 const lineWidthFraction = 1 / 25;
 
 
+/*
+ * Given an x and y coordinates of a hex and the hexSize, this returns an [x,y] pair giving the
+ * drawing coordinates of the center of that hex.
+ */
 function hexCenter(x, y, hexSize) {
     const cord = [];
-    if(y%2 === 0) {
-        cord[0] = hexSize/2 + x*hexSize;
+    if(y % 2 === 0) {
+        cord[0] = hexSize / 2 + x * hexSize;
     } else {
-        cord[0] = hexSize + x*hexSize;
+        cord[0] = hexSize + x * hexSize;
     }
-    cord[1] = hexSize * (1/(2*Math.sqrt(3))) * (2+3*y);
+    cord[1] = hexSize * (1 / (2 * Math.sqrt(3))) * (2 + 3 * y);
     return cord;
 }
 
@@ -65,13 +69,13 @@ function hexClicked(gameState, hexSize, pixelCoord) {
  */
 function createHexPath(drawContext, hexSize, cord) {
     drawContext.beginPath();
-    drawContext.moveTo(cord[0], cord[1]-hexSize/Math.sqrt(3));
-    drawContext.lineTo(cord[0]+hexSize/2, cord[1]-hexSize/(2*Math.sqrt(3)));
-    drawContext.lineTo(cord[0]+hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
-    drawContext.lineTo(cord[0], cord[1]+hexSize/(Math.sqrt(3)));
-    drawContext.lineTo(cord[0]-hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
-    drawContext.lineTo(cord[0]-hexSize/2, cord[1]-hexSize/(2*Math.sqrt(3)));
-    drawContext.lineTo(cord[0], cord[1]-hexSize/(Math.sqrt(3)));
+    drawContext.moveTo(cord[0]              , cord[1] - hexSize / (    Math.sqrt(3)));
+    drawContext.lineTo(cord[0] + hexSize / 2, cord[1] - hexSize / (2 * Math.sqrt(3)));
+    drawContext.lineTo(cord[0] + hexSize / 2, cord[1] + hexSize / (2 * Math.sqrt(3)));
+    drawContext.lineTo(cord[0]              , cord[1] + hexSize / (    Math.sqrt(3)));
+    drawContext.lineTo(cord[0] - hexSize / 2, cord[1] + hexSize / (2 * Math.sqrt(3)));
+    drawContext.lineTo(cord[0] - hexSize / 2, cord[1] - hexSize / (2 * Math.sqrt(3)));
+    drawContext.lineTo(cord[0]              , cord[1] - hexSize / (    Math.sqrt(3)));
     drawContext.closePath();
 }
 
@@ -80,10 +84,64 @@ function createHexPath(drawContext, hexSize, cord) {
 //returns the coordinate of the center of side the hexes share
 function neighboringSide(x1, y1, x2, y2) {
     const cord = [];
-    cord.push(x1 + (x2-x1)/2);
-    cord.push(y1 + (y2-y1)/2);
+    cord.push(x1 + (x2 - x1) / 2);
+    cord.push(y1 + (y2 - y1) / 2);
     return cord;
 }
+
+/*
+ * Inputs x1, y1 gives the hex address of a hex and x2, y2 give the hex address of a neighboring hex.
+ * This will return return [[dx1,dy1], [dx2,dy2]], a pair of offsets (in canvas coordinates) for the
+ * two corners the hexes share. The corners will always be listed in order going clockwise around the
+ * hex (x1,y1).
+ */
+function cornersBetweenOffsets(x1, y1, x2, y2) {
+    if (y1 === y2) { // if they are in the same row...
+        if (x2 === x1 + 1) { // hex2 is EAST of hex1
+            return [
+                [hexSize / 2, hexSize / (2 * Math.sqrt(3))],
+                [hexSize / 2, -1 * hexSize / (2 * Math.sqrt(3))],
+            ];
+        } else if (x2 === x1 - 1) { // hex2 is WEST of hex1
+            return [
+                [-1 * hexSize / 2, -1 * hexSize / (2 * Math.sqrt(3))],
+                [-1 * hexSize / 2, hexSize / (2 * Math.sqrt(3))],
+            ];
+        }
+    } else if (y2 === y1 + 1) { // if hex2 is below hex1...
+        if (x2 === x1 + (y1 % 2) - 1) { // hex2 is SOUTHWEST of hex1
+            return [
+                [0, hexSize / Math.sqrt(3)],
+                [-1 * hexSize / 2, hexSize / (2 * Math.sqrt(3))],
+            ];
+        } else if (x2 === x1 + (y1 % 2)) { // hex2 is SOUTHEAST of hex1
+            return [
+                [hexSize / 2, hexSize / (2 * Math.sqrt(3))],
+                [0, hexSize / Math.sqrt(3)],
+            ];
+        }
+    } else if (y2 === y1 - 1) { // if hex2 is above hex1...
+        if (x2 === x1 + (y1 % 2) - 1) { // hex2 is NORTHWEST of hex1
+            return [
+                [-1 * hexSize / 2, -1 * hexSize / (2 * Math.sqrt(3))],
+                [0, -1 * hexSize / Math.sqrt(3)],
+            ];
+        } else if (x2 === x1 + (y1 % 2)) { // hex2 is NORTHEAST of hex1
+            return [
+                [0, -1 * hexSize / Math.sqrt(3)],
+                [hexSize / 2, -1 * hexSize / (2 * Math.sqrt(3))],
+            ];
+        }
+    }
+    throw Error(`cornersBetween was passed non-neighbors: (${x1},${y1}) and (${x2},${y2})`);
+}
+
+
+/*
+ * A list of terrain types that will grow grass if they are adjacent to the surface.
+ */
+const terrainsThatGrowGrass = [1, 4, 5];
+
 
 // This is the main drawing function. It always draws to the standard game-canvas. It is
 // passed the drawing context to draw on, a Grid of TerrainIds to draw, and a size field
@@ -102,9 +160,9 @@ function neighboringSide(x1, y1, x2, y2) {
 function drawBackground(drawContext, terrainGrid, hexSize) {
 
     const colorNames = [
-        "#36454F", // Bedrock
+        "#36454f", // Bedrock
         "#734434", // Dirt
-        "grey",    // Stone
+        "#808080", // Stone
         "#8bc1f7", // Sky
         "#734434", // Dirt with Tunnel
         "#734434", // Dirt with Chamber
@@ -150,13 +208,25 @@ function drawBackground(drawContext, terrainGrid, hexSize) {
 
             // --- Draw the grass on Surface spaces ---
             if (terrain === 6) {
-                drawContext.fillStyle = "#009900";
-                drawContext.beginPath();
-                drawContext.moveTo(cord[0]+hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
-                drawContext.lineTo(cord[0], cord[1]+hexSize/(Math.sqrt(3)));
-                drawContext.lineTo(cord[0]-hexSize/2, cord[1]+hexSize/(2*Math.sqrt(3)));
-                drawContext.closePath();
-                drawContext.fill();
+                const neighbors = findNeighbors(terrainGrid, x, y);
+                neighbors.forEach((neighbor) => {
+                    if (!(x === neighbor[0] && y === neighbor[1])) { // the SAME hex isn't a neighbor we want to use!
+                        const neighborTerrain = terrainGrid[neighbor[1]][neighbor[0]];
+                        if (terrainsThatGrowGrass.includes(neighborTerrain)) {
+                            const offsetVals = cornersBetweenOffsets(x, y, neighbor[0], neighbor[1]);
+                            const grassHeight = 0.3; // how tall the grass is, ranges from 0 to 1.
+                            const r = 1 - grassHeight;
+                            drawContext.fillStyle = "#009900";
+                            drawContext.beginPath();
+                            drawContext.moveTo(cord[0] + offsetVals[0][0], cord[1] + offsetVals[0][1]);
+                            drawContext.lineTo(cord[0] + offsetVals[1][0], cord[1] + offsetVals[1][1]);
+                            drawContext.lineTo(cord[0] + r * offsetVals[1][0], cord[1] + r * offsetVals[1][1]);
+                            drawContext.lineTo(cord[0] + r * offsetVals[0][0], cord[1] + r * offsetVals[0][1]);
+                            drawContext.closePath();
+                            drawContext.fill();
+                        }
+                    }
+                });
             }
 
             // --- Draw the hex border ---
