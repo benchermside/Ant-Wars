@@ -3,6 +3,29 @@
  */
 
 
+/*
+ * Because new ants can be created by splitting stacks, it's actually non-trivial to obtain the ant we started
+ * from at the beginning of the turn. This function encapsulates that behavior so it can be used where needed.
+ */
+function getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber) {
+    const startOfTurnAnts = startOfTurnGameState.colonies[colonyNumber].ants;
+    const isNewAnt = antNumber >= startOfTurnAnts.length; // whether this ant was created during the turn
+    if (isNewAnt) {
+        const newAntOrigin = newAntOrigins[antNumber - startOfTurnAnts.length];
+        if (newAntOrigin.source === "Split") {
+            // CASE 1: Deal with Ant Created By a Split
+            return startOfTurnAnts[newAntOrigin.antNumber];
+        } else if (newAntOrigin.source === "Matured") {
+            throw Error(`Should not be able to command a newly-matured ant.`);
+        } else {
+            throw Error(`Unsupported value for newAntOrigin.source: '${newAntOrigin.source}'`);
+        }
+    } else {
+        return startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    }
+}
+
+
 /* Applies a None action. */
 function applyNoneAction(gameState, colonyNumber, antNumber, action, stage) {
     // Nothing to do
@@ -40,7 +63,7 @@ function applyMovelikeAction(gameState, colonyNumber, antNumber, action, stage) 
 function revertMoveAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
     // put the ant back where it started from
     const antToModify = gameState.colonies[colonyNumber].ants[antNumber];
-    const startOfTurnAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    const startOfTurnAnt = getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber);
     antToModify.location = startOfTurnAnt.location;
     antToModify.facing = startOfTurnAnt.facing;
 }
@@ -66,7 +89,7 @@ function applyAttackAction(gameState, colonyNumber, antNumber, action, stage) {
 function revertAttackAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
     // put the ant back where it started from
     const antToModify = gameState.colonies[colonyNumber].ants[antNumber];
-    const startOfTurnAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    const startOfTurnAnt = getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber);
     antToModify.location = startOfTurnAnt.location;
     antToModify.facing = startOfTurnAnt.facing;
 }
@@ -102,7 +125,8 @@ function applyLayEggAction(gameState, colonyNumber, antNumber, action, stage) {
 
 /* Reverts a LayEgg action. */
 function revertLayEggAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
-    const queenLocation = startOfTurnGameState.colonies[colonyNumber].ants[antNumber].location;
+    const startOfTurnAnt = getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber);
+    const queenLocation = startOfTurnAnt.location;
     const eggs = gameState.colonies[colonyNumber].eggs;
     const thisEgg = getEggAt(eggs, queenLocation);
     if (thisEgg.numberOfEggs > 1) {
@@ -151,7 +175,7 @@ function applyDigAction(gameState, colonyNumber, antNumber, action, stage) {
 function revertDigAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action) {
     // put the ant back where it started from
     const antToModify = gameState.colonies[colonyNumber].ants[antNumber];
-    const startOfTurnAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
+    const startOfTurnAnt = getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber);
     antToModify.location = startOfTurnAnt.location;
     // put the terrainGrid back as it was
     const loc = action.location;
@@ -197,8 +221,8 @@ function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNu
     // --- put back the larva ---
     const colony = gameState.colonies[colonyNumber];
     const larvaAnt = colony.ants[antNumber];
-    const origLarvaAnt = startOfTurnGameState.colonies[colonyNumber].ants[antNumber];
-    larvaAnt.numberOfAnts = origLarvaAnt.numberOfAnts; // grow the number of larva ants
+    const startOfTurnAnt = getStartOfTurnAnt(startOfTurnGameState, colonyNumber, antNumber);
+    larvaAnt.numberOfAnts = startOfTurnAnt.numberOfAnts; // grow the number of larva ants
 
     // --- locate the newAntOrigin ---
     const newAntOriginIdx = newAntOrigins.findIndex(
@@ -218,6 +242,36 @@ function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNu
     gameState.colonies[colonyNumber].foodSupply += cost;
 }
 
+/* Applies a Split action, by creating smaller stacks and applying the actions to them. */
+function applySplitAction(gameState, colonyNumber, antNumber, action, stage) {
+    const origAnt = gameState.colonies[colonyNumber].ants[antNumber];
+    const foodHeldByEachAnt = Math.floor(origAnt.foodHeld / origAnt.numberOfAnts);
+    const foodRemainder = origAnt.foodHeld % origAnt.numberOfAnts;
+    action.newStackCounts.forEach((numberOfAnts, stackNumber) => {
+        if (stackNumber === 0) {
+            origAnt.numberOfAnts = numberOfAnts;
+            origAnt.foodHeld = foodHeldByEachAnt + (stackNumber < foodRemainder ? 1 : 0);
+            applyAction(gameState, colonyNumber, antNumber, action.actions[stackNumber], stage);
+        } else {
+            const newAnt = {
+                "cast": origAnt.cast,
+                "facing": origAnt.facing,
+                "location": origAnt.location,
+                "numberOfAnts": numberOfAnts,
+                "foodHeld": foodHeldByEachAnt + (stackNumber < foodRemainder ? 1 : 0),
+            };
+            const newAntOrigin = {
+                "source": "Split",
+                "antNumber": uiModeData.selectedAntNumber,
+                "order": stackNumber,
+            };
+            gameState.colonies[colonyNumber].ants.push(newAnt);
+            newAntOrigins.push(newAntOrigin);
+            const newAntNumber = gameState.colonies[colonyNumber].ants.length - 1;
+            applyAction(gameState, colonyNumber, newAntNumber, action.actions[stackNumber], stage);
+        }
+    });
+}
 
 
 /*
@@ -261,6 +315,8 @@ function applyAction(gameState, colonyNumber, antNumber, action, stage) {
         applyDigAction(gameState, colonyNumber, antNumber, action, stage);
     } else if (action.name === "Mature") {
         applyMatureAction(gameState, colonyNumber, antNumber, action, stage);
+    } else if (action.name === "Split") {
+        applySplitAction(gameState, colonyNumber, antNumber, action, stage);
     } else {
         throw Error(`Unsupported action type, '${action.name}'`);
     }
@@ -293,9 +349,11 @@ function revertAction(gameState, startOfTurnGameState, colonyNumber, antNumber, 
     } else if (action.name === "LayEgg") {
         revertLayEggAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Dig") {
-        revertDigAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
+        revertDigAction(gameState, startOfTurnGameState, startOfTurnAnt, colonyNumber, antNumber, action);
     } else if (action.name === "Mature") {
-        revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
+        revertMatureAction(gameState, startOfTurnGameState, startOfTurnAnt, colonyNumber, antNumber, action);
+    } else if (action.name === "Split") {
+        throw Error(`The code doesn't support reverting a split.`);
     } else {
         throw Error(`Unsupported action type, '${action.name}'`);
     }

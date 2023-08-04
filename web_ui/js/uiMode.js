@@ -118,12 +118,12 @@ const readyToEnterMoves = {
             //if we have already selected ants at this hex only get ants AFTER the ones we have selected
             if (coordEqual(coord, highlightedHex) && (lastSelectedAntNum !== null)){
                 console.log ("already selected an ant");
-                antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum+1);
+                antNums = getAntNumsAt(playerAnts, coord, lastSelectedAntNum + 1);
             } else {
                 antNums = getAntNumsAt(playerAnts, coord);
             }
 
-            if (coordEqual(coord, highlightedHex) && (antNums.length <1))
+            if (coordEqual(coord, highlightedHex) && (antNums.length < 1))
             {
                 // we clicked on the selected hex and have cycled through any ants on it ; just de-select it.
                 highlightedHex = null;
@@ -131,7 +131,7 @@ const readyToEnterMoves = {
                 render();
             } else {
                 highlightedHex = coord;
-                if (antNums.length >0) {
+                if (antNums.length > 0) {
                     lastSelectedAntNum = antNums[0];
                     const data = {
                         selectedAntNumber: lastSelectedAntNum,
@@ -227,7 +227,7 @@ function commandingAnAntActionButtons(uiModeData) {
         label: "Do Nothing",
         action: function() {
             // We decided to do nothing. Record that.
-            playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+            setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
             // Now switch modes
             changeUIMode("readyToEnterMoves");
             render();
@@ -235,11 +235,12 @@ function commandingAnAntActionButtons(uiModeData) {
     });
 
     if (selectedAntDisplayed.cast !== "Larva" && selectedAntDisplayed.numberOfAnts >= 2) {
+        // FIXME: Known bug: if you try to split an already-split ant it breaks things, and there's no way to revert a split
         buttons.push({
             label: "Split Up",
             action: function() {
                 // Until it changes, record the ant as doing nothing.
-                playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+                setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
                 // Now switch modes
                 changeUIMode("splittingAntStack", {selectedAntNumber: uiModeData.selectedAntNumber});
                 render();
@@ -259,7 +260,7 @@ function commandingAnAntActionButtons(uiModeData) {
                     action: function() {
                         // We decided to lay an egg. Record that.
                         const action = {name: "LayEgg"};
-                        playerActionSelections[uiModeData.selectedAntNumber] = action;
+                        setPlayerAction(uiModeData.selectedAntNumber, action);
                         applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                         // Now switch modes
@@ -296,7 +297,7 @@ function commandingAnAntActionButtons(uiModeData) {
             action: function() {
                 // We decided to have this ant defend. Record that.
                 const action = {name: "Defend"};
-                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                setPlayerAction(uiModeData.selectedAntNumber, action);
                 applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
                 // Now switch modes
                 changeUIMode("readyToEnterMoves");
@@ -306,7 +307,7 @@ function commandingAnAntActionButtons(uiModeData) {
     }
 
     if (selectedAntDisplayed.cast === "Worker") {
-        const digTunnelActions = possibleDigTunnelActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
+        const digTunnelActions = possibleDigTunnelActions(displayedGameState, startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
         if (digTunnelActions.length > 0) {
             buttons.push({
                 label: "Dig Tunnel",
@@ -323,14 +324,14 @@ function commandingAnAntActionButtons(uiModeData) {
     }
 
     if (selectedAntDisplayed.cast === "Worker") {
-        const digChamberActions = possibleDigChamberActions(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
+        const digChamberActions = possibleDigChamberActions(displayedGameState, startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
         if (digChamberActions.length > 0) {
             const digAction = digChamberActions[0]; // there will only be one, and this is it
             buttons.push({
                 label: "Dig Chamber",
                 action: function() {
                     // Record the action
-                    playerActionSelections[uiModeData.selectedAntNumber] = digAction;
+                    setPlayerAction(uiModeData.selectedAntNumber, digAction);
                     applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
                     // Return to entering commands
                     changeUIMode("readyToEnterMoves");
@@ -345,7 +346,7 @@ function commandingAnAntActionButtons(uiModeData) {
             label: "Feed larva worker ant food",
             action: function() {
                 const action = {name: "Mature", cast: "Worker"};
-                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                setPlayerAction(uiModeData.selectedAntNumber, action);
                 applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                 // Now switch modes
@@ -359,7 +360,7 @@ function commandingAnAntActionButtons(uiModeData) {
             label: "Feed larva warrior ant food",
             action: function() {
                 const action = {name: "Mature", cast: "Soldier"};
-                playerActionSelections[uiModeData.selectedAntNumber] = action;
+                setPlayerAction(uiModeData.selectedAntNumber, action);
                 applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, action);
 
                 // Now switch modes
@@ -384,17 +385,43 @@ const commandingAnAnt = {
 
     enterMode: function(uiModeData) {
         const selectedAntNumber = uiModeData.selectedAntNumber;
-        highlightedHex = startOfTurnGameState.colonies[playerColony].ants[selectedAntNumber].location;
+        const startOfTurnAnts = startOfTurnGameState.colonies[playerColony].ants;
+        const isNewAnt = selectedAntNumber >= startOfTurnAnts.length; // whether this ant was created during the turn
+        let prevAction;
+        if (isNewAnt) {
+            const newAntOrigin = newAntOrigins[selectedAntNumber - startOfTurnAnts.length];
+            if (newAntOrigin.source === "Matured") {
+                throw Error(`Should not be able to command a newly-matured ant.`);
+            } else if (newAntOrigin.source === "Split") {
+                // Highlight the hex
+                const origSplitAntNumber = newAntOrigin.antNumber;
+                highlightedHex = startOfTurnAnts[origSplitAntNumber].location;
+                const splitAction = playerActionSelections[origSplitAntNumber];
+                prevAction = splitAction.actions[newAntOrigin.order];
+            } else {
+                throw Error(`Unsupported value for newAntOrigin.source: '${newAntOrigin.source}'`);
+            }
+        } else {
+            // Highlight the hex
+            highlightedHex = startOfTurnAnts[selectedAntNumber].location;
+            prevAction = playerActionSelections[selectedAntNumber];
+        }
+
+        const isSplitAnt = prevAction !== null && prevAction.name === "Split"; // is this the orig ant that split
+        if (isSplitAnt) {
+            // it was split, and the TRUE action is what happened to the 0th stack
+            const splitAction = prevAction;
+            prevAction = prevAction.actions[0];
+        }
 
         // Revert the previous action
-        const prevAction = playerActionSelections[selectedAntNumber];
         revertAction(displayedGameState, startOfTurnGameState, playerColony, selectedAntNumber, prevAction);
 
         // (Now that it's reverted) find out where the ant is allowed to move
         uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // Now put us back to an action of "None".
-        playerActionSelections[selectedAntNumber] = {"name": "None"};
+        setPlayerAction(selectedAntNumber, {"name": "None"});
 
         // Now find the list of valid move actions. Store it in uiModeData
         uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
@@ -461,7 +488,7 @@ const commandingAnAnt = {
             const moveAction = movesEndingWhereWeSelected[0];
 
             // Make the move
-            playerActionSelections[uiModeData.selectedAntNumber] = moveAction;
+            setPlayerAction(uiModeData.selectedAntNumber, moveAction);
 
             applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, moveAction);
         } else {
@@ -512,13 +539,13 @@ const selectingAttackDestination = {
 
     onClickHex: function(coord, uiModeData) {
         // In case we clicked wrong, default to setting the action to "None":
-        playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+        setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
 
         // See if we clicked on one of the attackable locations...
         uiModeData.attackActions.forEach(attackAction => {
             if (coordEqual(attackAction.steps[attackAction.steps.length - 1], coord)) {
                 // We DID click on an attackable location, so set an actual attack action (instead of the "None")!
-                playerActionSelections[uiModeData.selectedAntNumber] = attackAction;
+                setPlayerAction(uiModeData.selectedAntNumber, attackAction);
                 applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, attackAction);
             }
         });
@@ -568,13 +595,13 @@ const selectingDigTunnelLocation = {
 
     onClickHex: function(coord, uiModeData) {
         // In case we clicked wrong, default to setting the action to "None":
-        playerActionSelections[uiModeData.selectedAntNumber] = {name: "None"};
+        setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
 
         // See if we clicked on one of the diggable locations...
         uiModeData.digTunnelActions.forEach(digAction => {
             if (coordEqual(digAction.location, coord)) {
                 // We DID click on a diggable location, so set an actual dig action (instead of the "None")!
-                playerActionSelections[uiModeData.selectedAntNumber] = digAction;
+                setPlayerAction(uiModeData.selectedAntNumber, digAction);
                 applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, digAction);
             }
         });
@@ -621,9 +648,30 @@ const splittingAntStack = {
     },
 
     uiControls: function(uiModeData) {
-        const numberOfAnts = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber].numberOfAnts;
+        const origStack = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+        const numberOfAnts = origStack.numberOfAnts;
+        const onDone = function(newStackCounts) {
+            if (newStackCounts.length < 2) {
+                throw Error(`splits should always be into at least two stacks`);
+            }
+            if (!newStackCounts.every(x => x >= 1)) {
+                throw Error(`splits should always have at least 1 in each stack`);
+            }
+            const splitAction = {
+                name: "Split",
+                newStackCounts: newStackCounts,
+                actions: newStackCounts.map(() => null),
+            };
+            setPlayerAction(uiModeData.selectedAntNumber, splitAction);
+            applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, splitAction);
+
+            // Now that it's all set up, change modes to command the last one we created
+            const selectedAntNumber = displayedGameState.colonies[playerColony].ants.length - 1;
+            changeUIMode("commandingAnAnt", {selectedAntNumber});
+            render();
+        };
         return {
-            splitter: {numberOfAnts}
+            splitter: {numberOfAnts, onDone}
         };
     },
 };

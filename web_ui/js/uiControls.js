@@ -158,9 +158,14 @@ function removeItemFromStack(stack) {
 /*
  * Display a splitter for the given number of ants.
  *
+ * numberOfAnts - the number of ants in the pile being split.
+ * onDone a function that will be called if the user completes successfully and chooses to split
+ * the stack. That function will be passed an array of numbers, each telling how many ants go
+ * in a corresponding stack.
+ *
  * // FIXME: It will also need an action to take after entering data!
  */
-function showSplitter(numberOfAnts) {
+function showSplitter(numberOfAnts, onDone) {
     const firstStack = Math.ceil(numberOfAnts / 2)
     const splits = [firstStack, numberOfAnts - firstStack]; // Initial split: close-to-even in 2 stacks
 
@@ -191,6 +196,22 @@ function showSplitter(numberOfAnts) {
     if (splits[splits.length - 1] >= 2) {
         placeNewStackButton(rowOfStacks);
     }
+
+    // --- set the behavior of the "Split" button ---
+    document.getElementById("splitterFinished").onclick = function() {
+        const splitter = document.getElementById("splitter");
+        const rowOfStacks = splitter.getElementsByClassName("row-of-stacks").item(0);
+        const stacks = rowOfStacks.getElementsByClassName("stack");
+
+        // build the list of new stack counts
+        const newStackCounts = [];
+        for (let stackNum = 0; stackNum < stacks.length; stackNum++) {
+            newStackCounts.push(stacks.item(stackNum).children.length);
+        }
+
+        // call the function that was provided to us
+        onDone(newStackCounts);
+    };
 }
 
 function hideSplitter() {
@@ -208,7 +229,10 @@ function setUIControls(uiControls) {
     setActionButtons(actionButtons);
 
     if(uiControls.splitter) {
-        showSplitter(uiControls.splitter.numberOfAnts);
+        showSplitter(
+            uiControls.splitter.numberOfAnts,
+            uiControls.splitter.onDone,
+        );
     } else {
         hideSplitter();
     }

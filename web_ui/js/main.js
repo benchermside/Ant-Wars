@@ -31,6 +31,43 @@ let uiModeData = {}; // an object where the uiMode can store some data fields. A
 /* ========= Functions ========= */
 
 /*
+ * This is passed the antNumber for an ant, and an action, and it sets the intended player action to
+ * that new action.
+ *
+ * antNumber - either the antNumber of an ant in the player colony at start of turn, OR the antNumber
+ *   of an ant that appears in the displayedGameState because it was created by a stack split.
+ * action - can be null (meaning "hasn't specified a move yet") or some Action (see dataStructures.js).
+ *   the action "Split" is special -- it can be set, but not really cleared because once it's in place,
+ *   an attempt to set that stack's actions will actually just set the 0th action in the split.
+ */
+function setPlayerAction(antNumber, action) {
+    const startOfTurnNumberOfAnts = startOfTurnGameState.colonies[playerColony].ants.length;
+    const isNewAnt = antNumber >= startOfTurnNumberOfAnts; // whether this ant was created during the turn
+    if (isNewAnt) {
+        const newAntOrigin = newAntOrigins[antNumber - startOfTurnNumberOfAnts];
+        if (newAntOrigin.source === "Matured") {
+            throw Error(`Should not be able to command a newly-matured ant.`);
+        } else if (newAntOrigin.source === "Split") {
+            // CASE 1: Deal with Ant Created By a Split
+            const splitAction = playerActionSelections[newAntOrigin.antNumber];
+            splitAction.actions[newAntOrigin.order] = action;
+        } else {
+            throw Error(`Unsupported value for newAntOrigin.source: '${newAntOrigin.source}'`);
+        }
+    } else {
+        const existingAction = playerActionSelections[antNumber];
+        if (existingAction !== null && existingAction.name === "Split") {
+            // CASE 2: Deal with Ant That Things Split Off From
+            existingAction.actions[0] = action;
+        } else {
+            // CASE 3: Any Normal ant
+            playerActionSelections[antNumber] = action;
+        }
+    }
+}
+
+
+/*
  * Call this passing a color to fill the screen with a solid color. It is used briefly
  * during animation to indicate that we're and finishing the animation.
  *

@@ -113,12 +113,12 @@ function possibleAttackActions(gameState, displayedGameState, colonyNumber, antN
  * want the moves for, and an integer specifying which ant in that colony we want the moves of. It returns
  * a list of Action objects (see dataStructures.js) all of which are Dig actions with whatToDig of "Tunnel".
  */
-function possibleDigTunnelActions(gameState, colonyNumber, antNumber) {
+function possibleDigTunnelActions(gameState, startOfTurnGameState, colonyNumber, antNumber) {
     const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
     // Tunneling can happen only in dirt and only in a neighboring location
     const eligibleTerrain = 1;
-    return findNeighbors(gameState.terrainGrid, antLocation[0], antLocation[1])
-        .filter(loc => gameState.terrainGrid[loc[1]][loc[0]] === eligibleTerrain)
+    return findNeighbors(startOfTurnGameState.terrainGrid, antLocation[0], antLocation[1])
+        .filter(loc => startOfTurnGameState.terrainGrid[loc[1]][loc[0]] === eligibleTerrain)
         .map(loc => {
             return {name: "Dig", location: loc, whatToDig: "Tunnel"};
         });
@@ -131,11 +131,11 @@ function possibleDigTunnelActions(gameState, colonyNumber, antNumber) {
  * want the moves for, and an integer specifying which ant in that colony we want the moves of. It returns
  * a list of Action objects (see dataStructures.js) all of which are Dig actions with whatToDig of "Chamber".
  */
-function possibleDigChamberActions(gameState, colonyNumber, antNumber) {
+function possibleDigChamberActions(gameState, startOfTurnGameState, colonyNumber, antNumber) {
     const antLocation = gameState.colonies[colonyNumber].ants[antNumber].location;
     // Chambers can only be dug on an existing tunnel and only in the current location
     const eligibleTerrain = 4;
-    const existingTerrain = gameState.terrainGrid[antLocation[1]][antLocation[0]];
+    const existingTerrain = startOfTurnGameState.terrainGrid[antLocation[1]][antLocation[0]];
     if (existingTerrain === eligibleTerrain) {
         return [{name: "Dig", location: antLocation, whatToDig: "Chamber"}];
     } else {

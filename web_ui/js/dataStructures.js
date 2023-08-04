@@ -261,7 +261,7 @@
         "source": "Split",
         "antNumber": 4,
         "order": 1,
-    }
+    };
 
 
 
@@ -500,8 +500,10 @@
     //     "label" (a string giving the text to display), and "action" (a function to call when
     //     the button is clicked).
     //   * "splitter" - an optional field. If absent or null then the splitter is not shown.
-    //     if present and non-null then it is an object with the field "numberOfAnts". It
-    //     tells how many ants are in the stack being split.
+    //     if present and non-null then it is an object with the field "numberOfAnts", which
+    //     tells how many ants are in the stack being split, and "onDone", which is a function
+    //     that is passed a list of numbers (telling how many ants in each split stack) if the
+    //     user chooses to go through with a split.
     //
     // Note: This CANNOT be reduced to JSON because it (potentially, if there are any buttons)
     // contains a function.
@@ -518,6 +520,7 @@
         ],
         "splitter": {
             "numberOfAnts": 3,
+            "onDone": splits => {},
         },
     }
 
