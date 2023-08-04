@@ -220,7 +220,8 @@ const readyToEnterMoves = {
  */
 function commandingAnAntActionButtons(uiModeData) {
     const buttons = [];
-    const selectedAntStartOfTurn = startOfTurnGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
+    // FIXME: Remove next line
+    const selectedAntStartOfTurn = getStartOfTurnAnt(startOfTurnGameState, playerColony, uiModeData.selectedAntNumber);
     const selectedAntDisplayed = displayedGameState.colonies[playerColony].ants[uiModeData.selectedAntNumber];
 
     buttons.push({
@@ -235,17 +236,30 @@ function commandingAnAntActionButtons(uiModeData) {
     });
 
     if (selectedAntDisplayed.cast !== "Larva" && selectedAntDisplayed.numberOfAnts >= 2) {
-        // FIXME: Known bug: if you try to split an already-split ant it breaks things, and there's no way to revert a split
-        buttons.push({
-            label: "Split Up",
-            action: function() {
-                // Until it changes, record the ant as doing nothing.
-                setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
-                // Now switch modes
-                changeUIMode("splittingAntStack", {selectedAntNumber: uiModeData.selectedAntNumber});
-                render();
-            }
-        });
+        // NOTE: this approach means that once a split happens there is no way to take it back and correct it.
+        //   that's not ideal, but it's what we have for now.
+
+        // check if this was already split
+        const existingSelection = playerActionSelections[uiModeData.selectedAntNumber];
+        const thisAntHasSplit = existingSelection && existingSelection.name === "Split";
+
+        // check if this was produced by a split
+        const startOfTurnNumAnts = startOfTurnGameState.colonies[playerColony].ants.length;
+        const thisIsANewAnt = uiModeData.selectedAntNumber >= startOfTurnNumAnts;
+
+        if (!(thisAntHasSplit || thisIsANewAnt)) {
+            // Go ahead and allow the ant to be split
+            buttons.push({
+                label: "Split Up",
+                action: function() {
+                    // Until it changes, record the ant as doing nothing.
+                    setPlayerAction(uiModeData.selectedAntNumber, {name: "None"});
+                    // Now switch modes
+                    changeUIMode("splittingAntStack", {selectedAntNumber: uiModeData.selectedAntNumber});
+                    render();
+                }
+            });
+        }
     }
 
     if (selectedAntDisplayed.cast === "Queen") {
@@ -666,8 +680,7 @@ const splittingAntStack = {
             applyAction(displayedGameState, playerColony, uiModeData.selectedAntNumber, splitAction);
 
             // Now that it's all set up, change modes to command the last one we created
-            const selectedAntNumber = displayedGameState.colonies[playerColony].ants.length - 1;
-            changeUIMode("commandingAnAnt", {selectedAntNumber});
+            changeUIMode("commandingAnAnt", {selectedAntNumber: uiModeData.selectedAntNumber});
             render();
         };
         return {
