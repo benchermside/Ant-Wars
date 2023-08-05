@@ -2,14 +2,11 @@ A list of tasks:
 
 -----
 
- * Create a set of rules for the game!
- * Create food sources.
+ * Make eggs actually hatch into larva.
+ * Make dead ants generate food.
  * Create disasters (anteater, flood, stepped on).
- * Allow ants of different colonies to fight.
  * Create an editor tool for creating maps.
  * The ability to display a message to the user floating over the map.
- * Support multiplayer: ability to log in and view a game.
- * Support multiplayer: ability to enter moves for a colony.
  * Research ants and get a bunch of ant facts.
  * Automate deployment to AWS.
 
@@ -22,3 +19,8 @@ A list of tasks:
  * Allow ants to walk on the surface.
  * Create  applyRules() function that will apply a set of actions.
  * Create movement rules that include moving faster through tunnels.
+ * Create a set of rules for the game!
+ * Create food sources.
+ * Allow ants of different colonies to fight.
+ * Support multiplayer: ability to log in and view a game.
+ * Support multiplayer: ability to enter moves for a colony.
