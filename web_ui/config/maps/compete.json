@@ -19,18 +19,19 @@
   "colonies": [
     {
       "eggs": [
+        {"numberOfEggs": 1, "location": [5, 8], "daysToHatch": 1}
       ],
       "ants": [
-        {"location": [5, 8], "facing": 5, "cast": "Larva",   "numberOfAnts": 1, "foodHeld": 0},
         {"location": [5, 8], "facing": 6, "cast": "Queen",   "numberOfAnts": 1, "foodHeld": 0}
       ],
       "foodSupply": 25,
       "antColor": "#000000"
     },
     {
-      "eggs": [],
+      "eggs": [
+        {"numberOfEggs": 1, "location": [31, 9], "daysToHatch": 1}
+      ],
       "ants": [
-        {"location": [31, 9], "facing": 0, "cast": "Larva",   "numberOfAnts": 1, "foodHeld": 0},
         {"location": [31, 9], "facing": 1, "cast": "Queen",   "numberOfAnts": 1, "foodHeld": 0}
       ],
       "foodSupply": 25,

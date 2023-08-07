@@ -15,8 +15,8 @@
   "colonies": [
     {
       "eggs": [
-        {"numberOfEggs": 1, "location": [2, 7], "daysToHatch": 3},
-        {"numberOfEggs": 2, "location": [6, 5], "daysToHatch": 3},
+        {"numberOfEggs": 1, "location": [2, 7], "daysToHatch": 2},
+        {"numberOfEggs": 2, "location": [6, 5], "daysToHatch": 1},
         {"numberOfEggs": 3, "location": [6, 6], "daysToHatch": 3}
       ],
       "ants": [

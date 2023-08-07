@@ -113,11 +113,16 @@ function applyLayEggAction(gameState, colonyNumber, antNumber, action, stage) {
         const eggLoc = gameState.colonies[colonyNumber].ants[antNumber].location;
         let eggStack = getEggAt(gameState.colonies[playerColony].eggs, eggLoc);
         if(eggStack === null) {
-            eggStack = {"numberOfEggs": 1, "location": eggLoc, "daysToHatch": rules.TURNS_TO_HATCH};
+            eggStack = {
+                numberOfEggs: 1,
+                location: eggLoc,
+                daysToHatch: rules.TURNS_TO_HATCH,
+            };
             gameState.colonies[playerColony].eggs.push(eggStack);
         } else {
             if (eggStack.numberOfEggs <= rules.MAX_EGGS) { // laying an egg when we're already at the max does nothing
                 eggStack.numberOfEggs += 1;
+                eggStack.daysToHatch = rules.TURNS_TO_HATCH; // laying a new egg restarts the clock
             }
         }
         gameState.colonies[colonyNumber].foodSupply -= rules.costs.layEggCost;
@@ -209,7 +214,7 @@ function applyMatureAction(gameState, colonyNumber, antNumber, action, stage) {
         newAntOrigins.push(newAntOrigin);
 
         // --- charge a cost ---
-        const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
+        const cost = larvaAnt.numberOfAnts * rules.costs.matureCost[action.cast];
         gameState.colonies[colonyNumber].foodSupply -= cost;
 
         // --- remove the larva ---
@@ -239,7 +244,7 @@ function revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNu
     colony.ants.splice(startOfTurnAntCount + newAntOriginIdx, 1);
 
     // --- refund the cost ---
-    const cost = larvaAnt.numberOfAnts * rules.costs.hatchCost[action.cast];
+    const cost = larvaAnt.numberOfAnts * rules.costs.matureCost[action.cast];
     gameState.colonies[colonyNumber].foodSupply += cost;
 }
 
@@ -350,9 +355,9 @@ function revertAction(gameState, startOfTurnGameState, colonyNumber, antNumber, 
     } else if (action.name === "LayEgg") {
         revertLayEggAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Dig") {
-        revertDigAction(gameState, startOfTurnGameState, startOfTurnAnt, colonyNumber, antNumber, action);
+        revertDigAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Mature") {
-        revertMatureAction(gameState, startOfTurnGameState, startOfTurnAnt, colonyNumber, antNumber, action);
+        revertMatureAction(gameState, startOfTurnGameState, colonyNumber, antNumber, action);
     } else if (action.name === "Split") {
         throw Error(`The code doesn't support reverting a split.`);
     } else {

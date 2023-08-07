@@ -345,10 +345,45 @@ function starveColony(colony) {
 
 
 /*
+ * This is called with a GameState it should modify. It processes the eggs for all colonies doing several
+ * interesting things. Eggs may age and hatch into larva.
+ */
+function processEggs(gameState) {
+    gameState.colonies.forEach((colony) => {
+        colony.eggs.forEach(egg => {
+            if (egg.daysToHatch === 0) {
+                // --- Hatch an egg ---
+                const newAnt = {
+                    "cast": "Larva",
+                    "facing": 1, // the default way everything faces
+                    "location": egg.location,
+                    "numberOfAnts": egg.numberOfEggs,
+                    "foodHeld": 0,
+                };
+                colony.ants.push(newAnt);
+                // NOTE: I'm actually unclear here whether I should create a newAntOrigin and push it
+                //   onto newAntOrigins. For now, I'm not doing it on the grounds that this is something
+                //   that happens during the execution, not the gathering of instructions, but I'm not
+                //   sure the design is actually right.
+
+                // --- Remove this egg ---
+                egg.numberOfEggs = 0;
+            } else {
+                egg.daysToHatch = egg.daysToHatch - 1;
+            }
+        });
+    });
+
+    // Delete any eggs that we shouldn't have anymore
+    gameState.colonies.forEach((colony) => {
+        colony.eggs = colony.eggs.filter(egg => egg.numberOfEggs > 0);
+    });
+}
+
+
+/*
  * This is passed a GameState, and it modifies that GameState by charging the upkeep costs for the
  * ants we have. If there isn't enough food to afford the upkeep costs, it starves some of the ants.
- *
- * FIXME: For now it doesn't actually do the starving thing.
  */
 function chargeUpkeepCosts(gameState) {
     gameState.colonies.forEach(colony => {
@@ -415,6 +450,9 @@ function animate(animationState) {
             indicatedHexes.length = 0; // remove interactions
             displayedGameState = gameStateForStage(animationState);
             if (animationState.stage === 12) { // Some things that happen specially at the end of the turn
+                // After stage 12 is when eggs are processed
+                processEggs(displayedGameState);
+
                 // After stage 12 is when ants process the food
                 processFood(displayedGameState, animationState.randomNumberSource);
 
