@@ -424,8 +424,15 @@ function chargeUpkeepCosts(gameState) {
  * on the stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
  * (showing the NEXT step...) after a few moments UNLESS we've shown the final stage of the animation,
  * in which cases it advances to the next turn and moves into the state for entering the next turn's actions.
+ *
+ * DESIGN NOTE: This was carrying around the animationState completely internally, without exposing it to
+ * any other parts of the program. But then we needed the value to be visible to display the animation
+ * stages in the UI. So now we're copying it into a global variable. Probably, we should keep it one place
+ * or the other but NOT both. That's a fix we can do later.
  */
 function animate(animationState) {
+    document.getElementById("next-turn-btn").setAttribute("disabled", "disabled"); // we'll enable it after showing 12:After
+    displayedAnimationState = animationState;
     if (animationState.stage === 0) {
         displayedGameState = structuredClone(startOfTurnGameState);
         render();
@@ -460,34 +467,17 @@ function animate(animationState) {
                 chargeUpkeepCosts(displayedGameState);
             }
             render();
-            animationState.stage += 1;
-            animationState.substage = "Before";
-            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
+            if (animationState.stage < 12) {
+                animationState.stage += 1;
+                animationState.substage = "Before";
+                setTimeout(animate, 2 * animationState.animateSpeed, animationState);
+            } else {
+                document.getElementById("next-turn-btn").removeAttribute("disabled");
+            }
         } else {
             throw Error(`Invalid animationState.substage of '${animationState.substage}'.`);
         }
     } else {
-        sweepScreen("#FFFFFF"); // show blank screen briefly
-        setTimeout(
-            function() {
-                // --- make what we're displaying be the new turn's state ---
-                startOfTurnGameState = displayedGameState; // advance to the new turn!
-
-                // --- merge any ant stacks ---
-                // Merge any stacks that have joined together
-                startOfTurnGameState.colonies.forEach(colony => {
-                    colony.ants = mergeAnts(colony.ants);
-                });
-                newAntOrigins.length = 0;
-
-                // --- base the new displayedGameState on the updated startOfTurnGameState ---
-                displayedGameState = structuredClone(startOfTurnGameState);
-
-                // --- start the new turn ---
-                startNewTurn();
-                render();
-            },
-            200 // flash white for only 200 ms
-        );
+        throw Error(`Invalid stage ${animationState.stage}`);
     }
 }

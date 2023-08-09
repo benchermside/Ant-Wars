@@ -20,6 +20,7 @@ let newAntOrigins = []; // when displayedGameState has more ants than startOfTur
 let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
                             // current selected moves and readiness to end turn of each colony.
 let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
+let displayedAnimationState = null; // null if we're not currently animation or the animationState if we are.
 
 
 
@@ -131,6 +132,31 @@ function startNewTurn() {
 
     // begin in readyToEnter uiMode.
     changeUIMode("readyToEnterMoves");
+}
+
+
+/*
+ * Calling this after the animation wraps up one turn and begins the next one.
+ */
+function turnTransition() {
+    displayedAnimationState = null;
+
+    // --- make what we're displaying be the new turn's state ---
+    startOfTurnGameState = displayedGameState;
+
+    // --- merge any ant stacks ---
+    // Merge any stacks that have joined together
+    startOfTurnGameState.colonies.forEach(colony => {
+        colony.ants = mergeAnts(colony.ants);
+    });
+    newAntOrigins.length = 0;
+
+    // --- base the new displayedGameState on the updated startOfTurnGameState ---
+    displayedGameState = structuredClone(startOfTurnGameState);
+
+    // --- start the new turn ---
+    startNewTurn();
+    render();
 }
 
 
@@ -313,6 +339,9 @@ function startGame(newGameSettings, playerNum) {
             const pixelCoord = [event.offsetX, event.offsetY];
             onCanvasClick(pixelCoord);
         });
+
+        // === Set up other UI Controls ===
+        initializeAnimationStages();
 
         // ==== Prepare Game Start ====
         onBoardResize();

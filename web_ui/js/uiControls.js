@@ -162,8 +162,6 @@ function removeItemFromStack(stack) {
  * onDone a function that will be called if the user completes successfully and chooses to split
  * the stack. That function will be passed an array of numbers, each telling how many ants go
  * in a corresponding stack.
- *
- * // FIXME: It will also need an action to take after entering data!
  */
 function showSplitter(numberOfAnts, onDone) {
     const firstStack = Math.ceil(numberOfAnts / 2)
@@ -219,6 +217,55 @@ function hideSplitter() {
 }
 
 
+/*
+ * This is called once early in game startup. It sets up the animationStages control.
+ */
+function initializeAnimationStages() {
+    const animationStagesElem = document.getElementById("animation-stages");
+    const stagesBarElem = animationStagesElem.getElementsByClassName("bar").item(0);
+    for (let stageNum = 0; stageNum <= 12; stageNum++) {
+        const stageElem = document.createElement("div");
+        const id = `stage-${stageNum}`;
+        stageElem.setAttribute("id", id);
+        stageElem.classList.add("stage");
+        const onDragEnter = () => document.getElementById(id).classList.add("droptarget");
+        const onDragLeave = () => document.getElementById(id).classList.remove("droptarget");
+        stageElem.addEventListener("dragenter", onDragEnter);
+        stageElem.addEventListener("dragleave", onDragLeave);
+        stagesBarElem.appendChild(stageElem);
+    }
+
+    const nextTurnBtnElem = document.getElementById("next-turn-btn");
+    nextTurnBtnElem.onclick = turnTransition;
+}
+
+
+/*
+ * Called during each render(), this will correctly highlight the current animation stage. animatinStage contains
+ * the current state of the animation (which might be null).
+ */
+function updateAnimationStages(animationState) {
+    const animationStagesElem = document.getElementById("animation-stages");
+    if (animationState === null) {
+        animationStagesElem.classList.add("hidden");
+    } else {
+        animationStagesElem.classList.remove("hidden");
+        const oldActiveStageElem = document.getElementById("active-stage");
+        if (oldActiveStageElem !== null) {
+            oldActiveStageElem.remove();
+        }
+        if (animationState !== null) {
+            // --- position the turn marker ---
+            const activeStageId = `stage-${animationState.stage}`;
+            const stageElem = document.getElementById(activeStageId);
+            const activeStageElem = document.createElement("div");
+            activeStageElem.setAttribute("id", "active-stage");
+            activeStageElem.setAttribute("draggable", true);
+            stageElem.appendChild(activeStageElem);
+        }
+    }
+}
+
 
 /*
  * This is passed a uiControls (see dataStructures.js) and it proceeds to display
@@ -236,6 +283,14 @@ function setUIControls(uiControls) {
     } else {
         hideSplitter();
     }
+
+    const animationStagesElem = document.getElementById("animation-stages");
+    if (uiControls.showAnimationStages === true) {
+        document.getElementById("next-turn-btn").setAttribute("disabled", "disabled"); // we'll enable it after showing 12:After
+        animationStagesElem.classList.remove("hidden");
+    } else {
+        animationStagesElem.classList.add("hidden");
+    }
 }
 
 
@@ -250,6 +305,7 @@ function updateControls() {
         0
     );
     document.getElementById("show-upkeep").value = upkeep;
+    updateAnimationStages(displayedAnimationState);
 }
 
 
