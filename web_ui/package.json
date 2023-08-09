@@ -6,7 +6,8 @@
   "license": "",
   "author": "",
   "scripts": {
-    "start": "python3 -m http.server"
+    "start": "python3 -m http.server",
+    "deploy": "./scripts/deploy.sh"
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4"
