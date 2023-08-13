@@ -24,5 +24,10 @@
     "Soldier": 2,
     "Queen": 1,
     "Larva": 0
+  },
+  "attackSpeed": {
+    "Worker": 1,
+    "Soldier": 1,
+    "Queen": 1
   }
 }
