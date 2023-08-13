@@ -20,7 +20,9 @@ let newAntOrigins = []; // when displayedGameState has more ants than startOfTur
 let colonySelections = null; // an array of ColonySelection (see dataStructures.js) giving the
                             // current selected moves and readiness to end turn of each colony.
 let movesHaveBeenSent = false; // tells whether this player has submitted moves for this turn
-let displayedAnimationState = null; // null if we're not currently animation or the animationState if we are.
+let animationState = null; // null if we're not currently animation or the animationState if we are.
+let screenFill = null; // null means render normally; a color means fill the whole screen with that color instead
+
 
 
 
@@ -68,7 +70,7 @@ function setPlayerAction(antNumber, action) {
 }
 
 
-/*
+/* FIXME: This is gone now. Do the cleanup that's described below
  * Call this passing a color to fill the screen with a solid color. It is used briefly
  * during animation to indicate that we're and finishing the animation.
  *
@@ -92,13 +94,18 @@ function sweepScreen(color) {
 function render() {
     const gameCanvasElem = document.getElementById("game-canvas");
     const drawContext = gameCanvasElem.getContext("2d");
-    drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
-    drawBackground(drawContext, displayedGameState.terrainGrid, hexSize);
-    if (highlightedHex !== null) {
-        highlightHex(drawContext, hexSize, highlightedHex);
+    if (screenFill !== null) {
+        drawContext.fillStyle = screenFill;
+        drawContext.fillRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
+    } else {
+        drawContext.clearRect(0, 0, gameCanvasElem.width, gameCanvasElem.height);
+        drawBackground(drawContext, displayedGameState.terrainGrid, hexSize);
+        if (highlightedHex !== null) {
+            highlightHex(drawContext, hexSize, highlightedHex);
+        }
+        indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
+        drawItems(drawContext, displayedGameState, hexSize);
     }
-    indicatedHexes.forEach(indicator => indicateHex(drawContext, hexSize, indicator));
-    drawItems(drawContext, displayedGameState, hexSize);
     updateControls();
 }
 
@@ -139,7 +146,7 @@ function startNewTurn() {
  * Calling this after the animation wraps up one turn and begins the next one.
  */
 function turnTransition() {
-    displayedAnimationState = null;
+    animationState = null;
 
     // --- make what we're displaying be the new turn's state ---
     startOfTurnGameState = displayedGameState;

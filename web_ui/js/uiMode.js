@@ -40,32 +40,14 @@
 
 const watchingTurnHappen = {
     enterMode: function(uiModeData) {
-        // --- Put the game state back to how it started ---
-        displayedGameState = structuredClone(startOfTurnGameState);
-
-        //reduce all turn to hatch eggs by 1; if any reach 0 put an action on the quuee???
-
-        // --- Now call the animation function which will run for a few seconds, then exit the mode ---
-        const animationState = {
-            colonySelections: colonySelections,
-            stage: 0,
-            substage: "After",
-            interactions: [],
-            randomNumberSource: newRandomSequence(uiModeData.randomSeed),
-            animateSpeed: 50,
-        };
-        uiModeData.animationState = animationState;
-        sweepScreen("#000000"); // show blank screen briefly
-        setTimeout(animate, 500, animationState); // then run the animation
+        beginHowTurnWentAnimation(); // Kick off the animation
     },
 
     exitMode: function(uiModeData) {
     },
 
     onClickHex: function(coord, uiModeData) {
-        // If you click while watching the turn play out we'll assume you're in a hurry, and we'll just
-        // speed up the rest of the animation.
-        uiModeData.animationState.animateSpeed = 1;
+        // You can't do anything... just watch
     },
 
     actionButtons: function(uiModeData) {

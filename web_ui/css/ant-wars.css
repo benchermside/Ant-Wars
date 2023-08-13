@@ -140,7 +140,9 @@
 #animation-stages .bar {
     background-color: #cccccc;
     border-radius: 10px;
-    border: 1px solid #000000;
+    border-width: 1px 0;
+    border-style: solid;
+    border-color: #000000;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -162,12 +164,8 @@
     justify-content: center;
 }
 
-#animation-stages .bar .stage.droptarget {
-    background-color: #1f1f1f;
-}
-
 #animation-stages .bar .stage #active-stage {
-    background-color: #1f1f1f;
+    background-color: #3f3f3f;
     border-radius: 50%;
     border: 1px solid #000000;
     width: 75%;

@@ -524,4 +524,33 @@
         },
     }
 
+
+    // AnimationState
+    //
+    // This is the type of the global variable that keeps track of the current state when we are performing
+    // an animation. (It will be null when we are NOT performing one.)
+    //
+    // It is an object containing the following fields:
+    //   * scheduledTimeout -- the handle used to cancel the currently-pending timeout OR null if there is no
+    //          currently-pending timeout. Always update this when calling setTimeout() for animation.
+    //   * colonySelections -- an array of ColonySelection objects (see dataStructures.js) giving
+    //          the choices of what actions all the ants and colonies want to take.
+    //   * stage -- set to 0 initially, it will range up to 12 as we step through the steps of the animation
+    //   * substage -- set to one of "Before", "Interacting", or "After". Stage 0 will only have "After"; all
+    //          the other stages will run through the substages in order.
+    //   * interactions -- this is an array of interactions objects (see dataStrucures.js). After
+    //          first animating each stage, a new entry will be added, so the interactions for stage x are at
+    //          interactions[x-1].
+    //   * randomNumberSource -- a sequence that generates random numbers to use during the animation. It
+    //          is a function which can be called to return a number such that 0 <= x < 1. The series of
+    //          numbers returned will be the same for the randomNumberSource passed to each machine that is
+    //          executing the animation.
+    //   * animateSpeed - a number that controls the speed of the animation. 100 is "pretty darn slow", 1 is
+    //          "as fast as possible". Must be a positive integer.
+    //   * progression - set to one of "Animating" (running through at normal speed, to pause after 12:After),
+    //          "Rushing" (running through at full speed, to move on to the next turn once we hit the
+    //          end), "Replaying" (running through at 1/3 speed, to pause after 12:After), or "Paused"
+    //          (running through at 1/3 speed until the next "After" substage, then staying there).
+
+
 }

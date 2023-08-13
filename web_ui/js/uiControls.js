@@ -225,23 +225,42 @@ function initializeAnimationStages() {
     const stagesBarElem = animationStagesElem.getElementsByClassName("bar").item(0);
     for (let stageNum = 0; stageNum <= 12; stageNum++) {
         const stageElem = document.createElement("div");
-        const id = `stage-${stageNum}`;
-        stageElem.setAttribute("id", id);
+        stageElem.setAttribute("id", `stage-${stageNum}`);
         stageElem.classList.add("stage");
-        const onDragEnter = () => document.getElementById(id).classList.add("droptarget");
-        const onDragLeave = () => document.getElementById(id).classList.remove("droptarget");
-        stageElem.addEventListener("dragenter", onDragEnter);
-        stageElem.addEventListener("dragleave", onDragLeave);
+        stageElem.addEventListener("click", (event) => {
+            // FIXME: Need to make sure we never go later than the latest stage we ever computed
+
+            // --- Restart the animation from where we left it ---
+            if (stageNum === animationState.stage) {
+                // --- Clicked the one we're on: switch to "Replaying" slowly ---
+                changeAnimationProgression("Replaying");
+            } else {
+                // --- Clicked some other one: go there and be "Paused" ---
+                if (stageNum === 0) {
+                    animationState.stage = 0;
+                    animationState.substage = "Interacting";
+                } else {
+                    animationState.stage = stageNum - 1;
+                    animationState.substage = "After";
+                }
+                // FIXME: This won't work unless I do something to reset the random number generator. It needs to support fork().
+                // FIXME: I need to reset animationState.randomNumberSource somehow
+                // FIXME: I need to reset animationState.interactions somehow
+                changeAnimationProgression("Paused");
+            }
+        });
         stagesBarElem.appendChild(stageElem);
     }
 
     const nextTurnBtnElem = document.getElementById("next-turn-btn");
-    nextTurnBtnElem.onclick = turnTransition;
+    nextTurnBtnElem.addEventListener("click", () => {
+        changeAnimationProgression("Rushing");
+    });
 }
 
 
 /*
- * Called during each render(), this will correctly highlight the current animation stage. animatinStage contains
+ * Called during each render(), this will correctly highlight the current animation stage. animationStage contains
  * the current state of the animation (which might be null).
  */
 function updateAnimationStages(animationState) {
@@ -254,15 +273,12 @@ function updateAnimationStages(animationState) {
         if (oldActiveStageElem !== null) {
             oldActiveStageElem.remove();
         }
-        if (animationState !== null) {
-            // --- position the turn marker ---
-            const activeStageId = `stage-${animationState.stage}`;
-            const stageElem = document.getElementById(activeStageId);
-            const activeStageElem = document.createElement("div");
-            activeStageElem.setAttribute("id", "active-stage");
-            activeStageElem.setAttribute("draggable", true);
-            stageElem.appendChild(activeStageElem);
-        }
+        // --- position the turn marker ---
+        const activeStageId = `stage-${animationState.stage}`;
+        const stageElem = document.getElementById(activeStageId);
+        const activeStageElem = document.createElement("div");
+        activeStageElem.setAttribute("id", "active-stage");
+        stageElem.appendChild(activeStageElem);
     }
 }
 
@@ -286,7 +302,6 @@ function setUIControls(uiControls) {
 
     const animationStagesElem = document.getElementById("animation-stages");
     if (uiControls.showAnimationStages === true) {
-        document.getElementById("next-turn-btn").setAttribute("disabled", "disabled"); // we'll enable it after showing 12:After
         animationStagesElem.classList.remove("hidden");
     } else {
         animationStagesElem.classList.add("hidden");
@@ -305,7 +320,7 @@ function updateControls() {
         0
     );
     document.getElementById("show-upkeep").value = upkeep;
-    updateAnimationStages(displayedAnimationState);
+    updateAnimationStages(animationState);
 }
 
 

@@ -95,7 +95,7 @@ function fight(ant0, ant1, randomNumberSource) {
  * stage PRIOR to applying any interactions, and it returns the list of interactions to
  * apply. It is allowed (encouraged!) to use the randomNumberSource in animationState
  * to determine outcomes. (WARNING: When we allow running it backward, this way of using
- * the randomNumberSource will need to change.
+ * the randomNumberSource will need to change).
  */
 function interactionsForStage(displayedGameState, animationState) {
     const result = []; // an array of interactions
@@ -402,57 +402,47 @@ function chargeUpkeepCosts(gameState) {
 
 
 /*
- * This is a key part of watching the turn happen.
- *
- * It gets called with an animationState which is an object containing these fields:
- *  * colonySelections -- an array of ColonySelection objects (see dataStructures.js) giving
- *        the choices of what actions all the ants and colonies want to take.
- *  * stage -- set to 0 initially, it will range up to 12 as we step through the steps of the animation
- *  * substage -- set to one of "Before", "Interacting", or "After". Stage 0 will only have "After"; all
- *        the other stages will run through the substages in order.
- *  * interactions -- this is an array of interactions objects (see dataStrucures.js). After
- *        first animating each stage, a new entry will be added, so the interactions for stage x are at
- *        interactions[x-1].
- *  * randomNumberSource -- a sequence that generates random numbers to use during the animation. It
- *        is a function which can be called to return a number such that 0 <= x < 1. The series of
- *        numbers returned will be the same for the randomNumberSource passed to each machine that is
- *        executing the animation.
- * * animateSpeed - a number that controls the speed of the animation. 100 is "pretty darn slow", 1 is
- *        "as fast as possible". Must be a positive integer.
- *
- * This function sets the global displayedGameState to a single stage of the animation (which one depends
- * on the stage field of the animationState). Then it increments stage. THEN it triggers itself to run again
- * (showing the NEXT step...) after a few moments UNLESS we've shown the final stage of the animation,
- * in which cases it advances to the next turn and moves into the state for entering the next turn's actions.
- *
- * DESIGN NOTE: This was carrying around the animationState completely internally, without exposing it to
- * any other parts of the program. But then we needed the value to be visible to display the animation
- * stages in the UI. So now we're copying it into a global variable. Probably, we should keep it one place
- * or the other but NOT both. That's a fix we can do later.
+ * This is called to perform the next step of the animation, then continue with the animation
+ * (if appropriate, depending on the animationState).
  */
-function animate(animationState) {
-    document.getElementById("next-turn-btn").setAttribute("disabled", "disabled"); // we'll enable it after showing 12:After
-    displayedAnimationState = animationState;
-    if (animationState.stage === 0) {
-        displayedGameState = structuredClone(startOfTurnGameState);
-        render();
-        animationState.stage += 1;
+function performAnimationStep() {
+    // --- Clear out the timeout handle that we just triggered ---
+    animationState.scheduledTimeout = null;
+
+    // --- Move forward to the next stage/substage ---
+    if (animationState.substage === "Before") {
+        animationState.substage = "Interacting";
+    } else if (animationState.substage === "Interacting") {
+        animationState.substage = "After";
+    } else if (animationState.substage === "After") {
         animationState.substage = "Before";
-        setTimeout(animate, 2 * animationState.animateSpeed, animationState);
-    } else if (animationState.stage <= 12) {
+        animationState.stage = animationState.stage + 1;
+    }
+
+    // --- do the work to render the new stage ---
+    if (animationState.stage > 12) {
+        // We made it past the endpoint... now we move on to the next turn.
+        turnTransition();
+        return; // And we do NOT continue to do the rest of this function!
+    } else if (animationState.stage === 0) {
+        if (animationState.substage === "Before") {
+            throw Error(`Invalid animationState, Before stage 0`);
+        } else if (animationState.substage === "Interacting") {
+            screenFill = "#000000";
+        } else if (animationState.substage === "After") {
+            screenFill = null;
+            displayedGameState = gameStateForStage(animationState);
+        } else {
+            throw Error(`Invalid animationState.substage of '${animationState.substage}'.`);
+        }
+    } else {
         if (animationState.substage === "Before") {
             displayedGameState = gameStateForStage(animationState);
-            render();
-            animationState.substage = "Interacting";
-            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
         } else if (animationState.substage === "Interacting") {
             // NOTE: if we're always moving forward, then displayedGameState is already correct
             const newInteractions = interactionsForStage(displayedGameState, animationState);
             animationState.interactions.push(newInteractions);
             showInteractions(newInteractions);
-            render();
-            animationState.substage = "After";
-            setTimeout(animate, 2 * animationState.animateSpeed, animationState);
         } else if (animationState.substage === "After") {
             indicatedHexes.length = 0; // remove interactions
             displayedGameState = gameStateForStage(animationState);
@@ -466,18 +456,70 @@ function animate(animationState) {
                 // After the food we have to pay upkeep for the ants
                 chargeUpkeepCosts(displayedGameState);
             }
-            render();
-            if (animationState.stage < 12) {
-                animationState.stage += 1;
-                animationState.substage = "Before";
-                setTimeout(animate, 2 * animationState.animateSpeed, animationState);
-            } else {
-                document.getElementById("next-turn-btn").removeAttribute("disabled");
-            }
         } else {
             throw Error(`Invalid animationState.substage of '${animationState.substage}'.`);
         }
-    } else {
-        throw Error(`Invalid stage ${animationState.stage}`);
     }
+
+    // --- Draw it ---
+    render();
+
+    // --- Determine what we'll do next --
+    const millisToWait = {
+        "Animating": animationState.animateSpeed,
+        "Rushing": 1,
+        "Replaying": 3 * animationState.animateSpeed,
+        "Paused": 3 * animationState.animateSpeed,
+    }[animationState.progression];
+    const stopped = (animationState.substage === "After"
+        && (animationState.progression === "Paused" ||
+            (animationState.stage === 12 && animationState.progression !== "Rushing")
+        )
+    );
+
+    // --- Now do it ---
+    if (!stopped) {
+        const newTimeoutHandle = setTimeout(performAnimationStep, millisToWait);
+        animationState.scheduledTimeout = newTimeoutHandle;
+    }
+}
+
+
+/*
+ * This is called while an animation is in progress to change the way it progresses. Allowed
+ * values of newProgression are "Animating" (running through at normal speed, to pause after 12:After),
+ * "Rushing" (running through at full speed, to move on to the next turn once we hit the end),
+ * "Replaying" (running through at 1/3 speed, to pause after 12:After), or "Paused" (running through
+ * at 1/3 speed until the next "After" substage, then staying there). The function will go ahead
+ * and render the new look, then proceed with animation if possible.
+ */
+function changeAnimationProgression(newProgression) {
+    // --- Clear the awaiting timeout (if any) ---
+    if (animationState.scheduledTimeout !== null) {
+        clearTimeout(animationState.scheduledTimeout);
+        animationState.scheduledTimeout = null;
+    }
+
+    animationState.progression = newProgression;
+    performAnimationStep();
+}
+
+
+/*
+ * Call this to kick off the animation of what happened on a turn.
+ */
+function beginHowTurnWentAnimation() {
+    if (animationState !== null) {
+        throw new Error(`Beginning how turn went animation but we have an active animationState.`);
+    }
+    animationState = {
+        colonySelections: colonySelections,
+        stage: 0,
+        substage: "Before",
+        interactions: [],
+        randomNumberSource: newRandomSequence(uiModeData.randomSeed),
+        animateSpeed: 60,
+        progression: "Animating",
+    };
+    performAnimationStep();
 }
