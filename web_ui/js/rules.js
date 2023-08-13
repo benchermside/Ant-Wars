@@ -10,8 +10,10 @@ const notMovable = new Set([0, 1, 2, 3]) //list of all hex types that you CANNOT
 
 
 
-//helper function for new possible moves
-//returns true if the location in moves
+/*
+ * helper function for new possible moves
+ * returns true if the location in moves
+ */
 function spaceReached(moves, location) {
     for(let movesIndex=0; movesIndex<moves.length; movesIndex++) {
         if(!(moves[movesIndex][JSON.stringify(location)] === undefined)) {
@@ -22,8 +24,10 @@ function spaceReached(moves, location) {
 
 }
 
-//helper for possable moves
-//takes in a place and gives the list of moves to get there
+/*
+ * helper for possable moves
+ * takes in a place and gives the list of moves to get there
+ */
 function generateSteps(destination) {
     if(destination === null){
         return [];
@@ -35,8 +39,10 @@ function generateSteps(destination) {
     }
 }
 
-//helper for possibleMoves
-//takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
+/*
+ * helper for possibleMoves
+ * takes a list of ant stacks and checks if all ant stacks are in the same cast, if so returns true. oatherwise returns false
+ */
 function isCast(ants, cast) {
     for(let i=0; i<ants.length; i++) {
         if(!(ants[i].cast === cast)) {
@@ -47,11 +53,11 @@ function isCast(ants, cast) {
 }
 
 
-
-// finds the allowed moves an ant can move to and returns a list of the paths
-// of those moves (I think)
-
-function getStepsList(gameState, displayedGameState, colonyNumber, antNumber, moveDistance) {
+/*
+ * finds the allowed moves an ant can move to and returns a list of the paths
+ * of those moves (I think)
+ */
+function getStepsList(startOfTurnGameState, displayedGameState, colonyNumber, antNumber, moveDistance) {
     const movingAnt = displayedGameState.colonies[colonyNumber].ants[antNumber];
     //moves is a list of objects used as hashtables.  Each hashtable is indexed by the coord destination the ant can move to
     //as a json string and contains an object which has the field coord and prevLocation.  coord represents the
@@ -64,10 +70,10 @@ function getStepsList(gameState, displayedGameState, colonyNumber, antNumber, mo
         moves[moveNumber] = {};
         for(let space in moves[moveNumber-1]) {
             const prevLocation = JSON.parse(space);
-            const neighbors = findNeighbors(gameState.terrainGrid, prevLocation[0], prevLocation[1]);
+            const neighbors = findNeighbors(startOfTurnGameState.terrainGrid, prevLocation[0], prevLocation[1]);
             for (let neighborIndex = 0; neighborIndex<neighbors.length; neighborIndex++) {
                 const currNeighbor = neighbors[neighborIndex];
-                if (!notMovable.has(gameState.terrainGrid[currNeighbor[1]][currNeighbor[0]])) {
+                if (!notMovable.has(startOfTurnGameState.terrainGrid[currNeighbor[1]][currNeighbor[0]])) {
                     if (!spaceReached(moves, currNeighbor)) {
                         moves[moveNumber][JSON.stringify(currNeighbor)] = {"coord": currNeighbor, "prevLocation": moves[moveNumber-1][space]};
                     }
@@ -88,9 +94,13 @@ function getStepsList(gameState, displayedGameState, colonyNumber, antNumber, mo
     return toReturn;
 }
 
-function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber) {
+/*
+ * Returns the list of possible move actions that the ant (given by colonyNumber, antNumber) can
+ * make with the specified startOfTurnGameState and displayedGameState.
+ */
+function possibleMoveActions(startOfTurnGameState, displayedGameState, colonyNumber, antNumber) {
     const moveDistance = rules.movementSpeed[displayedGameState.colonies[colonyNumber].ants[antNumber].cast];
-    return getStepsList(gameState, displayedGameState, colonyNumber, antNumber, moveDistance).map(steps => {
+    return getStepsList(startOfTurnGameState, displayedGameState, colonyNumber, antNumber, moveDistance).map(steps => {
         return {
             "name": "Move",
             "steps": steps,
@@ -101,9 +111,9 @@ function possibleMoves(gameState, displayedGameState, colonyNumber, antNumber) {
 /*
  * returns the list of possible attack actions that antNumber the ant, specified by colonyNumber and antNumber, can take.
  */
-function possibleAttackActions(gameState, displayedGameState, colonyNumber, antNumber) {
+function possibleAttackActions(startOfTurnGameSate, displayedGameState, colonyNumber, antNumber) {
     const moveDistance = rules.attackSpeed[displayedGameState.colonies[colonyNumber].ants[antNumber].cast];
-    return getStepsList(gameState, displayedGameState, colonyNumber, antNumber, moveDistance).map(steps => {
+    return getStepsList(startOfTurnGameSate, displayedGameState, colonyNumber, antNumber, moveDistance).map(steps => {
         return {
             "name": "Attack",
             "steps": steps,

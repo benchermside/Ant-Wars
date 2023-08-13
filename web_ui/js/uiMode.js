@@ -432,13 +432,13 @@ const commandingAnAnt = {
         revertAction(displayedGameState, startOfTurnGameState, playerColony, selectedAntNumber, prevAction);
 
         // (Now that it's reverted) find out where the ant is allowed to move
-        uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
+        uiModeData.moveActions = possibleMoveActions(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // Now put us back to an action of "None".
         setPlayerAction(selectedAntNumber, {"name": "None"});
 
         // Now find the list of valid move actions. Store it in uiModeData
-        uiModeData.moveActions = possibleMoves(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
+        uiModeData.moveActions = possibleMoveActions(startOfTurnGameState, displayedGameState, playerColony, selectedAntNumber);
 
         // now make visible the places we can move to
         indicatedHexes.length = 0; // clear out any indicated hexes

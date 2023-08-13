@@ -167,7 +167,7 @@ function turnTransition() {
 function decideAIMoves(gameState, colonyNumber) {
     // === This is a dumb AI. For each ant, select a random allowed destination to move to ===
     const actionSelections = gameState.colonies[colonyNumber].ants.map((antState, antNumber) => {
-        const moveActions = possibleMoves(startOfTurnGameState, displayedGameState, colonyNumber, antNumber);
+        const moveActions = possibleMoveActions(startOfTurnGameState, displayedGameState, colonyNumber, antNumber);
         if (moveActions.length === 0) {
             return {name: "None"}; // can't move; so do nothing
         } else {
